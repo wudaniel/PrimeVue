@@ -12,6 +12,12 @@ const router = createRouter({
       component: () => import("../components/LoginPage.vue"),
       //meta: { requiresAuth: true }
     },
+    {
+      path: "/",
+      name: "Main",
+      component: () => import("../components/Firstprimevue.vue"),
+      //meta: { requiresAuth: true }
+    },
 
   ],
 });
