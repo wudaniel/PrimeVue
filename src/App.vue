@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import Sidebar from 'primevue/sidebar';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu'; // 使用 Menu 作為導航
-import Firstprimevue from './components/Firstprimevue.vue';
+
 
 import { useRouter,RouterView } from 'vue-router';
 const router = useRouter();

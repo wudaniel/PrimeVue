@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
+import InputText from 'primevue/inputtext';
+import Password from 'primevue/password';
 import { SaveSession } from "../stores/auth";
 
 const router = createRouter({
