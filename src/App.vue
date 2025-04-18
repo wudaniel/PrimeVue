@@ -1,36 +1,39 @@
-
 <script setup lang="ts">
-import { ref } from 'vue';
-import Sidebar from 'primevue/sidebar';
-import Button from 'primevue/button';
-import Menu from 'primevue/menu'; // 使用 Menu 作為導航
+import { ref } from "vue";
+import Sidebar from "primevue/sidebar";
+import Button from "primevue/button";
+import Menu from "primevue/menu"; // 使用 Menu 作為導航
 
-
-import { useRouter,RouterView } from 'vue-router';
+import { useRouter, RouterView } from "vue-router";
 const router = useRouter();
 const sidebarVisible = ref(false); // 控制 Sidebar 的顯示/隱藏
 
 // 替換成你實際需要的導航項目
 const menuItems = ref([
-    {
-        label: '首頁 (Logo)',
-        icon: 'pi pi-fw pi-home',
-        command: () => {
-            // 這裡可以添加點擊後的動作，例如路由跳轉
-            console.log('點擊了首頁');
-            router.push('/');
-            sidebarVisible.value = false; // 點擊後關閉 Sidebar
-        }
+  {
+    label: "首頁 ",
+    icon: "pi pi-fw pi-home",
+    command: () => {
+      // 這裡可以添加點擊後的動作，例如路由跳轉
+      router.push("/");
+      sidebarVisible.value = false; // 點擊後關閉 Sidebar
+    },
+  },
+  {
+    label: "登入介面",
+    icon: "pi pi-lock",
+    command: () => {
+      router.push("/login");
+      sidebarVisible.value = false;
     },
     {
-        label: 'PrimeVue 範例',
-        icon: 'pi pi-lock',
-        command: () => {
-            console.log('點擊了 PrimeVue 範例');
-            router.push('/login');
-            sidebarVisible.value = false;
-        }
+    label: "新入境派案表",
+    icon: "pi pi-lock",
+    command: () => {
+      router.push("/login");
+      sidebarVisible.value = false;
     },
+  },
 ]);
 </script>
 <template>
@@ -56,8 +59,8 @@ const menuItems = ref([
     <!-- 主要內容區域 -->
     <div class="main-content p-4">
       <!-- 你原本的內容 START -->
-      
-      <RouterView/>
+
+      <RouterView />
       <!-- 你原本的內容 END -->
 
       <!-- 如果你有使用 vue-router，路由出口會放在這裡 -->
@@ -65,9 +68,6 @@ const menuItems = ref([
     </div>
   </div>
 </template>
-
-
-
 
 <style scoped>
 .app-layout {
@@ -85,9 +85,9 @@ const menuItems = ref([
 
 /* 清理 Menu 的預設邊框和背景，使其融入 Sidebar */
 :deep(.p-menu) {
-    width: 100%;
-    border: none;
-    background: transparent;
+  width: 100%;
+  border: none;
+  background: transparent;
 }
 
 /* 讓 Sidebar 內容填滿高度 (如果需要 footer 置底) */
@@ -121,14 +121,19 @@ const menuItems = ref([
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
-.logo.vite:hover { /* 分開定義 vite 的 hover 效果 */
-    filter: drop-shadow(0 0 2em #646cffaa);
+.logo.vite:hover {
+  /* 分開定義 vite 的 hover 效果 */
+  filter: drop-shadow(0 0 2em #646cffaa);
 }
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
 }
 
 /* PrimeFlex 輔助類模擬 (如果沒用 PrimeFlex) */
-.w-full { width: 100%; }
-.p-4 { padding: 4rem; }
+.w-full {
+  width: 100%;
+}
+.p-4 {
+  padding: 4rem;
+}
 </style>

@@ -1,13 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from "vue-router";
 
-import InputText from 'primevue/inputtext';
-import Password from 'primevue/password';
+import InputText from "primevue/inputtext";
+import Password from "primevue/password";
 import { SaveSession } from "../stores/auth";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    
     {
       path: "/login",
       name: "login",
@@ -20,7 +19,11 @@ const router = createRouter({
       component: () => import("../components/Firstprimevue.vue"),
       //meta: { requiresAuth: true }
     },
-
+    {
+      path: "/arrivalAssigns",
+      name: "arrivalAssigns",
+      component: () => import("../components/Arrivalassigns.vue"),
+    },
   ],
 });
 
