@@ -6,6 +6,8 @@ import PrimeVue from "primevue/config";
 import { createPinia } from "pinia";
 import router from "./router";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
+import Calendar from "primevue/calendar";
+
 // --- PrimeVue v4+ 設定 (再次修改) ---
 
 // 1. 導入你選擇的預設集 (Preset)，例如 Lara
@@ -20,6 +22,7 @@ const pinia = createPinia();
 app.use(pinia);
 app.use(router); // 如果你有使用 Vue Router+
 // 3. 配置 PrimeVue 使用主題預設集
+
 app.use(PrimeVue, {
   // unstyled: true, // 確保這不是 true，或者直接移除這行以使用主題
   theme: {
@@ -31,6 +34,5 @@ app.use(PrimeVue, {
     },
   },
 });
-
-
+app.use(PrimeVue);
 app.mount("#app");

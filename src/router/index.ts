@@ -17,7 +17,7 @@ const router = createRouter({
       path: "/",
       name: "Main",
       component: () => import("../components/Firstprimevue.vue"),
-      //meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: "/arrivalAssigns",

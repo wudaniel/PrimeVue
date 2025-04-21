@@ -26,11 +26,12 @@ const menuItems = ref([
       router.push("/login");
       sidebarVisible.value = false;
     },
-    {
+  },
+  {
     label: "新入境派案表",
-    icon: "pi pi-lock",
+    icon: "pi pi-check",
     command: () => {
-      router.push("/login");
+      router.push("/arrivalAssigns");
       sidebarVisible.value = false;
     },
   },
