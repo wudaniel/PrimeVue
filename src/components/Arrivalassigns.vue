@@ -42,7 +42,6 @@
 
         <!-- 如果仍然需要 "其他" 選項 -->
         <div class="field col-12 md:col-6" v-if="selectednationalities === -1">
-          {/* 假設 "其他" 的 ID 是 -1 */}
           <label for="othernationalities">請輸入其他國籍:</label>
           <InputText
             id="othernationalities"
@@ -86,15 +85,17 @@
 
         <div class="field col-12 md:col-6">
           <label>鄉鎮市區</label>
-          <SelectButton
+          <Dropdown
+            inputId="townDropdown"
             v-model="selectedtown"
             :options="town_List"
-            optionLabel="label"
-            optionValue="value"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="請選擇鄉鎮市區"
             class="w-full"
+            filter
           />
         </div>
-
         <div class="field col-12 md:col-6" v-if="selectedtown === -1">
           <label for="othertown">請輸入其他鄉鎮市區:</label>
           <InputText id="othertown" v-model="othertown" class="w-full" />
@@ -102,12 +103,15 @@
 
         <div class="field col-12 md:col-6">
           <label>主責社工</label>
-          <SelectButton
+          <Dropdown
+            inputId="mainworkerDropdown"
             v-model="selectedworkers"
             :options="workers_List"
-            optionLabel="label"
-            optionValue="value"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="請選擇主責社工"
             class="w-full"
+            filter
           />
         </div>
 
@@ -130,6 +134,7 @@ import RadioButton from "primevue/radiobutton"; // 你也用了 RadioButton
 import Button from "primevue/button"; // 你也用了 Button
 import Dropdown from "primevue/dropdown"; // <--- 導入 Dropdown
 import Select from "primevue/select";
+
 export default {
   components: {
     Dropdown,

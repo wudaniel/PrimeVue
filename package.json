@@ -12,6 +12,8 @@
   "dependencies": {
     "@primeuix/themes": "^1.0.2",
     "@primevue/themes": "^4.3.3",
+    "@vee-validate/i18n": "^4.15.0",
+    "@vee-validate/rules": "^4.15.0",
     "axios": "^1.8.4",
     "date-fns": "^4.1.0",
     "pinia": "^3.0.2",
@@ -19,6 +21,7 @@
     "primeicons": "^7.0.0",
     "primevue": "^4.3.3",
     "router": "^2.2.0",
+    "vee-validate": "^4.15.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
