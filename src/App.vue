@@ -35,6 +35,21 @@ const menuItems = ref([
       sidebarVisible.value = false;
     },
   },
+  {
+    label: "一般派案表",
+    icon: "pi pi-check",
+    command: () => {
+      router.push("/generalAssigns");
+      sidebarVisible.value = false;
+    },
+  },
+  {
+    label: "新入境紀錄表",
+    command: () => {
+      router.push("/arrivalRecords");
+      sidebarVisible.value = false;
+    },
+  },
 ]);
 </script>
 <template>

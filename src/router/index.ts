@@ -24,6 +24,16 @@ const router = createRouter({
       name: "arrivalAssigns",
       component: () => import("../components/Arrivalassigns.vue"),
     },
+    {
+      path: "/generalAssigns",
+      name: "generalAssigns",
+      component: () => import("../components/Generalassigns.vue"),
+    },
+    {
+      path: "/arrivalRecords",
+      name: "arrivalRecords",
+      component: () => import("../components/Arrivalrecords.vue"),
+    },
   ],
 });
 

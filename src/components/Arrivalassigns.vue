@@ -1,11 +1,10 @@
 <template>
-  <!-- 使用 PrimeFlex 的 class 會更簡潔 -->
-  <div class="surface-card p-4 shadow-2 border-round">
+  <div id="arrival-form-card" class="surface-card p-4 shadow-2 border-round">
     <h3 class="text-center mb-4">新入境派案表</h3>
-    <form @submit.prevent="handleSubmit">
+    <form @submit="onSubmit">
       <div class="grid formgrid">
         <div class="field col-12 md:col-6">
-          <label>填表日期:</label>
+          <label for="filingDate">填表日期:</label>
           <Calendar
             id="filingDate"
             v-model="filingDate"
@@ -13,17 +12,34 @@
             showIcon
             placeholder="YYYY-MM-DD"
             class="w-full"
+            :class="{ 'p-invalid': errors.filingDate }"
           />
+
+          <ErrorMessage name="filingDate" as="small" class="p-error" />
         </div>
 
         <div class="field col-12 md:col-6">
           <label for="caseNumber">案號:</label>
-          <InputText id="caseNumber" v-model="caseNumber" class="w-full" />
+          <InputText
+            id="caseNumber"
+            v-model="caseNumber"
+            class="w-full"
+            :class="{ 'p-invalid': errors.caseNumber }"
+          />
+
+          <ErrorMessage name="caseNumber" as="small" class="p-error" />
         </div>
 
         <div class="field col-12 md:col-6">
           <label for="fullName">全名:</label>
-          <InputText id="fullName" v-model="FullName" class="w-full" />
+          <InputText
+            id="fullName"
+            v-model="FullName"
+            class="w-full"
+            :class="{ 'p-invalid': errors.FullName }"
+          />
+
+          <ErrorMessage name="FullName" as="small" class="p-error" />
         </div>
 
         <div class="field col-12 md:col-6">
@@ -37,17 +53,21 @@
             placeholder="請選擇國籍"
             class="w-full"
             filter
+            :class="{ 'p-invalid': errors.nationality }"
           />
+
+          <ErrorMessage name="nationality" as="small" class="p-error" />
         </div>
 
-        <!-- 如果仍然需要 "其他" 選項 -->
         <div class="field col-12 md:col-6" v-if="selectednationalities === -1">
           <label for="othernationalities">請輸入其他國籍:</label>
           <InputText
             id="othernationalities"
             v-model="othernationalities"
             class="w-full"
+            :class="{ 'p-invalid': errors.othernationalities }"
           />
+          <ErrorMessage name="othernationalities" as="small" class="p-error" />
         </div>
 
         <div class="field col-12 md:col-6">
@@ -81,10 +101,12 @@
               <label for="gender2" class="ml-2">其他</label>
             </div>
           </div>
+
+          <ErrorMessage name="gender" as="small" class="p-error mt-1" />
         </div>
 
         <div class="field col-12 md:col-6">
-          <label>鄉鎮市區</label>
+          <label for="townDropdown">鄉鎮市區</label>
           <Dropdown
             inputId="townDropdown"
             v-model="selectedtown"
@@ -94,15 +116,24 @@
             placeholder="請選擇鄉鎮市區"
             class="w-full"
             filter
+            :class="{ 'p-invalid': errors.town }"
           />
+          <ErrorMessage name="town" as="small" class="p-error" />
         </div>
+
         <div class="field col-12 md:col-6" v-if="selectedtown === -1">
           <label for="othertown">請輸入其他鄉鎮市區:</label>
-          <InputText id="othertown" v-model="othertown" class="w-full" />
+          <InputText
+            id="othertown"
+            v-model="othertown"
+            class="w-full"
+            :class="{ 'p-invalid': errors.othertown }"
+          />
+          <ErrorMessage name="othertown" as="small" class="p-error" />
         </div>
 
         <div class="field col-12 md:col-6">
-          <label>主責社工</label>
+          <label for="mainworkerDropdown">主責社工</label>
           <Dropdown
             inputId="mainworkerDropdown"
             v-model="selectedworkers"
@@ -112,147 +143,213 @@
             placeholder="請選擇主責社工"
             class="w-full"
             filter
+            :class="{ 'p-invalid': errors.worker }"
           />
+          <ErrorMessage name="worker" as="small" class="p-error" />
         </div>
 
         <div class="field col-12 flex justify-content-end">
-          <Button type="submit" label="提交" icon="pi pi-check" />
+          <Button
+            type="submit"
+            label="提交"
+            icon="pi pi-check"
+            :disabled="!meta.valid && meta.touched"
+          />
         </div>
       </div>
     </form>
   </div>
 </template>
 
-<script>
-import { watch, ref, onMounted } from "vue";
+<script setup lang="ts">
+import { ref, onMounted, computed } from "vue"; // 導入 computed
 import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
+// --- PrimeVue 元件導入 ---
 import Calendar from "primevue/calendar";
-import InputText from "primevue/inputtext"; // 你也用了 InputText
-import SelectButton from "primevue/selectbutton"; // 你也用了 SelectButton
-import RadioButton from "primevue/radiobutton"; // 你也用了 RadioButton
-import Button from "primevue/button"; // 你也用了 Button
-import Dropdown from "primevue/dropdown"; // <--- 導入 Dropdown
-import Select from "primevue/select";
+import InputText from "primevue/inputtext";
+// import SelectButton from "primevue/selectbutton"; // 假設你改用 Dropdown 了
+import RadioButton from "primevue/radiobutton";
+import Button from "primevue/button";
+import Dropdown from "primevue/dropdown";
+// --- VeeValidate 導入 ---
+import { useForm, useField, ErrorMessage } from "vee-validate";
 
-export default {
-  components: {
-    Dropdown,
-    Select,
-    Calendar,
-    InputText,
-    SelectButton,
-    RadioButton,
-    Button,
-  },
-  setup() {
-    const filingDate = ref(null); // 顯式類型
-
-    const caseNumber = ref("");
-    const FullName = ref("");
-    const Nationality_List = ref([]);
-    const town_List = ref([]);
-    const workers_List = ref([]);
-    const selectedGender = ref();
-    const selectednationalities = ref();
-    const selectedtown = ref();
-    const selectedworkers = ref();
-    const othernationalities = ref("");
-    const othertown = ref("");
-
-    onMounted(() => {
-      apiHandler
-        .get("/option/nationalities")
-        .then((response) => {
-          Nationality_List.value = response.data;
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-      apiHandler
-        .get("/option/towns")
-        .then((response) => {
-          town_List.value = response.data;
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-      apiHandler
-        .get("/option/workers")
-        .then((response) => {
-          workers_List.value = response.data;
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    });
-
-    const handleSubmit = () => {
-      //console.log("--- handleSubmit ---");
-      //console.log("步驟 1: 進入 handleSubmit，filingDate.value 是:",filingDate.value,);
-      //console.log("步驟 1: filingDate.value 的類型:", typeof filingDate.value);
-
-      // --- 格式化日期 ---
-      let formattedDate = null;
-      // 進行更安全的檢查
-      if (
-        filingDate.value &&
-        filingDate.value instanceof Date &&
-        !isNaN(filingDate.value.getTime())
-      ) {
-        //console.log("步驟 2: 準備格式化有效的 Date 物件");
-        try {
-          formattedDate = format(filingDate.value, "yyyy-MM-dd"); // 使用 date-fns
-          // formattedDate = dayjs(filingDate.value).format('YYYY-MM-DD'); // 或者使用 dayjs
-          //console.log("步驟 3: 格式化後的日期 (formattedDate):", formattedDate);
-        } catch (e) {
-          //console.error("日期格式化錯誤:", e);
-          formattedDate = null; // 出錯時確保是 null
-        }
-      } else {
-        //console.log("步驟 2: filingDate 不是有效的 Date 物件，將使用 null");
-        formattedDate = null; // 如果不是 Date (可能是 null 或其他無效值)，直接設為 null
-      }
-      //console.log("步驟 4: 最終 formattedDate 的值:", formattedDate);
-      //console.log("步驟 4: formattedDate 的類型:", typeof formattedDate);
-
-      apiHandler
-        .post("/form/assign/arrival", {
-          filingDate: formattedDate,
-          caseNumber: caseNumber.value,
-          fullName: FullName.value,
-          nationalityID: selectednationalities.value,
-          nationalityOther: othernationalities.value,
-          gender: selectedGender.value,
-          town: selectedtown.value,
-          townOther: othertown.value,
-          worker: selectedworkers.value,
-        })
-        .then((response) => {
-          console.log(response);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    };
-
-    return {
-      handleSubmit,
-      filingDate,
-      caseNumber,
-      FullName,
-      Nationality_List,
-      town_List,
-      workers_List,
-      selectedGender,
-      selectednationalities,
-      selectedtown,
-      selectedworkers,
-      othernationalities,
-      othertown,
-    };
-  },
+const validateOtherNationality = (value: string | undefined | null) => {
+  // 依賴於 selectednationalities ref 的當前值
+  if (selectednationalities.value === -1 && !value?.trim()) {
+    return "請輸入其他國籍"; // 返回錯誤訊息
+  }
+  return true; // 驗證通過
 };
+
+const validateOtherTown = (value: string | undefined | null) => {
+  // 依賴於 selectedtown ref 的當前值
+  if (selectedtown.value === -1 && !value?.trim()) {
+    return "請輸入其他鄉鎮市區";
+  }
+  return true;
+};
+// --- 為每個欄位使用 useField ---
+const { handleSubmit, errors, meta, setFieldValue } = useForm({});
+// useField 返回一個包含 value ref 和其他屬性的物件
+const { value: filingDate, errorMessage: filingDateError } =
+  useField<Date | null>("filingDate", "required", { initialValue: null });
+
+const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
+  "caseNumber",
+  "required",
+  { initialValue: "" },
+);
+
+const { value: FullName, errorMessage: FullNameError } = useField<string>(
+  "FullName",
+  "required",
+  { initialValue: "" },
+);
+const { value: selectednationalities, errorMessage: nationalityError } =
+  useField<number | null>("nationality", "required", { initialValue: null });
+
+const { value: othernationalities, errorMessage: othernationalitiesError } =
+  useField<string>("othernationalities", validateOtherNationality, {
+    initialValue: "",
+  });
+const { value: selectedGender, errorMessage: genderError } = useField<
+  number | null
+>("gender", "required", { initialValue: null });
+const { value: selectedtown, errorMessage: townError } = useField<
+  number | null
+>("town", "required", { initialValue: null });
+
+const { value: othertown, errorMessage: othertownError } = useField<string>(
+  "othertown",
+  validateOtherTown,
+  { initialValue: "" },
+);
+const { value: selectedworkers, errorMessage: workerError } = useField<
+  number | null
+>("worker", "required", { initialValue: null });
+
+// --- API 選項數據 ref (保持不變) ---
+const Nationality_List = ref<{ id: number; name: string }[]>([]);
+const town_List = ref<{ id: number; name: string }[]>([]);
+const workers_List = ref<{ id: number; name: string }[]>([]);
+
+onMounted(() => {
+  apiHandler
+    .get("/option/nationalities")
+    .then((response) => {
+      Nationality_List.value = response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  apiHandler
+    .get("/option/towns")
+    .then((response) => {
+      console.log(response.data);
+      town_List.value = response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  apiHandler
+    .get("/option/workers")
+    .then((response) => {
+      workers_List.value = response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+});
+const onSubmit = handleSubmit(async (values) => {
+  // ... 提交邏輯不變 (格式化日期、構建 payload、API 呼叫) ...
+  // values 物件仍然包含了所有 useField 定義的欄位的當前值
+  let formattedDate = null;
+  if (
+    values.filingDate instanceof Date &&
+    !isNaN(values.filingDate.getTime())
+  ) {
+    try {
+      formattedDate = format(values.filingDate, "yyyy-MM-dd");
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  const payload = {
+    filing_date: formattedDate,
+    case_number: values.caseNumber?.trim(),
+    full_name: values.FullName?.trim(), // 使用 values 中的 FullName
+    nationality_id: values.nationality,
+    nationality_other:
+      values.nationality === -1 ? values.othernationalities?.trim() : null,
+    gender: values.gender,
+    town_id: values.town,
+    town_other: values.town === -1 ? values.othertown?.trim() : null,
+    worker_id: values.worker,
+  };
+  console.log("Submitting:", payload);
+  apiHandler
+    .post("/form/assign/arrival", {
+      filing_date: formattedDate,
+      case_number: values.caseNumber?.trim(),
+      full_name: values.FullName?.trim(), // 使用 values 中的 FullName
+      nationality_id: values.nationality,
+      nationality_other:
+        values.nationality === -1 ? values.othernationalities?.trim() : null,
+      gender: values.gender,
+      town_id: values.town,
+      town_other: values.town === -1 ? values.othertown?.trim() : null,
+      worker_id: values.worker,
+    })
+    .then((response) => {
+      console.log(response);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+});
+// const handleSubmit = () => {
+//   let formattedDate = null;
+
+//   if (
+//     filingDate.value &&
+//     filingDate.value instanceof Date &&
+//     !isNaN(filingDate.value.getTime())
+//   ) {
+//     //console.log("步驟 2: 準備格式化有效的 Date 物件");
+//     try {
+//       formattedDate = format(filingDate.value, "yyyy-MM-dd"); // 使用 date-fns
+//       // formattedDate = dayjs(filingDate.value).format('YYYY-MM-DD'); // 或者使用 dayjs
+//       //console.log("步驟 3: 格式化後的日期 (formattedDate):", formattedDate);
+//     } catch (e) {
+
+//       formattedDate = null; // 出錯時確保是 null
+//     }
+//   } else {
+
+//     formattedDate = null; // 如果不是 Date (可能是 null 或其他無效值)，直接設為 null
+//   }
+
+//   apiHandler
+//     .post("/form/assign/arrival", {
+//       filingDate: formattedDate,
+//       caseNumber: caseNumber.value,
+//       fullName: FullName.value,
+//       nationalityID: selectednationalities.value,
+//       nationalityOther: othernationalities.value,
+//       gender: selectedGender.value,
+//       town: selectedtown.value,
+//       townOther: othertown.value,
+//       worker: selectedworkers.value,
+//     })
+//     .then((response) => {
+//       console.log(response);
+//     })
+//     .catch((error) => {
+//       console.error(error);
+//     });
+// };
 </script>
 
 <style scoped>
@@ -262,5 +359,8 @@ export default {
 
 .p-field {
   margin-bottom: 20px;
+}
+#arrival-form-card .field {
+  margin-bottom: 1rem;
 }
 </style>
