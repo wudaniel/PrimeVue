@@ -50,6 +50,13 @@ const menuItems = ref([
       sidebarVisible.value = false;
     },
   },
+  {
+    label: "一般紀錄表",
+    command: () => {
+      router.push("/generalRecords");
+      sidebarVisible.value = false;
+    },
+  },
 ]);
 </script>
 <template>

@@ -34,6 +34,11 @@ const router = createRouter({
       name: "arrivalRecords",
       component: () => import("../components/Arrivalrecords.vue"),
     },
+    {
+      path: "/generalRecords",
+      name: "generalRecords",
+      component: () => import("../components/Generalrecords.vue"),
+    },
   ],
 });
 
