@@ -39,6 +39,12 @@ const router = createRouter({
       name: "generalRecords",
       component: () => import("../components/Generalrecords.vue"),
     },
+    {
+      path: "/assigns/:type/:id", // :type 和 :id 是「佔位符」
+      name: "AssignDetail",
+      component: () => import("../components/AssignItemDetail.vue"),
+      props: true,
+    },
   ],
 });
 

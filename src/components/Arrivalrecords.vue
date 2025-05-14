@@ -310,6 +310,7 @@ import Textarea from "primevue/textarea";
 import MultiSelect from "primevue/multiselect"; // 導入 MultiSelect
 // --- VeeValidate 導入 ---
 import { useForm, useField } from "vee-validate"; // 不再需要 FieldContext 或 ErrorMessage (如果動態欄位不用)
+import { required } from "@vee-validate/rules"; // <--- 需要導入 required 規則函數
 
 // --- 類型定義 (幫助 TypeScript) ---
 interface SelectOption {
@@ -328,12 +329,25 @@ interface ExtraInput {
 const { handleSubmit, errors, meta, values } = useForm({}); // 不再需要 defineField, setFieldValue, unregister
 
 // Filing Date
-const filingFieldContext = useField<Date | null>("filingDate", "required", {
-  initialValue: null,
-});
-const filingDate = filingFieldContext.value; // 獲取 value ref
-const filingDateError = filingFieldContext.errorMessage; // 獲取 errorMessage ref
-
+const { value: filingDate, errorMessage: filingDateError } =
+  useField<Date | null>(
+    "filingDate", // 欄位名稱
+    // --- 驗證規則函數 ---
+    (value) => {
+      // 接收當前值
+      if (!required(value)) {
+        // **調用導入的 required 函數** 進行判斷
+        return "請輸入一個有效日期"; // <--- 驗證失敗時返回你的自訂訊息
+      }
+      // 如果需要其他驗證規則，可以在這裡添加
+      // if (value && value > new Date()) {
+      //   return '日期不能是未來日期';
+      // }
+      return true; // 所有驗證通過返回 true
+    },
+    // --- ----------------- ---
+    { initialValue: null }, // 初始值
+  );
 // Case Number
 const caseNumberFieldContext = useField<string>("caseNumber", "required", {
   initialValue: "",
@@ -344,7 +358,12 @@ const caseNumberError = caseNumberFieldContext.errorMessage;
 // Nationality
 const nationalityFieldContext = useField<number | null>(
   "nationality",
-  "required",
+  (value) => {
+    if (!required(value)) {
+      return "請輸入一個有效國籍";
+    }
+    return true; // 所有驗證通過返回 true
+  },
   { initialValue: null },
 );
 const selectednationalities = nationalityFieldContext.value; // 保持模板使用的變數名
@@ -434,10 +453,6 @@ const isServiceObjectOtherSelected = computed(() => {
 watch(
   selectedExtraItems,
   (newItems, oldItems) => {
-    /*console.log("WATCHER (Simplified): selectedExtraItems changed", {
-      newItems,
-      oldItems,
-    });*/
     if (!Array.isArray(newItems)) return;
     oldItems = oldItems ?? [];
 
@@ -612,7 +627,7 @@ const onSubmit = handleSubmit(
         : null,
       extraInfo: extraInfo,
     };
-    //console.log("Submitting:", payload);
+    console.log("Submitting:", payload);
 
     // API 請求...
     // try { await apiHandler.post... } catch { ... }
