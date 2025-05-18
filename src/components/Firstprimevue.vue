@@ -66,6 +66,12 @@
           :sortable="true"
           style="min-width: 120px"
         >
+          <Column
+            field="type"
+            header="類別"
+            :sortable="true"
+            style="min-width: 120px"
+          ></Column>
           <template #body="slotProps">
             <Chip
               :label="getTypeText(slotProps.data.type)"
@@ -78,6 +84,17 @@
         <Column field="date" header="日期" :sortable="true">
           <template #body="slotProps">
             {{ formatDate(slotProps.data.date) }}
+          </template>
+        </Column>
+        <Column header="操作" style="min-width: 120px; text-align: center">
+          <template #body="slotProps">
+            <Button
+              label="開案"
+              icon="pi pi-folder-open"
+              class="p-button-sm p-button-success"
+              @click="handleOpenCase(slotProps.data)"
+              :disabled="slotProps.data.status === 1"
+            />
           </template>
         </Column>
 
@@ -97,6 +114,7 @@ import { useRouter } from "vue-router";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Chip from "primevue/chip";
+import { userInfo } from "../class/userinfo";
 // 移除了 Button, ProgressSpinner, Message, Card, Divider
 
 // --- 狀態變數 ---
@@ -242,6 +260,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 };
 const shouldShowWorkerColumn = computed(() => {
   const permission = userStore.userInfo?.permission;
+
   return typeof permission === "number" && permission <= 10;
 });
 
@@ -269,6 +288,41 @@ const handleIdClick = (item: { id: string; type: number }) => {
   // 或者使用命名路由 (更推薦，如果已在 router/index.ts 中定義 name)
   // router.push({ name: 'AssignDetail', params: { type: typeName, id: item.id } });
 };
+const handleOpenCase = (item: { id: string; type: number; status: number }) => {
+  console.log("準備為 ID:", item.id, "類型:", item.type, "進行開案操作");
+  // 在這裡實現你的開案邏輯，例如：
+  // 1. 彈出確認對話框 (可以使用 PrimeVue 的 ConfirmDialog)
+  // 2. 調用 API 更新案件狀態
+  // 3. 更新成功後，可能需要重新加載列表數據或更新該行的狀態
+  // 4. 或者跳轉到一個專門的開案表單頁面
+
+  // 簡單示例：
+  if (item.status !== 1) {
+    // 再次確認不是已開案狀態
+    // 假設有一個 API 端點用於開案
+    // apiHandler.post(`/cases/${item.id}/open`)
+    //   .then(response => {
+    //     alert(`ID: ${item.id} 開案成功！`);
+    //     // 更新 testdata 中該項的 status (如果 API 不返回更新後的數據)
+    //     const index = testdata.value.findIndex(d => d.id === item.id);
+    //     if (index !== -1) {
+    //       testdata.value[index].status = 1; // 假設 1 代表已開案
+    //     }
+    //   })
+    //   .catch(error => {
+    //     console.error("開案失敗:", error);
+    //     alert(`ID: ${item.id} 開案失敗，請稍後再試。`);
+    //   });
+    alert(`模擬為 ID: ${item.id} 進行開案 (實際應調用API)`);
+    // 為了演示，我們直接修改 testdata (實際應用中應該通過 API 更新後端數據)
+    const index = testdata.value.findIndex((d) => d.id === item.id);
+    if (index !== -1) {
+      testdata.value[index].status = 1; // 假設 1 代表已開案
+    }
+  } else {
+    alert(`ID: ${item.id} 已經是開案狀態。`);
+  }
+};
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
@@ -294,7 +348,6 @@ onMounted(() => {
   top: 10px;
   right: 10px;
   padding: 8px 12px;
-  background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid #ccc;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

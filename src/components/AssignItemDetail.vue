@@ -1,12 +1,19 @@
 <template>
   <div class="surface-card p-4 shadow-2 border-round">
-    <Button
-      @click="goBack"
-      class="mb-4 p-button-secondary p-button-sm"
-      label="返回列表"
-      icon="pi pi-arrow-left"
-    />
-
+    <div class="flex justify-content-between align-items-center mb-4">
+      <Button
+        @click="goBack"
+        class="mb-4 p-button-secondary p-button-sm"
+        label="返回列表"
+        icon="pi pi-arrow-left"
+      />
+      <Button
+        @click="goToAddRecord"
+        class="p-button-success p-button-sm"
+        label="新增紀錄"
+        icon="pi pi-plus"
+      />
+    </div>
     <div v-if="loadingDetailData" class="text-center pa-5">
       <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
       <p class="mt-4 text-grey">
@@ -152,7 +159,23 @@ const goBack = () => {
   router.go(-1); // 返回上一頁
   // 或者 router.push('/your-list-page-path'); // 跳轉到指定的列表頁
 };
+const goToAddRecord = () => {
+  console.log(`準備為 ID: ${props.id} (類型: ${props.type}) 新增紀錄`);
 
+  let targetRouteName = ''; // 目標路由的名稱
+  // 假設你的新增 Arrival 紀錄表單的路由名稱是 'AddArrivalRecord'
+  // 假設你的新增 General 紀錄表單的路由名稱是 'AddGeneralRecord'
+  // 這些需要在你的 router/index.ts 中定義
+
+  if (props.type === 'arrival') {
+    targetRouteName = 'AddArrivalRecord'; // 或者是你的 ArrivalRecords.vue 對應的路由名
+  } else if (props.type === 'general') {
+    targetRouteName = 'AddGeneralRecord'; // 或者是你的 GeneralRecords.vue 對應的路由名
+  } else {
+    console.error("未知的類型，無法跳轉到新增紀錄頁面:", props.type);
+    alert("錯誤：未知的記錄類型！");
+    return;
+  }
 // 元件掛載時獲取數據
 onMounted(() => {
   fetchDetailData(props.type, props.id);
@@ -226,5 +249,17 @@ watch(
 }
 .mt-3 {
   margin-top: 0.75rem;
+}
+.flex {
+  display: flex;
+} /* 確保 PrimeFlex class 生效 */
+.justify-content-between {
+  justify-content: space-between;
+}
+.align-items-center {
+  align-items: center;
+}
+.mb-4 {
+  margin-bottom: 1rem;
 }
 </style>
