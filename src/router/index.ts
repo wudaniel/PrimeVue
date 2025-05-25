@@ -45,6 +45,11 @@ const router = createRouter({
       component: () => import("../components/AssignItemDetail.vue"),
       props: true,
     },
+    {
+      path: "/test",
+      name: "testcol",
+      component: () => import("../components/testColGroup.vue"),
+    },
   ],
 });
 

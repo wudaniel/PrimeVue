@@ -230,7 +230,6 @@ const { value: selectedworkers, errorMessage: workerError } = useField<
   number | null
 >("worker", "required", { initialValue: null });
 
-// --- API 選項數據 ref (保持不變) ---
 const Nationality_List = ref<{ id: number; name: string }[]>([]);
 const town_List = ref<{ id: number; name: string }[]>([]);
 const workers_List = ref<{ id: number; name: string }[]>([]);
@@ -263,8 +262,6 @@ onMounted(() => {
     });
 });
 const onSubmit = handleSubmit(async (values) => {
-  // ... 提交邏輯不變 (格式化日期、構建 payload、API 呼叫) ...
-  // values 物件仍然包含了所有 useField 定義的欄位的當前值
   let formattedDate = null;
   if (
     values.filingDate instanceof Date &&
@@ -309,47 +306,6 @@ const onSubmit = handleSubmit(async (values) => {
       console.error(error);
     });
 });
-// const handleSubmit = () => {
-//   let formattedDate = null;
-
-//   if (
-//     filingDate.value &&
-//     filingDate.value instanceof Date &&
-//     !isNaN(filingDate.value.getTime())
-//   ) {
-//     //console.log("步驟 2: 準備格式化有效的 Date 物件");
-//     try {
-//       formattedDate = format(filingDate.value, "yyyy-MM-dd"); // 使用 date-fns
-//       // formattedDate = dayjs(filingDate.value).format('YYYY-MM-DD'); // 或者使用 dayjs
-//       //console.log("步驟 3: 格式化後的日期 (formattedDate):", formattedDate);
-//     } catch (e) {
-
-//       formattedDate = null; // 出錯時確保是 null
-//     }
-//   } else {
-
-//     formattedDate = null; // 如果不是 Date (可能是 null 或其他無效值)，直接設為 null
-//   }
-
-//   apiHandler
-//     .post("/form/assign/arrival", {
-//       filingDate: formattedDate,
-//       caseNumber: caseNumber.value,
-//       fullName: FullName.value,
-//       nationalityID: selectednationalities.value,
-//       nationalityOther: othernationalities.value,
-//       gender: selectedGender.value,
-//       town: selectedtown.value,
-//       townOther: othertown.value,
-//       worker: selectedworkers.value,
-//     })
-//     .then((response) => {
-//       console.log(response);
-//     })
-//     .catch((error) => {
-//       console.error(error);
-//     });
-// };
 </script>
 
 <style scoped>
