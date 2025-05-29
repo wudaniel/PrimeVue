@@ -159,23 +159,39 @@ const goBack = () => {
   router.go(-1); // 返回上一頁
   // 或者 router.push('/your-list-page-path'); // 跳轉到指定的列表頁
 };
+// --- 修改 goToAddRecord 函數 ---
 const goToAddRecord = () => {
   console.log(`準備為 ID: ${props.id} (類型: ${props.type}) 新增紀錄`);
 
-  let targetRouteName = ''; // 目標路由的名稱
-  // 假設你的新增 Arrival 紀錄表單的路由名稱是 'AddArrivalRecord'
-  // 假設你的新增 General 紀錄表單的路由名稱是 'AddGeneralRecord'
-  // 這些需要在你的 router/index.ts 中定義
+  let targetRouteName = ""; // 目標路由的名稱
 
-  if (props.type === 'arrival') {
-    targetRouteName = 'AddArrivalRecord'; // 或者是你的 ArrivalRecords.vue 對應的路由名
-  } else if (props.type === 'general') {
-    targetRouteName = 'AddGeneralRecord'; // 或者是你的 GeneralRecords.vue 對應的路由名
+  // 根據 props.type 決定要跳轉到哪個路由名稱
+  // 這些路由名稱 (AddArrivalRecord, AddGeneralRecord) 必須與你在 router/index.ts 中定義的完全一致
+  if (props.type === "arrival") {
+    targetRouteName = "arrivalRecords"; // <--- 修改為路由表中的 name
+  } else if (props.type === "general") {
+    targetRouteName = "generalRecords"; // <--- 修改為路由表中的 name
   } else {
-    console.error("未知的類型，無法跳轉到新增紀錄頁面:", props.type);
-    alert("錯誤：未知的記錄類型！");
+    console.error(
+      "goToAddRecord: 未知的類型，無法跳轉到新增紀錄頁面:",
+      props.type,
+    );
+    alert("錯誤：未知的記錄類型，無法新增記錄！");
     return;
   }
+
+  // 使用 router.push 進行跳轉
+  // 將案號 (props.id) 作為查詢參數 (query parameter) `caseNumber` 傳遞
+  router.push({
+    name: targetRouteName, // 使用路由名稱
+    query: {
+      caseNumber: props.id, // 將當前詳情的 ID 作為 'caseNumber' 查詢參數
+      // 目標表單頁面需要配置 props 來接收這個查詢參數
+    },
+  });
+};
+// --- 修改結束 ---
+
 // 元件掛載時獲取數據
 onMounted(() => {
   fetchDetailData(props.type, props.id);
@@ -195,7 +211,6 @@ watch(
       fetchDetailData(newType, newId);
     }
   },
-  // { immediate: true } // 初始加載由 onMounted 處理，這裡通常不需要 immediate
 );
 </script>
 

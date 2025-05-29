@@ -33,11 +33,13 @@ const router = createRouter({
       path: "/arrivalRecords",
       name: "arrivalRecords",
       component: () => import("../components/Arrivalrecords.vue"),
+      props: (route) => ({ caseNumberQuery: route.query.caseNumber }), // 將查詢參數轉為 prop
     },
     {
       path: "/generalRecords",
       name: "generalRecords",
       component: () => import("../components/Generalrecords.vue"),
+      props: (route) => ({ caseNumberQuery: route.query.caseNumber }), // 將查詢參數轉為 prop
     },
     {
       path: "/assigns/:type/:id", // :type 和 :id 是「佔位符」

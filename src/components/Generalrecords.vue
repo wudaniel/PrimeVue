@@ -339,14 +339,23 @@ interface ExtraInput {
 
 // --- VeeValidate Setup (Static Fields) ---
 const { handleSubmit, errors, meta, values } = useForm({});
+// 在你的新增記錄表單元件 (例如 Arrivalassigns.vue) 的 <script setup lang="ts"> 中
+const props = defineProps<{
+  caseNumberQuery?: string; // 接收名為 caseNumberQuery 的 prop
+}>();
+
+const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
+  "caseNumber", // VeeValidate 內部欄位名
+  "required",
+  {
+    initialValue: props.caseNumberQuery || "", // 使用 prop 的值作為初始值
+  },
+);
 
 // --- Refs for Static Fields (managed by VeeValidate) ---
 const { value: filingDate, errorMessage: filingDateError } =
   useField<Date | null>("filingDate", "required");
-const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
-  "caseNumber",
-  "required",
-);
+
 const { value: selectednationalities, errorMessage: nationalityError } =
   useField<number | null>("nationality", "required");
 const { value: target, errorMessage: targetError } = useField<string>(

@@ -312,6 +312,19 @@ import MultiSelect from "primevue/multiselect"; // 導入 MultiSelect
 import { useForm, useField } from "vee-validate"; // 不再需要 FieldContext 或 ErrorMessage (如果動態欄位不用)
 import { required } from "@vee-validate/rules"; // <--- 需要導入 required 規則函數
 
+// 在你的新增記錄表單元件 (例如 Arrivalassigns.vue) 的 <script setup lang="ts"> 中
+const props = defineProps<{
+  caseNumberQuery?: string; // 接收名為 caseNumberQuery 的 prop
+}>();
+
+const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
+  "caseNumber", // VeeValidate 內部欄位名
+  "required",
+  {
+    initialValue: props.caseNumberQuery || "", // 使用 prop 的值作為初始值
+  },
+);
+
 // --- 類型定義 (幫助 TypeScript) ---
 interface SelectOption {
   id: number;
@@ -348,12 +361,6 @@ const { value: filingDate, errorMessage: filingDateError } =
     // --- ----------------- ---
     { initialValue: null }, // 初始值
   );
-// Case Number
-const caseNumberFieldContext = useField<string>("caseNumber", "required", {
-  initialValue: "",
-});
-const caseNumber = caseNumberFieldContext.value;
-const caseNumberError = caseNumberFieldContext.errorMessage;
 
 // Nationality
 const nationalityFieldContext = useField<number | null>(
