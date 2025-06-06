@@ -1,0 +1,855 @@
+components:
+  schemas:
+    loginInfo:  #登入所需的資訊
+      type: object
+      properties:
+        username:
+          type: string
+          description: 使用者名稱
+        password:
+          type: string
+          description: 密碼
+    userInfo: #使用者相關資訊(姓名、職稱等)
+      description: 使用者相關資訊(姓名、職稱等)
+      type: object
+      properties:
+        username:
+          type: string
+          description: 使用者名稱
+          example: account123
+        fullname:
+          type: string
+          description: 使用者姓名
+          example: 王大明
+        permission:
+          type: integer
+          description: 使用者權限值
+          example: 1
+    changeInfo: #可變更的使用者資訊
+      description: 可以變更的使用者資訊
+      type: object
+      properties:
+        # password:
+        #   type: string
+        #   description: 使用者密碼 (或其他預設密碼、密碼確認於前端)
+        #   example: password1234
+        fullname:
+          type: string
+          description: 使用者姓名
+          example: 王大明
+        permission:
+          type: string
+          description: 使用者權限
+          example: 1
+    changePassword: #變更使用者密碼
+      description: 變更使用者密碼
+      type: object
+      properties:
+        oldPassword:
+          type: string
+          description: 使用者新密碼 (或其他預設密碼、密碼確認於前端)
+          example: password1234
+        newPassword:
+          type: string
+          description: 使用者新密碼 (或其他預設密碼、密碼確認於前端)
+          example: password5678
+    userList: #使用者列表
+      description: 使用者列表
+      type: array
+      items:
+        type: object
+        properties:
+          username:
+            type: string
+            description: 使用者名稱
+          fullname:
+            type: string
+            description: 使用者姓名
+    signUp:
+      type: object
+      properties:
+        username:
+          type: string
+          description: 使用者名稱
+          example: 使用者名稱
+        fullname:
+          type: string
+          description: 使用者姓名
+          example: 使用者姓名
+        password:
+          type: string
+          description: 密碼
+          example: 密碼
+    assignList: # 派案表列表所需資訊
+      type: array
+      items:
+        type: object
+        properties:
+          caseNumber:
+            type: string # 或 integer
+            description: 派案表案號流水號
+            example: "113528A054"
+          type:
+            type: integer
+            description: 派案表類型 (一般個案服務輸送(1) / 新入境個案服務輸送(2))
+            example: 1
+          worker:
+            type: string
+            description: 負責處理人員的username(限督導可見)
+            example: "username001(限督導可見)"
+          status:
+            type: integer
+            description: 該派案表的當前狀態
+            enum:
+              - 0 #未開案
+              - 1 #進行中
+              - 2 #已結案
+              - 3 #不開案
+            example: 1
+          date:
+            type: string
+            description: 建檔時間 (YYYY-MM-DDTHH:mm:ssZ)
+            format: date-time
+            example: "2024-07-20"
+    assignGeneralInfo: # 個案服務輸送派案表全欄位資訊
+      description: 派案表的所有欄位
+      type: object
+      properties:
+        filingDate: # 建檔日
+          type: string
+          format: date
+          description: Filing date (YYYY-MM-DD) # 日期(建檔日) (YYYY-MM-DD)
+          example: "2024-07-20"
+        # caseNumber: # 案號
+        #   type: string
+        #   description: Case number (string) # 案號(字串)
+        #   example: 113528A054
+        fullName: # 姓名
+          type: string
+          description: Full name # 姓名
+          example: "王小明"
+        nationalityID: # 原母國籍ID
+          type: integer
+          description: 原母國籍(選項/其它)
+          example: -1 # 其他
+        nationalityOther:  # 原母國籍(其他)
+          type: string
+          description: 原母國籍選擇"其他"時，自行輸入用(中文)
+          example: "烏托邦"
+        yearOfBirth:  # 出生年
+          type: integer
+          description: 出生西元年 (YYYY)
+          format: year
+          example: 1980
+        gender: # 性別 (男/女/其它) 
+          type: integer
+          description: 性別 (男/女/其它) 
+          enum:
+            - 0 #男
+            - 1 #女
+            - 2 #其他
+          example: 2
+        naturalized: # 歸化
+          type: boolean
+          description: 歸化（有／無）
+          enum:
+            - true
+            - false
+          example: true
+        sourceCatID: # 個案來源類別ID
+          type: integer
+          description: 個案來源類別ID(單選)
+          example: -1 # 其他
+        sourceCatOther: # 個案來源類別 (其他)
+          type: string
+          description: 個案來源類別 (其他)
+          example: "其他來源"
+        sourceID: # 轉介單位ID
+          type: integer
+          description: 轉介單位ID
+          example: -1
+        sourceOther: # 轉介單位_其他
+          type: string
+          description: 轉介單位_其他(文字)
+          example: "XX社福機關"
+        town: # 鄉鎮
+          type: integer
+          description: 鄉鎮ID(選項)
+          example: -1
+        townOther: # 鄉鎮 (其他)
+          type: string
+          description: 鄉鎮 (其他)
+          example: "台北市信義區"
+        detail: #案情
+          type: string
+          description: 案情
+          example: "關於該案的資訊說明"
+        worker: # 主責社工username
+          type: string
+          description: 主責社工username
+          example: "username001"
+    assignArrivalInfo: # 新入境個案服務輸送派案表全欄位資訊
+      description: 派案表的所有欄位
+      type: object
+      properties:
+        filingDate: # 建檔日
+          type: string
+          format: date
+          description: Filing date (YYYY-MM-DD) # 日期(建檔日) (YYYY-MM-DD)
+          example: "2024-07-20"
+        # caseNumber: # 案號
+        #   type: string
+        #   description: Case number (string) # 案號(字串)
+        #   example: 113528A054
+        fullName: # 姓名
+          type: string
+          description: Full name # 姓名
+          example: "王小明"
+        nationalityID: # 原母國籍ID
+          type: integer
+          description: 原母國籍(選項/其它)
+          example: -1 # 其他
+        nationalityOther:  # 原母國籍(其他)
+          type: string
+          description: 原母國籍選擇"其他"時，自行輸入用(中文)
+          example: "烏托邦"
+        gender: # 性別 (男/女/其它) 
+          type: integer
+          description: 性別 (男/女/其它) 
+          enum:
+            - 0 #男
+            - 1 #女
+            - 2 #其他
+          example: 2
+        town: # 鄉鎮
+          type: integer
+          description: 鄉鎮ID(選項)
+          example: -1
+        townOther: # 鄉鎮 (其他)
+          type: string
+          description: 鄉鎮 (其他)
+          example: "台北市信義區"
+        worker: # 主責社工username
+          type: string
+          description: 主責社工username
+          example: "username001"
+    assignReason: # 派案表的狀態變更原因與時間
+      description: 派案表的狀態變更原因與時間
+      type: object
+      properties:
+        openingDate: #開案日期
+          type: string
+          format: date
+          description: 開案日期
+          example: "2024-07-20"
+        needsID: # 問題需求(代碼)
+          type: array
+          description: 問題需求(代碼)
+          items:
+            type: integer
+            example: 1
+        needsOther: # 問題需求 (其他)
+          type: string
+          description: 問題需求 (其他)
+          example: "其他未列出的需求"
+        refusingDate: #不開案日期
+          type: string
+          format: date
+          description: 不開案日期
+          example: "2024-07-20"
+        refusingReasonID: # 不開案原因ID
+          type: integer
+          description: 不開案原因ID
+          example: -1
+        refusingReasonOther: # 不開案原因 (其他)
+          type: string
+          description: 不開案原因 (其他)
+          example: "其他不開案原因"
+        closingDate: #結案日期
+          type: string
+          format: date
+          description: 結案日期
+          example: "2024-07-20"
+        closingReasonID: # 結案原因ID
+          type: integer
+          description: 結案原因ID
+          example: -1
+        closingReasonOther: # 結案原因 (其他)
+          type: string
+          description: 結案原因 (其他)
+          example: "其他結案原因"
+
+    recordList: # 紀錄表列表所需資訊
+      type: array
+      items:
+        type: object
+        properties:
+          caseNumber:
+            type: string
+            description: 紀錄表案號
+            example: 113528A054
+          method:
+            type: string
+            description: 該紀錄表之服務方式
+            enum:
+              - 電訪
+              - 外展／面談
+              - 數位
+              - 其它(文字)
+          date:
+            type: string
+            description: 紀錄表完成/最後變更日期 (YYYY-MM-DD)
+            format: date-time
+          author:
+            type: string
+            description: 該紀錄表作者全名
+            example: "王曉明 (僅督導可見)"
+    recordGeneralInfo: # 紀錄表全欄位資訊
+      description: 紀錄表的所有欄位
+      type: object
+      properties:
+        filingDate: # 建檔日
+          type: string
+          format: date
+          description: 日期(建檔日) (YYYY-MM-DD)
+          example: "2024-07-20"
+        # caseNumber: # 案號
+        #   type: string
+        #   description: 案號
+        #   example: 113528A054
+        nationalityID: # 國籍ID
+          type: integer
+          description: 國籍ID
+          example: -1
+        nationalityOther: # 國籍 (其他)
+          type: string
+          description: 國籍 (其他)
+          example: "美國"
+        target: # 對象
+          type: string
+          description: 對象
+          example: "新住民女性"
+        gender: # 性別 (男/女/其它) 
+          type: integer
+          description: 性別 (0男/1女/2其它) 
+          example: 2
+        serviceMethod: # 服務方法ID
+          type: integer
+          description: 服務方式ID (電訪、外展/面談、數位、其它(文字))
+          example: -1
+        serviceMethodOther: # 服務方式 (其他)
+          type: string
+          description: 服務方式 (其他)
+          example: "其他未列出的服務方式"
+        # ==================================================================
+        serviceObjectID: # 服務項目ID列表 (部分需要額外資訊(單位,內容))
+          type: array
+          description: 勾選的服務項目ID列表 (部分需要額外資訊(單位,內容))
+          items:
+            type: integer
+            example: 1
+        serviceObjectOther: # 服務項目其他
+          type: string
+          description: 服務項目其他
+          example: "其他服務項目說明"
+        # ==================================================================
+        extraInfo: # 額外資訊的列表
+          type: array
+          description: 額外資訊的列表
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: 哪個項目的額外資訊
+                example: 18
+              unit:
+                type: string
+                description: 該項目的額外資訊(單位)
+                example: "彰化縣政府"
+              detail:
+                type: string
+                description: 該項目的額外資訊(內容)
+                example: "更多額外的資訊阿巴阿巴"
+        # ==================================================================
+        taskObject: # 工作目標
+          type: string
+          description: 工作目標
+          example: "工作目標之相關說明"
+        detail: # 服務目標
+          type: string
+          description: 服務目標
+          example: "服務目標之相關說明"
+    recordArrivalInfo: # 紀錄表全欄位資訊
+      description: 紀錄表的所有欄位
+      type: object
+      properties:
+        filingDate: # 建檔日
+          type: string
+          format: date
+          description: 日期(建檔日) (YYYY-MM-DD)
+          example: "2024-07-20"
+        # caseNumber: # 案號
+        #   type: string
+        #   description: 案號
+        #   example: 113528A054
+        nationalityID: # 國籍ID
+          type: integer
+          description: 國籍ID
+          example: -1
+        nationalityOther: # 國籍 (其他)
+          type: string
+          description: 國籍 (其他)
+          example: "美國"
+        target: # 對象
+          type: string
+          description: 對象
+          example: "新住民女性"
+        gender: # 性別 (男/女/其它) 
+          type: integer
+          description: 性別 (0男/1女/2其它) 
+          example: 2
+        serviceMethod: # 服務方法ID
+          type: integer
+          description: 服務方式ID (電訪、外展/面談、數位、其它(文字))
+          example: -1
+        serviceMethodOther: # 服務方式 (其他)
+          type: string
+          description: 服務方式 (其他)
+          example: "其他未列出的服務方式"
+        # ==================================================================
+        serviceObjectID: # 服務項目ID列表 (部分需要額外資訊(單位,內容))
+          type: array
+          description: 勾選的服務項目ID列表 (部分需要額外資訊(單位,內容))
+          items:
+            type: integer
+            example: 1
+        serviceObjectOther: # 服務項目其他
+          type: string
+          description: 服務項目其他
+          example: "其他服務項目說明"
+        # ==================================================================
+        extraInfo: # 額外資訊的列表
+          type: array
+          description: 額外資訊的列表
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: 哪個項目的額外資訊
+                example: 18
+              unit:
+                type: string
+                description: 該項目的額外資訊(單位)
+                example: "彰化縣政府"
+              detail:
+                type: string
+                description: 該項目的額外資訊(內容)
+                example: "更多額外的資訊阿巴阿巴"
+        # ==================================================================
+        taskObject: # 工作目標
+          type: string
+          description: 工作目標
+          example: "工作目標之相關說明"
+        detail: # 服務目標
+          type: string
+          description: 服務目標
+          example: "服務目標之相關說明"
+
+    reportList:
+      type: array
+      items:
+        type: object
+        properties:
+          report_id:
+            type: string # 或 integer
+            description: 報表編號
+            example: "01"
+          report_name:
+            type: string
+            description: 報表名稱
+            example: "個案來源統計"
+    reportPar:
+      type: object
+      properties:
+        begin_time:
+          type: string
+          description: |
+            開始統計的時間點 (YYYY-MM-DDTHH:mm:ssZ)
+            根據報表類型，可能為 開案時間 / 建檔時間 / 不開案時間等
+            預設為"有史以來"
+          format: date-time
+          example: "2024-07-20T16:04:22Z"
+        end_time:
+          type: string
+          description: |
+            結束統計的時間點 (YYYY-MM-DDTHH:mm:ssZ)
+            根據報表類型，可能為 開案時間 / 建檔時間 / 不開案時間等
+            預設為"now"
+          format: date-time
+          example: "2024-07-27T16:04:22Z"
+        sex:
+          type: string
+          description: | 
+            性別 (男/女/其他)
+            根據報表類型，可能為必填
+            無預設值
+          example: 男
+    reportData:
+      type: array
+      items:
+        type: array
+        items:
+          type: string
+          example: ""
+        maxItems: 16
+        minItems: 4
+      maxItems: 16
+      minItems: 4
+    formQuery:
+      type: object
+      properties:
+        from:
+          type: integer
+          description: 起始資料筆數
+          example: 5
+        maxItems:
+          type: integer
+          description: 最大筆數
+          example: 20
+        caseNumber:
+          type: string
+          description: 案號
+          example: "案號的部分"
+        status:
+          type: integer
+          description: 案件的狀態 (0為停用, 1為起用, (-1為已刪除))
+    statusModify:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 要改變成的狀態ID
+          example: 1
+        reasonID:
+          type: integer
+          description: 變更為該狀態的原因
+          example: [3]
+        reasonOther:
+          type: string
+          description: 其他未列出之原因
+          example: 其他未列出之原因
+        
+
+    error: #　單純錯誤訊息
+      description: 單純錯誤訊息
+      type: object
+      properties:
+        error:
+          type: string
+    success:  # 單純成功的回覆
+      description: 單純成功的回覆
+      type: object
+      properties:
+        success:
+          type: string
+
+  parameters:
+    reportPar:
+      name: reportPar
+      in: query
+      required: true
+      description: 報表所需的各種參數(非全種)
+      schema:
+        $ref: "#/components/schemas/reportPar"
+    queryCaseNumber:
+      in: query
+      name: caseNumber
+      description: 案號關鍵字搜尋
+      schema:
+        type: string
+    queryFrom:
+      in: query
+      name: from
+      description: 起始筆數
+      schema:
+        type: integer
+    queryMaxItems:
+      in: query
+      name: maxItems
+      description: 最大筆數
+      schema:
+        type: integer
+        default: 20
+    queryStatus:
+      in: query
+      name: status
+      description: 對象狀態
+      schema:
+        type: integer
+    queryUsername:
+      in: query
+      name: username
+      description: 主責社工username
+      schema:
+        type: string
+    queryFormType:
+      in: query
+      name: type
+      description: 派案表類型 (一般個案服務輸送(1) / 新入境個案服務輸送(2))
+      schema:
+        type: integer
+    formtype:
+      in: query
+      name: type
+      description: 要求的是用於何種表單(1:一般/2:新入境)
+      schema:
+        type: integer
+    reportQueryStartDate:
+      in: query
+      name: startDate
+      description: 報表選定的起始日期(預設現在的一個月前，具體)
+      schema:
+        type: string
+        format: date
+        example: "2024-06-20"
+    reportQueryEndDate:
+      in: query
+      name: endDate
+      description: 報表選定的結束日期(預設現在)
+      schema:
+        type: string
+        format: date
+        example: "2024-07-20"
+    reportQueryGender:
+      in: query
+      name: gender
+      description: 報表選定的性別(預設不分性別，0為不分性別、1為男、2為女)
+      schema:
+        type: integer
+        example: 0
+    
+
+  requestBodies:
+    login: # 請求登入
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/loginInfo"
+    signUp:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/signUp"
+    changeInfo:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/changeInfo"
+    changePassword:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/changePassword"
+    assignGeneralInfoCreate:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - properties:
+                  caseNumber:
+                    type: string
+                    description: 案號
+                    example: "113528A054"
+              - $ref: "#/components/schemas/assignGeneralInfo"
+    assignGeneralInfoGet:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/assignGeneralInfo"
+              - properties:
+                  caseNumber: # 案號
+                    type: string
+                    description: 案號
+                    example: 113528A054
+    assignGeneralInfoUpdate:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/assignGeneralInfo"
+    assignArrivalInfoCreate:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - properties:
+                  caseNumber:
+                    type: string
+                    description: 暗號
+                    example: "113528A054"
+              - $ref: "#/components/schemas/assignArrivalInfo"
+    assignArrivalInfoGet:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/assignArrivalInfo"
+              - properties:
+                  caseNumber: # 案號
+                    type: string
+                    description: 案號
+                    example: 113528A054
+    assignArrivalInfoUpdate:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/assignArrivalInfo"
+
+    recordGeneralInfoGet:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/recordGeneralInfo"
+              - properties:
+                  caseNumber: # 案號
+                    type: string
+                    description: 案號
+                    example: 113528A054
+    recordGeneralInfoUpdate:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/recordGeneralInfo"
+    recordArrivalInfoGet:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/recordArrivalInfo"
+              - properties:
+                  caseNumber: # 案號
+                    type: string
+                    description: 案號
+                    example: 113528A054
+    recordArrivalInfoUpdate:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/recordArrivalInfo"
+    reportPar:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/reportPar"
+    formQuery:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/formQuery"
+
+  responses:
+    BadRequest: # 400 請求內容有錯
+      description: 請求內容有錯
+      content:
+        application/json:
+          schema:
+            description: 錯誤訊息
+            type: object
+            properties:
+              error:
+                type: string
+                example: "輸入資訊有誤"
+    Unauthorized: # 401 未授權，請先登入
+      description: 未授權，請先登入
+      content:
+        application/json:
+          schema:
+            description: 錯誤訊息
+            type: object
+            properties:
+              error:
+                type: string
+                example: "未授權，請先登入"
+    Forbidden: # 403 權限不足
+      description: 權限不足
+      content:
+        application/json:
+          schema:
+            description: 錯誤訊息
+            type: object
+            properties:
+              error:
+                type: string
+                example: "權限不足"
+    NotFound: # 404 請求的資源不存在
+      description: 請求的資源不存在
+      content:
+        application/json:
+          schema:
+            description: 錯誤訊息
+            type: object
+            properties:
+              error:
+                type: string
+                example: "請求資源的不存在"
+    Success: # 200 單純成功的回覆
+      description: 單純成功的回覆
+      content:
+        application/json:
+          schema:
+            description: 單純成功的回覆
+            type: object
+            properties:
+              message:
+                type: string
+                example: (請求)成功
+
+    LoginInfo: # 200 成功登入，返回使用者資訊及JWT Token
+      description: 成功登入，返回使用者資訊
+      content:
+        application/json:
+          schema:
+            type: object
+            allOf:
+              - properties:
+                  token:
+                    type: string
+                    description: "JSON Web Token (JWT) - 用於後續 API 請求的身份驗證"
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+              - $ref: "Components.yml#/components/schemas/userInfo"
+    LogoutInfo: # 200 成功登出
+      description: 成功登出
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/success"
+    UserInfo: # 200 成功呼叫，返回使用者資訊
+      description: 成功登入，返回使用者資訊
+      content:
+        application/json:
+          schema:
+            $ref: "Components.yml#/components/schemas/userInfo"
+  
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

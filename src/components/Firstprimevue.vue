@@ -5,28 +5,33 @@
     </div>
     <div>
       <DataTable
-        :value="testdata"
+        :value="form_data"
         scrollable
-        scrollHeight="400px"
-        dataKey="id"
+        scrollHeight="flex"
+        dataKey="caseNumber"
         responsiveLayout="scroll"
         class="p-datatable-sm p-datatable-striped"
       >
         <template #header> </template>
 
-        <Column field="id" header="ID" :sortable="true" style="min-width: 80px">
+        <Column
+          field="caseNumber"
+          header="caseNumber"
+          :sortable="true"
+          style="min-width: 80px"
+        >
           <template #body="slotProps">
             <span
-              @click="handleIdClick(slotProps.data)"
+              @click="handlecaseNumberClick(slotProps.data)"
               style="
                 cursor: pointer;
                 color: var(--p-primary-color); /* 使用 PrimeVue 主題色 */
                 text-decoration: underline;
                 font-weight: bold;
               "
-              :title="`查看 ID ${slotProps.data.id} 的詳細資料`"
+              :title="`查看 caseNumber ${slotProps.data.caseNumber} 的詳細資料`"
             >
-              {{ slotProps.data.id }}
+              {{ slotProps.data.caseNumber }}
             </span>
           </template>
         </Column>
@@ -87,7 +92,9 @@
               class="p-button-sm p-button-success"
               @click="handleOpenCase(slotProps.data)"
               :disabled="slotProps.data.status === 1"
-              :aria-label="'為 ID ' + slotProps.data.id + ' 開案'"
+              :aria-label="
+                '為 caseNumber ' + slotProps.data.caseNumber + ' 開案'
+              "
             />
           </template>
         </Column>
@@ -102,7 +109,7 @@
 import { ref, onMounted, computed } from "vue";
 import { SaveSession } from "../stores/auth"; // 確認路徑正確
 import { useRouter } from "vue-router";
-
+import { apiHandler } from "../class/apiHandler";
 // --- PrimeVue 元件導入 ---
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
@@ -112,73 +119,74 @@ import Button from "primevue/button";
 // 移除了 Button, ProgressSpinner, Message, Card, Divider
 
 // --- 狀態變數 ---
+const form_data = ref([]);
 const testdata = ref([
   // 這裡仍然使用靜態測試數據，如果需要 API 加載，onMounted 中處理
   {
-    id: "9527",
+    caseNumber: "9527",
     worker: "worker01",
     status: 2,
     date: "2024-07-23T03:22:15Z",
     type: 1,
   },
   {
-    id: "2",
+    caseNumber: "2",
     worker: "worker02",
     status: 1,
     date: "2024-08-18T19:58:42Z",
     type: 2,
   },
   {
-    id: "3",
+    caseNumber: "3",
     worker: "worker03",
     status: 0,
     date: "2024-08-10T12:45:09Z",
     type: 1,
   },
   {
-    id: "4",
+    caseNumber: "4",
     worker: "worker04",
     status: 3,
     date: "2024-08-02T07:31:36Z",
     type: 2,
   },
   {
-    id: "5",
+    caseNumber: "5",
     worker: "worker05",
     status: 2,
     date: "2024-08-15T00:17:03Z",
     type: 1,
   },
   {
-    id: "6",
+    caseNumber: "6",
     worker: "worker06",
     status: 0,
     date: "2024-07-29T17:03:30Z",
     type: 2,
   },
   {
-    id: "7",
+    caseNumber: "7",
     worker: "worker07",
     status: 1,
     date: "2024-07-25T09:49:57Z",
     type: 1,
   },
   {
-    id: "8",
+    caseNumber: "8",
     worker: "worker08",
     status: 3,
     date: "2024-08-07T02:36:24Z",
     type: 2,
   },
   {
-    id: "9",
+    caseNumber: "9",
     worker: "worker09",
     status: 2,
     date: "2024-08-20T23:22:51Z",
     type: 1,
   },
   {
-    id: "10",
+    caseNumber: "10",
     worker: "worker10",
     status: 0,
     date: "2024-07-31T16:09:18Z",
@@ -259,8 +267,13 @@ const shouldShowWorkerColumn = computed(() => {
 });
 
 // --- 修改後的 handleIdClick 方法 (只負責路由跳轉) ---
-const handleIdClick = (item: { id: string; type: number }) => {
-  console.log("列表元件：點擊 ID:", item.id, "類型:", item.type);
+const handlecaseNumberClick = (item: { caseNumber: string; type: number }) => {
+  console.log(
+    "列表元件：點擊 caseNumber:",
+    item.caseNumber,
+    "類型:",
+    item.type,
+  );
 
   let typeName = "unknown";
   if (item.type === 1) {
@@ -270,20 +283,30 @@ const handleIdClick = (item: { id: string; type: number }) => {
   }
 
   if (typeName === "unknown") {
-    console.error("handleIdClick: 未知的記錄類型:", item.type);
+    console.error("handlecaseNumberClick: 未知的記錄類型:", item.type);
     return;
   }
 
-  // 假設你的詳細頁面路由是 /assigns/:type/:id
-  const targetPath = `/assigns/${typeName}/${item.id}`;
+  // 假設你的詳細頁面路由是 /assigns/:type/:caseNumber
+  const targetPath = `/assigns/${typeName}/${item.caseNumber}`;
   console.log("列表元件：準備跳轉到:", targetPath);
   router.push(targetPath);
 
   // 或者使用命名路由 (更推薦，如果已在 router/index.ts 中定義 name)
   // router.push({ name: 'AssignDetail', params: { type: typeName, id: item.id } });
 };
-const handleOpenCase = (item: { id: string; type: number; status: number }) => {
-  console.log("準備為 ID:", item.id, "類型:", item.type, "進行開案操作");
+const handleOpenCase = (item: {
+  caseNumber: string;
+  type: number;
+  status: number;
+}) => {
+  console.log(
+    "準備為caseNumber:",
+    item.caseNumber,
+    "類型:",
+    item.type,
+    "進行開案操作",
+  );
   // 在這裡實現你的開案邏輯，例如：
   // 1. 彈出確認對話框 (可以使用 PrimeVue 的 ConfirmDialog)
   // 2. 調用 API 更新案件狀態
@@ -307,31 +330,30 @@ const handleOpenCase = (item: { id: string; type: number; status: number }) => {
     //     console.error("開案失敗:", error);
     //     alert(`ID: ${item.id} 開案失敗，請稍後再試。`);
     //   });
-    alert(`模擬為 ID: ${item.id} 進行開案 (實際應調用API)`);
+    alert(`模擬為 ID: ${item.caseNumber} 進行開案 (實際應調用API)`);
     // 為了演示，我們直接修改 testdata (實際應用中應該通過 API 更新後端數據)
-    const index = testdata.value.findIndex((d) => d.id === item.id);
+    const index = form_data.value.findIndex(
+      (d) => d.caseNumber === item.caseNumber,
+    );
     if (index !== -1) {
-      testdata.value[index].status = 1; // 假設 1 代表已開案
+      form_data.value[index].status = 1; // 假設 1 代表已開案
     }
   } else {
-    alert(`ID: ${item.id} 已經是開案狀態。`);
+    alert(`caseNumber: ${item.caseNumber} 已經是開案狀態。`);
   }
 };
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
-  console.log("列表組件 (Firstprimevue.vue) 已掛載");
-  // 如果 testdata 需要從 API 加載，可以在此處進行
-  // 例如:
-  // const fetchData = async () => {
-  //   try {
-  //     const response = await apiHandler.get('/your-list-endpoint');
-  //     testdata.value = response.data;
-  //   } catch (error) {
-  //     console.error("獲取列表數據失敗:", error);
-  //   }
-  // };
-  // fetchData();
+  console.log("onMounted");
+  apiHandler
+    .get("/form/assign")
+    .then((response) => {
+      form_data.value = response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
 });
 </script>
 

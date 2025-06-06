@@ -1,0 +1,1345 @@
+openapi: 3.0.0
+info:
+  title: 頁面與API資訊
+  version: v1
+servers:
+  - url: http://{domain}/api/
+    description: API資訊 (API Endpoints)
+paths:
+  /login:
+    post:
+      tags:
+        - 登入驗證
+      summary: 登入
+      description: 使用者登入 API 
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/login"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/LoginInfo"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+  /logout:
+    post:
+      tags:
+        - 登入驗證
+      summary: 登出
+      description: 使用者登出 API
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功登出
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "登出成功"
+
+  /user:
+    get: # 取得使用者列表 (供督導管理)
+      tags:
+        - 使用者
+      summary: 取得使用者列表 (供督導管理)
+      description: 取得全體使用者列表
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功返回使用者列表
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/userList"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+    post: #新增使用者 (供督導管理、新使用者預設權限為社工)
+      tags:
+        - 使用者
+      summary: 新增使用者 (供督導管理、新使用者預設權限為社工)
+      description: 新增使用者
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/signUp"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+  /user/{username}:
+    get: # 取得使用者資訊 (名稱,姓名)
+      tags:
+        - 使用者
+      summary: 取得使用者資訊
+      description: 根據使用者名稱取得使用者詳細資訊
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          description: 使用者名稱
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功返回使用者資訊
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/userInfo"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    put: # 更新使用者資訊
+      tags:
+        - 使用者
+      summary: 更新使用者資訊 (丟啥改啥)
+      description: 更新使用者資訊 (丟啥改啥)
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/changeInfo"
+      parameters:
+        - in: path
+          name: username
+          required: true
+          description: 使用者名稱
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    delete: # 刪除特定使用者
+      tags:
+        - 使用者
+      summary: 刪除特定使用者
+      description: 透過將特定使用者的status改為-1(deleted),刪除特定使用者
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          description: 使用者名稱
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    patch: # 停用啟用使用者
+      tags:
+        - 使用者
+      summary: 啟用特定使用者
+      description: 透過將特定使用者的status改為1(enable),起用特定使用者
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          description: 使用者名稱
+          schema:
+            type: string
+      requestBody:  # 定義 Request Body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "Components.yml#/components/schemas/statusModify"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+  /user/{username}/password:
+    put: # 更新使用者資訊
+      tags:
+        - 使用者
+      summary: 更新使用者資訊 (丟啥改啥)
+      description: 更新使用者資訊 (丟啥改啥)
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/changePassword"
+      parameters:
+        - in: path
+          name: username
+          required: true
+          description: 使用者名稱
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+
+  /status: # 改status
+    get:
+      tags:
+        # - 使用者
+        - 登入驗證
+      summary: 驗證使用者可用性 (是否停用)
+      description: 驗證使用者可用性
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/UserInfo"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+
+  /form/assign:
+    get:
+      tags:
+        - 派案表
+      summary: 取得派案表列表
+      description: 取得使用者權限範圍內的派案表列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "Components.yml#/components/parameters/queryCaseNumber"
+        - $ref: "Components.yml#/components/parameters/queryFrom"
+        - $ref: "Components.yml#/components/parameters/queryMaxItems"
+        - $ref: "Components.yml#/components/parameters/queryStatus"
+        - $ref: "Components.yml#/components/parameters/queryUsername"
+        - $ref: "Components.yml#/components/parameters/queryFormType"
+      responses:
+        '200':
+          description: 成功返回派案表列表
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/assignList"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+  /form/assign/general:
+    get:
+      tags:
+        - 派案表
+      summary: 取得"個案服務輸送"派案表列表
+      description: 取得使用者權限範圍內的"個案服務輸送"派案表列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "Components.yml#/components/parameters/queryCaseNumber"
+        - $ref: "Components.yml#/components/parameters/queryFrom"
+        - $ref: "Components.yml#/components/parameters/queryMaxItems"
+        - $ref: "Components.yml#/components/parameters/queryStatus"
+        - $ref: "Components.yml#/components/parameters/queryUsername"
+      responses:
+        '200':
+          description: 成功返回派案表列表
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/assignList"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    post:
+      tags:
+        - 派案表
+      summary: 新增"個案服務輸送"派案表
+      description: 新增"個案服務輸送"派案表
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/assignGeneralInfoCreate"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+  /form/assign/general/{casenumber}:
+    get:
+      tags:
+        - 派案表
+      summary: 取得派案表詳細資訊 (包含內容與變更紀錄等)
+      description: 取得使用者權限範圍內的派案表詳細資訊 (權限督導 與 主責社工)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功返回派案表詳細資訊
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - properties:
+                      author:
+                        type: string
+                        description: 作者username
+                        example: "username001"
+                      status:
+                        type: integer
+                        description: 該派案表之狀態
+                        enum:
+                          - 0 #未開案
+                          - 1 #已結案
+                          - 2 #不開案
+                        example: 0
+                      caseNumber: # 案號
+                        type: string
+                        description: 案號
+                        example: 113528A054
+                  - $ref: "Components.yml#/components/schemas/assignGeneralInfo"
+                  - $ref: "Components.yml#/components/schemas/assignReason"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    put:
+      tags:
+        - 派案表
+      summary: 更新表單 (派案表)
+      description: 更新表單
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/assignGeneralInfoUpdate"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    delete: # 刪除派案表狀態
+      tags:
+        - 派案表
+      summary: 變更派案表狀態 (刪除)
+      description: 變更派案表狀態 (刪除)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    patch: # 變更派案表狀態
+      tags:
+        - 派案表
+      summary: 變更派案表狀態
+      description: |
+        變更派案表狀態
+        0: 未開案,
+        1: 已開案,
+        2: 不開案,
+        3: 已結案,
+        -1: 已刪除
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "Components.yml#/components/schemas/statusModify"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+  /form/assign/arrival:
+    get:
+      tags:
+        - 派案表
+      summary: 取得"新入境個案服務輸送"派案表列表
+      description: 取得使用者權限範圍內的"新入境個案服務輸送"派案表列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "Components.yml#/components/parameters/queryCaseNumber"
+        - $ref: "Components.yml#/components/parameters/queryFrom"
+        - $ref: "Components.yml#/components/parameters/queryMaxItems"
+        - $ref: "Components.yml#/components/parameters/queryStatus"
+        - $ref: "Components.yml#/components/parameters/queryUsername"
+      responses:
+        '200':
+          description: 成功返回派案表列表
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/assignList"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    post:
+      tags:
+        - 派案表
+      summary: 新增"新入境個案服務輸送"派案表
+      description: 新增"新入境個案服務輸送"派案表
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/assignArrivalInfoCreate"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+  /form/assign/arrival/{casenumber}:
+    get:
+      tags:
+        - 派案表
+      summary: 取得派案表詳細資訊 (包含內容與變更紀錄等)
+      description: 取得使用者權限範圍內的派案表詳細資訊 (權限督導 與 主責社工)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功返回派案表詳細資訊
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - properties:
+                      author:
+                        type: string
+                        description: 作者username
+                        example: "username001"
+                      status:
+                        type: integer
+                        description: 該派案表之狀態
+                        enum:
+                          - 0 #未開案
+                          - 1 #已結案
+                          - 2 #不開案
+                        example: 0
+                      caseNumber: # 案號
+                        type: string
+                        description: 案號
+                        example: 113528A054
+                  - $ref: "Components.yml#/components/schemas/assignArrivalInfo"
+                  - $ref: "Components.yml#/components/schemas/assignReason"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    put:
+      tags:
+        - 派案表
+      summary: 更新表單 (派案表)
+      description: 更新表單
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/assignArrivalInfoUpdate"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    delete: # 刪除派案表狀態
+      tags:
+        - 派案表
+      summary: 變更派案表狀態 (刪除)
+      description: 變更派案表狀態 (刪除)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+    patch: # 變更派案表狀態
+      tags:
+        - 派案表
+      summary: 變更派案表狀態
+      description: |
+        變更派案表狀態
+        0: 未開案,
+        1: 已開案,
+        2: 不開案,
+        3: 已結案,
+        -1: 已刪除
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "Components.yml#/components/schemas/statusModify"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+
+  # /form/assign/general/{casenumber}/record:
+  #   get:
+  #     tags:
+  #       - 紀錄表
+  #     summary: 取得表單列表 (限紀錄表)
+  #     description: 取得使用者權限範圍內的紀錄表列表
+  #     security:
+  #       - bearerAuth: []
+  #     parameters:
+  #       - $ref: "Components.yml#/components/parameters/queryCaseNumber"
+  #       - $ref: "Components.yml#/components/parameters/queryFrom"
+  #       - $ref: "Components.yml#/components/parameters/queryMaxItems"
+  #       # - $ref: "Components.yml#/components/parameters/queryStatus"
+  #       - $ref: "Components.yml#/components/parameters/queryUsername"
+  #     responses:
+  #       '200':
+  #         description: 成功返回紀錄表列表
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "Components.yml#/components/schemas/recordList"
+  #       '400':
+  #         $ref: "Components.yml#/components/responses/BadRequest"
+  #       '401':
+  #         $ref: "Components.yml#/components/responses/Unauthorized"
+  #       '403':
+  #         $ref: "Components.yml#/components/responses/Forbidden"
+  #       '404':
+  #         $ref: "Components.yml#/components/responses/NotFound"    
+  /form/assign/general/{casenumber}/record:
+    get:
+      tags:
+        - 紀錄表
+      summary: 取得指定派案表底下的紀錄表列表
+      description: 取得指定派案表底下的紀錄表列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+        - $ref: "Components.yml#/components/parameters/queryFrom"
+        - $ref: "Components.yml#/components/parameters/queryMaxItems"
+        - $ref: "Components.yml#/components/parameters/queryUsername"
+      responses:
+        '200':
+          description: 成功返回紀錄表列表
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/recordList"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"    
+    post:
+      tags:
+        - 紀錄表
+      summary: 新增表單 (派案表+紀錄表)
+      description: 新增表單
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/recordGeneralInfoUpdate"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"    
+  /form/assign/general/{casenumber}/record/{recordid}:
+    get:
+      tags:
+        - 紀錄表
+      summary: 取得紀錄表詳細資訊 (包含內容與變更紀錄等)
+      description: 取得使用者權限範圍內的紀錄表詳細資訊 (權限督導、負責人員)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: recordid
+          description: 紀錄表編號
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功返回紀錄表詳細資訊
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - properties:
+                      author:
+                        type: string
+                        description: 作者username
+                        example: "username001 (僅作者可見)"
+                      caseNumber: # 案號
+                        type: string
+                        description: 案號
+                        example: 113528A054
+                  - $ref: "Components.yml#/components/schemas/recordGeneralInfo"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"   
+    put:
+      tags:
+        - 紀錄表
+      summary: 更新表單 (紀錄表)
+      description: 更新表單
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: recordid
+          description: 紀錄表編號
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/recordGeneralInfoUpdate"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"    
+    delete:  # 變更紀錄表狀態 (刪除)
+      tags:
+        - 紀錄表
+      summary: 變更紀錄表狀態 (刪除)
+      description: | 
+        變更紀錄表狀態 (刪除)
+        -1: 已刪除
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: recordid
+          description: 紀錄表編號
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+  # /form/assign/arrival/{casenumber}/record:
+  #   get:
+  #     tags:
+  #       - 紀錄表
+  #     summary: 取得表單列表 (限紀錄表)
+  #     description: 取得使用者權限範圍內的紀錄表列表
+  #     security:
+  #       - bearerAuth: []
+  #     parameters:
+  #       - $ref: "Components.yml#/components/parameters/queryCaseNumber"
+  #       - $ref: "Components.yml#/components/parameters/queryFrom"
+  #       - $ref: "Components.yml#/components/parameters/queryMaxItems"
+  #       # - $ref: "Components.yml#/components/parameters/queryStatus"
+  #       - $ref: "Components.yml#/components/parameters/queryUsername"
+  #     responses:
+  #       '200':
+  #         description: 成功返回紀錄表列表
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "Components.yml#/components/schemas/recordList"
+  #       '400':
+  #         $ref: "Components.yml#/components/responses/BadRequest"
+  #       '401':
+  #         $ref: "Components.yml#/components/responses/Unauthorized"
+  #       '403':
+  #         $ref: "Components.yml#/components/responses/Forbidden"
+  #       '404':
+  #         $ref: "Components.yml#/components/responses/NotFound"    
+  /form/assign/arrival/{casenumber}/record:
+    get:
+      tags:
+        - 紀錄表
+      summary: 取得表單列表 (限紀錄表)
+      description: 取得使用者權限範圍內的紀錄表列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+        - $ref: "Components.yml#/components/parameters/queryFrom"
+        - $ref: "Components.yml#/components/parameters/queryMaxItems"
+        - $ref: "Components.yml#/components/parameters/queryUsername"
+      responses:
+        '200':
+          description: 成功返回紀錄表列表
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/recordList"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"    
+    post:
+      tags:
+        - 紀錄表
+      summary: 新增表單 (派案表+紀錄表)
+      description: 新增表單
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/recordArrivalInfoUpdate"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"    
+  /form/assign/arrival/{casenumber}/record/{recordid}:
+    get:
+      tags:
+        - 紀錄表
+      summary: 取得紀錄表詳細資訊 (包含內容與變更紀錄等)
+      description: 取得使用者權限範圍內的紀錄表詳細資訊 (權限督導、負責人員)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: recordid
+          description: 紀錄表編號
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功返回紀錄表詳細資訊
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - properties:
+                      author:
+                        type: string
+                        description: 作者username
+                        example: "username001 (僅督導可見)"
+                      caseNumber: # 案號
+                        type: string
+                        description: 案號
+                        example: 113528A054
+                  - $ref: "Components.yml#/components/schemas/recordArrivalInfo"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"   
+    put:
+      tags:
+        - 紀錄表
+      summary: 更新表單 (紀錄表)
+      description: 更新表單
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: recordid
+          description: 紀錄表編號
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "Components.yml#/components/requestBodies/recordArrivalInfoUpdate"
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"    
+    delete:  # 變更紀錄表狀態 (刪除)
+      tags:
+        - 紀錄表
+      summary: 變更紀錄表狀態 (刪除)
+      description: | 
+        變更紀錄表狀態 (刪除)
+        -1: 已刪除
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: casenumber
+          description: 派案表編號
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: recordid
+          description: 紀錄表編號
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "Components.yml#/components/responses/Success"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+
+
+  /report: # 報表列表
+    get:
+      tags:
+        - 報表
+      summary: 取得報表清單
+      description: 取得使用者權限範圍內的報表清單 (僅限督導權限)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功返回報表清單
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/reportList"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"
+  /report/{reportid}:
+    get:
+      tags:
+        - 報表
+      summary: 取得單一報表詳細資訊
+      description: 取得單一報表詳細資訊 (僅限督導權限)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: reportid
+          description: 報表編號
+          required: true
+          schema:
+            type: string
+        - $ref: "Components.yml#/components/parameters/reportPar"
+        # - $ref: "Components.yml#/components/parameters/reportQueryStartDate"
+        - $ref: "Components.yml#/components/parameters/reportQueryEndDate"
+        - $ref: "Components.yml#/components/parameters/reportQueryGender"
+      responses:
+        '200':
+          description: 成功返回報表詳細
+          content:
+            application/json:
+              schema:
+                $ref: "Components.yml#/components/schemas/reportData"
+        '400':
+          $ref: "Components.yml#/components/responses/BadRequest"
+        '401':
+          $ref: "Components.yml#/components/responses/Unauthorized"
+        '403':
+          $ref: "Components.yml#/components/responses/Forbidden"
+        '404':
+          $ref: "Components.yml#/components/responses/NotFound"   
+
+
+  /option/needs: # 問題需求
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 問題需求
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "家庭關係"
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+  /option/refusingReasons: # 不開案原因
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 不開案原因
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "案主未居住服務區域內"
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+  /option/closingReasons: # 結案原因
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 結案原因
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "案件已完成"
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+  /option/nationalities: # 原母國籍
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 原母國籍的國家列表資料
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "美國"
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+  /option/towns: # 鄉鎮
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 鄉鎮列表資料
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "彰化縣彰化市"
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+  /option/workers: # 社工 (需要認證)
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 社工 (需要認證)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "testuser01"
+                    id:
+                      type: string
+                      description: username
+                      example: "username001"
+  /option/sources: # 轉介單位
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 轉介單位
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "彰化縣政府"
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+                    sourceCatID:
+                      type: integer
+                      description: 個案來源類別
+                      example: 3
+  /option/sourceCats: # 個案來源類別
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 個案來源
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "案主或親友求助"
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+  /option/serviceObjects: # 服務項目 (多一個額外項目bool)
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 服務項目 (多一個額外項目bool)
+      parameters:
+        - $ref: "Components.yml#/components/parameters/formtype"
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "彰化縣政府"
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+                    extra:
+                      type: boolean
+                      description: 是否需要額外資訊
+                      example: true
+  /option/serviceMethods: # 服務方式
+    get:
+      tags:
+        - 欄位選項列表
+      summary: 服務方式
+      responses:
+        '200':
+          description: 成功要求列表資料
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: 項目ID
+                      example: 1
+                    name:
+                      type: string
+                      description: 項目名稱
+                      example: "電訪"
+
+
