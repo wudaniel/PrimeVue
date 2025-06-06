@@ -66,12 +66,6 @@
           :sortable="true"
           style="min-width: 120px"
         >
-          <Column
-            field="type"
-            header="類別"
-            :sortable="true"
-            style="min-width: 120px"
-          ></Column>
           <template #body="slotProps">
             <Chip
               :label="getTypeText(slotProps.data.type)"
@@ -86,14 +80,14 @@
             {{ formatDate(slotProps.data.date) }}
           </template>
         </Column>
-        <Column header="操作" style="min-width: 120px; text-align: center">
+        <Column header="操作" style="min-width: 100px; text-align: center">
           <template #body="slotProps">
             <Button
               label="開案"
-              icon="pi pi-folder-open"
               class="p-button-sm p-button-success"
               @click="handleOpenCase(slotProps.data)"
               :disabled="slotProps.data.status === 1"
+              :aria-label="'為 ID ' + slotProps.data.id + ' 開案'"
             />
           </template>
         </Column>
@@ -106,7 +100,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-// import { apiHandler } from "../class/apiHandler"; // 如果列表數據是靜態的或由父組件傳入，可能不再需要
 import { SaveSession } from "../stores/auth"; // 確認路徑正確
 import { useRouter } from "vue-router";
 
@@ -115,13 +108,14 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Chip from "primevue/chip";
 import { userInfo } from "../class/userinfo";
+import Button from "primevue/button";
 // 移除了 Button, ProgressSpinner, Message, Card, Divider
 
 // --- 狀態變數 ---
 const testdata = ref([
   // 這裡仍然使用靜態測試數據，如果需要 API 加載，onMounted 中處理
   {
-    id: "1",
+    id: "9527",
     worker: "worker01",
     status: 2,
     date: "2024-07-23T03:22:15Z",
