@@ -5,7 +5,7 @@
     </div>
     <div>
       <DataTable
-        :value="form_data"
+        :value="testdata"
         scrollable
         scrollHeight="flex"
         dataKey="caseNumber"
@@ -85,16 +85,35 @@
             {{ formatDate(slotProps.data.date) }}
           </template>
         </Column>
-        <Column header="操作" style="min-width: 100px; text-align: center">
+
+        <Column header="操作" style="min-width: 200px; text-align: center">
           <template #body="slotProps">
             <Button
               label="開案"
               class="p-button-sm p-button-success"
               @click="handleOpenCase(slotProps.data)"
-              :disabled="slotProps.data.status === 1"
+              :disabled="slotProps.data.status === 2"
               :aria-label="
                 '為 caseNumber ' + slotProps.data.caseNumber + ' 開案'
               "
+            />
+            <Button
+              label="不開案"
+              icon="pi pi-times-circle"
+              class="p-button-sm p-button-warning"
+              @click="handleDoNotOpenCase(slotProps.data)"
+              :disabled="slotProps.data.status === 2"
+              :aria-label="
+                '將案號 ' + slotProps.data.caseNumber + ' 設為不開案'
+              "
+            />
+            <Button
+              label="結案"
+              icon="pi pi-times-circle"
+              class="p-button-sm p-button-warning"
+              @click="handleFinishCase(slotProps.data)"
+              :disabled="slotProps.data.status !== 2"
+              :aria-label="'將案號 ' + slotProps.data.caseNumber + ' 設為結案'"
             />
           </template>
         </Column>
@@ -295,51 +314,79 @@ const handlecaseNumberClick = (item: { caseNumber: string; type: number }) => {
   // 或者使用命名路由 (更推薦，如果已在 router/index.ts 中定義 name)
   // router.push({ name: 'AssignDetail', params: { type: typeName, id: item.id } });
 };
+// ---未開案>>開案---
 const handleOpenCase = (item: {
   caseNumber: string;
   type: number;
   status: number;
 }) => {
   console.log(
-    "準備為caseNumber:",
+    "準備為案號:",
     item.caseNumber,
     "類型:",
     item.type,
     "進行開案操作",
   );
-  // 在這裡實現你的開案邏輯，例如：
-  // 1. 彈出確認對話框 (可以使用 PrimeVue 的 ConfirmDialog)
-  // 2. 調用 API 更新案件狀態
-  // 3. 更新成功後，可能需要重新加載列表數據或更新該行的狀態
-  // 4. 或者跳轉到一個專門的開案表單頁面
-
-  // 簡單示例：
-  if (item.status !== 1) {
-    // 再次確認不是已開案狀態
-    // 假設有一個 API 端點用於開案
-    // apiHandler.post(`/cases/${item.id}/open`)
-    //   .then(response => {
-    //     alert(`ID: ${item.id} 開案成功！`);
-    //     // 更新 testdata 中該項的 status (如果 API 不返回更新後的數據)
-    //     const index = testdata.value.findIndex(d => d.id === item.id);
-    //     if (index !== -1) {
-    //       testdata.value[index].status = 1; // 假設 1 代表已開案
-    //     }
-    //   })
-    //   .catch(error => {
-    //     console.error("開案失敗:", error);
-    //     alert(`ID: ${item.id} 開案失敗，請稍後再試。`);
-    //   });
+  // 新增/修改 START：明確只有 status 0 (未開案) 才能開案
+  if (item.status === 0) {
+    // 新增/修改 END
     alert(`模擬為 ID: ${item.caseNumber} 進行開案 (實際應調用API)`);
-    // 為了演示，我們直接修改 testdata (實際應用中應該通過 API 更新後端數據)
-    const index = form_data.value.findIndex(
+    const index = testdata.value.findIndex(
       (d) => d.caseNumber === item.caseNumber,
     );
     if (index !== -1) {
-      form_data.value[index].status = 1; // 假設 1 代表已開案
+      testdata.value[index].status = 1; // 更新為已開案
     }
   } else {
-    alert(`caseNumber: ${item.caseNumber} 已經是開案狀態。`);
+    alert(`案號: ${item.caseNumber} 的當前狀態無法執行開案操作。`);
+  }
+};
+// ---已開案>>結案---
+const handleFinishCase = (item: {
+  caseNumber: string;
+  type: number;
+  status: number;
+}) => {
+  console.log(
+    "準備為案號:",
+    item.caseNumber,
+    "類型:",
+    item.type,
+    "設為已開案轉結案",
+  );
+  if (item.status === 1) {
+    // 只能從 "已開" (1) 變為 "結案" (3)
+    // 模擬 API 調用
+    alert(`模擬將案號: ${item.caseNumber} 狀態從 '已開' 改為 '結案'`);
+    const index = testdata.value.findIndex(
+      (d) => d.caseNumber === item.caseNumber,
+    );
+    if (index !== -1) {
+      testdata.value[index].status = 3; // 更新為結案
+    }
+  } else {
+    alert(`案號: ${item.caseNumber} 。`);
+  }
+};
+// ---未開案>>不開案---
+const handleDoNotOpenCase = (item: {
+  caseNumber: string;
+  type: number;
+  status: number;
+}) => {
+  console.log("準備為案號:", item.caseNumber, "類型:", item.type, "設為不開案");
+  if (item.status === 0) {
+    // 只能從 "未開案" (0) 變為 "不開案" (2)
+    // 模擬 API 調用
+    alert(`模擬將案號: ${item.caseNumber} 狀態從 '未開案' 改為 '不開案'`);
+    const index = testdata.value.findIndex(
+      (d) => d.caseNumber === item.caseNumber,
+    );
+    if (index !== -1) {
+      testdata.value[index].status = 2; // 更新為不開案
+    }
+  } else {
+    alert(`案號: ${item.caseNumber} 的當前狀態無法執行不開案操作。`);
   }
 };
 
