@@ -3,18 +3,20 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import PrimeVue from "primevue/config";
+
 import { createPinia } from "pinia";
 import router from "./router";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import Calendar from "primevue/calendar";
 
 // --- PrimeVue v4+ 設定 (再次修改) ---
-
+import "primeflex/primeflex.css"; // <--- 導入 PrimeFlex
 // 1. 導入你選擇的預設集 (Preset)，例如 Lara
 import Lara from "@primevue/themes/lara"; // 從 @primevue/themes 導入
 
 // 2. 導入 PrimeIcons (路徑不變)
 import "primeicons/primeicons.css";
+
 import { defineRule, configure } from "vee-validate"; // 核心函數
 import * as AllRules from "@vee-validate/rules"; // 導入所有內建規則 (方便)
 // 或者，如果你只想用幾個特定規則，可以這樣導入：

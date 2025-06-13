@@ -16,7 +16,7 @@
 
         <Column
           field="caseNumber"
-          header="caseNumber"
+          header="案號"
           :sortable="true"
           style="min-width: 80px"
         >
@@ -92,7 +92,7 @@
               label="開案"
               class="p-button-sm p-button-success"
               @click="handleOpenCase(slotProps.data)"
-              :disabled="slotProps.data.status === 2"
+              :disabled="slotProps.data.status !== 0"
               :aria-label="
                 '為 caseNumber ' + slotProps.data.caseNumber + ' 開案'
               "
@@ -102,7 +102,7 @@
               icon="pi pi-times-circle"
               class="p-button-sm p-button-warning"
               @click="handleDoNotOpenCase(slotProps.data)"
-              :disabled="slotProps.data.status === 2"
+              :disabled="slotProps.data.status !== 0"
               :aria-label="
                 '將案號 ' + slotProps.data.caseNumber + ' 設為不開案'
               "
@@ -112,7 +112,7 @@
               icon="pi pi-times-circle"
               class="p-button-sm p-button-warning"
               @click="handleFinishCase(slotProps.data)"
-              :disabled="slotProps.data.status !== 2"
+              :disabled="slotProps.data.status !== 1"
               :aria-label="'將案號 ' + slotProps.data.caseNumber + ' 設為結案'"
             />
           </template>

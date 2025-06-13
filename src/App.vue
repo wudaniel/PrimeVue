@@ -70,6 +70,7 @@ const menuItems = ref([
     />
 
     <!-- Sidebar 元件 -->
+
     <Sidebar v-model:visible="sidebarVisible" position="left">
       <template #header>
         <h3>導覽選單</h3>
@@ -112,13 +113,6 @@ const menuItems = ref([
   border: none;
   background: transparent;
 }
-
-/* 讓 Sidebar 內容填滿高度 (如果需要 footer 置底) */
-/* :deep(.p-sidebar-content) {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-} */
 
 /* 主要內容區域的 padding */
 .main-content {
