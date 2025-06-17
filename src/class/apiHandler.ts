@@ -33,7 +33,7 @@ apiHandler.interceptors.request.use(
     // 對請求錯誤做些什麼
     console.error("Axios Request Interceptor Error:", error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // (可選) 添加回應攔截器 (Response Interceptor) - 用於處理全局錯誤，例如 401 未授權
@@ -53,8 +53,7 @@ apiHandler.interceptors.response.use(
       // window.location.href = '/login';
     }
     return Promise.reject(error);
-  }
+  },
 );
-
 
 export { apiHandler };

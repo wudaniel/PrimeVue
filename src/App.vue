@@ -116,10 +116,15 @@ const menuItems = ref([
 
 /* 主要內容區域的 padding */
 .main-content {
-  padding: 1rem;
-  /* 如果按鈕是 fixed，需要給內容留出空間避免被按鈕遮擋 */
+  /*
+    你需要根據按鈕的實際大小和位置來設定 padding。
+    假設按鈕大概是 3rem x 3rem 大小，並且位於 top: 1rem, left: 1rem 的位置。
+    那麼內容區域的 padding-top 和 padding-left 需要大於 (1rem + 3rem)。
+    我們設定為 5rem 比較保險。
+  */
   padding-top: 5rem;
-  padding-left: 5rem; /* 根據按鈕大小調整 */
+  padding-left: 5rem;
+  width: 100%; /* 確保它佔滿寬度 */
 }
 
 .logo-container {
@@ -151,6 +156,6 @@ const menuItems = ref([
   width: 100%;
 }
 .p-4 {
-  padding: 4rem;
+  padding-top: 4rem !important;
 }
 </style>
