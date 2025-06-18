@@ -28,7 +28,7 @@
       <i class="pi pi-check-circle" style="color: green; font-size: 24px"></i>
 
       <span style="font-size: 18px; color: green"
-        >登入成功！歡迎{{ userStore.userInfo.getUserfullname() }}</span
+        >登入成功！歡迎{{ userStore.userInfoInstance?.getUserfullname() }}</span
       >
       <br />
       <Button
@@ -97,7 +97,4 @@ export default {
 .w-full {
   width: 100%;
 }
-
-
-
 </style>

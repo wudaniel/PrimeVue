@@ -5,8 +5,8 @@ import App from "./App.vue";
 import PrimeVue from "primevue/config";
 
 import { createPinia } from "pinia";
+import piniaPluginPersistedstate from "pinia-plugin-persistedstate"; // <-- 導入插件
 import router from "./router";
-import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import Calendar from "primevue/calendar";
 
 // --- PrimeVue v4+ 設定 (再次修改) ---
@@ -37,7 +37,7 @@ setLocale("zh_TW");
 
 const app = createApp(App);
 const pinia = createPinia();
-
+pinia.use(piniaPluginPersistedstate); // <-- 將插件 use 到 pinia 實例上
 app.use(pinia);
 app.use(router); // 如果你有使用 Vue Router+
 // 3. 配置 PrimeVue 使用主題預設集

@@ -23,34 +23,40 @@ const router = createRouter({
       path: "/arrivalAssigns",
       name: "arrivalAssigns",
       component: () => import("../components/Arrivalassigns.vue"),
+      meta: { requiresAuth: true },
     },
     {
       path: "/generalAssigns",
       name: "generalAssigns",
       component: () => import("../components/Generalassigns.vue"),
+      meta: { requiresAuth: true },
     },
     {
       path: "/arrivalRecords",
       name: "arrivalRecords",
       component: () => import("../components/Arrivalrecords.vue"),
+      meta: { requiresAuth: true },
       props: (route) => ({ caseNumberQuery: route.query.caseNumber }), // 將查詢參數轉為 prop
     },
     {
       path: "/generalRecords",
       name: "generalRecords",
       component: () => import("../components/Generalrecords.vue"),
+      meta: { requiresAuth: true },
       props: (route) => ({ caseNumberQuery: route.query.caseNumber }), // 將查詢參數轉為 prop
     },
     {
       path: "/assigns/:type/:id", // :type 和 :id 是「佔位符」
       name: "AssignDetail",
       component: () => import("../components/AssignItemDetail.vue"),
+      meta: { requiresAuth: true },
       props: true,
     },
     {
       path: "/test",
       name: "testcol",
       component: () => import("../components/testColGroup.vue"),
+      meta: { requiresAuth: true },
     },
   ],
 });

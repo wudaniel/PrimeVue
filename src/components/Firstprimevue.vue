@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="userStore.isLoggedIn" class="right-corner">
-      {{ userStore.userInfo.getUserfullname() }}
+      {{ userStore.userInfoInstance?.getUserfullname() }}
     </div>
     <div>
       <DataTable

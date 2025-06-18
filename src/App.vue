@@ -19,6 +19,7 @@ const menuItems = ref([
       sidebarVisible.value = false; // 點擊後關閉 Sidebar
     },
   },
+  /*
   {
     label: "登入介面",
     icon: "pi pi-lock",
@@ -27,6 +28,7 @@ const menuItems = ref([
       sidebarVisible.value = false;
     },
   },
+  */
   {
     label: "新入境派案表",
     icon: "pi pi-check",
