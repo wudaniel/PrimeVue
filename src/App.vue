@@ -3,6 +3,7 @@ import { ref } from "vue";
 import Sidebar from "primevue/sidebar";
 import Button from "primevue/button";
 import Menu from "primevue/menu"; // 使用 Menu 作為導航
+import Toast from "primevue/toast";
 
 import { useRouter, RouterView } from "vue-router";
 const router = useRouter();
@@ -19,16 +20,16 @@ const menuItems = ref([
       sidebarVisible.value = false; // 點擊後關閉 Sidebar
     },
   },
-  /*
+
   {
-    label: "登入介面",
+    label: "管理員測試",
     icon: "pi pi-lock",
     command: () => {
-      router.push("/login");
+      router.push("/test");
       sidebarVisible.value = false;
     },
   },
-  */
+
   {
     label: "新入境派案表",
     icon: "pi pi-check",
@@ -93,6 +94,7 @@ const menuItems = ref([
       <!-- <router-view /> -->
     </div>
   </div>
+  <Toast />
 </template>
 
 <style scoped>
