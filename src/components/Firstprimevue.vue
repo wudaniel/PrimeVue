@@ -1,8 +1,5 @@
 <template>
   <div>
-    <div v-if="userStore.isLoggedIn" class="right-corner">
-      {{ userStore.userInfoInstance?.getUserfullname() }}
-    </div>
     <div>
       <DataTable
         :value="testdata"
@@ -405,17 +402,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 這裡只保留列表可能需要的樣式 */
-.right-corner {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-}
 /* 你原有的其他列表樣式 */
 .text-grey {
   color: var(--p-text-color-secondary);

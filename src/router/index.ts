@@ -53,9 +53,9 @@ const router = createRouter({
       props: true,
     },
     {
-      path: "/test",
-      name: "testcol",
-      component: () => import("../components/testColGroup.vue"),
+      path: "/user/password",
+      name: "ChangePassword",
+      component: () => import("../components/ChangePassword.vue"),
       meta: { requiresAuth: true },
     },
   ],

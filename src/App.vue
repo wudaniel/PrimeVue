@@ -4,12 +4,50 @@ import Sidebar from "primevue/sidebar";
 import Button from "primevue/button";
 import Menu from "primevue/menu"; // 使用 Menu 作為導航
 import Toast from "primevue/toast";
+import Avatar from "primevue/avatar"; // 新增導入 Avatar
+import { SaveSession } from "./stores/auth.ts"; // 確認路徑正確
 
 import { useRouter, RouterView } from "vue-router";
 const router = useRouter();
+const userStore = SaveSession(); // <-- 新增獲取 userStore
 const sidebarVisible = ref(false); // 控制 Sidebar 的顯示/隱藏
 
-// 替換成你實際需要的導航項目
+// 會員下拉選單
+const userMenu = ref(); // 用於獲取 Menu 元件的實例
+const userMenuItems = ref([
+  {
+    label: "用戶選項",
+    items: [
+      {
+        label: "變更密碼",
+        icon: "pi pi-key",
+        command: () => {
+          router.push("/user/password");
+        },
+      },
+      {
+        label: "登出",
+        icon: "pi pi-sign-out",
+        command: () => {
+          handleLogout();
+        },
+      },
+    ],
+  },
+]);
+
+// --- **新增：觸發用戶選單的方法** ---
+const toggleUserMenu = (event: Event) => {
+  userMenu.value.toggle(event);
+};
+
+// --- **新增：登出處理函數** ---
+const handleLogout = () => {
+  userStore.logout(); // 假設你的 store 有 logout 方法
+  router.push("/login");
+};
+
+//sidebar 內容物
 const menuItems = ref([
   {
     label: "首頁 ",
@@ -71,7 +109,31 @@ const menuItems = ref([
       class="p-button-secondary p-button-rounded p-button-text fixed-sidebar-button"
       aria-label="Toggle Menu"
     />
-
+    <!-- **新增：右上角用戶選單** -->
+    <div v-if="userStore.isLoggedIn" class="user-menu-corner">
+      <Button
+        type="button"
+        class="p-button-text p-button-rounded user-menu-button"
+        @click="toggleUserMenu"
+        aria-haspopup="true"
+        aria-controls="user_menu"
+      >
+        <Avatar
+          :label="userStore.getUserfullname?.charAt(0) || 'U'"
+          class="mr-2"
+          shape="circle"
+        />
+        <span class="font-bold">{{ userStore.getUserfullname }}</span>
+        <i class="pi pi-angle-down ml-2"></i>
+      </Button>
+      <Menu
+        ref="userMenu"
+        id="user_menu"
+        :model="userMenuItems"
+        :popup="true"
+      />
+    </div>
+    <!-- **新增結束** -->
     <!-- Sidebar 元件 -->
 
     <Sidebar v-model:visible="sidebarVisible" position="left">
@@ -109,6 +171,13 @@ const menuItems = ref([
   top: 1rem;
   left: 1rem;
   z-index: 1101; /* 需要比 Sidebar 的遮罩層(預設1100)高一點，或者比內容高 */
+}
+/* **新增：右上角用戶選單的樣式** */
+.user-menu-corner {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1100; /* 層級，確保在內容之上 */
 }
 
 /* 清理 Menu 的預設邊框和背景，使其融入 Sidebar */
