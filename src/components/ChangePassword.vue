@@ -5,7 +5,7 @@
         <div class="text-center">
           <i class="pi pi-key text-5xl text-primary mb-2"></i>
           <h3>變更密碼</h3>
-          <p class="text-color-secondary text-base">為用戶: {{ username }}</p>
+          <p class="text-color-secondary text-base">用戶名: {{ username }}</p>
         </div>
       </template>
 
@@ -96,7 +96,7 @@ import Button from "primevue/button";
 // --- 初始化 ---
 const toast = useToast(); // 初始化 Toast 服務
 const userStore = SaveSession();
-const username = userStore.getUserData?.userfullname || "未知用戶"; // 從 store 獲取當前用戶名
+const username = userStore.userData?.userfullname; // 從 store 獲取當前用戶名
 
 // --- VeeValidate 表單設定 ---
 // 使用 useForm 來管理整個表單的狀態
