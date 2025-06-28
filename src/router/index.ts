@@ -65,14 +65,19 @@ router.beforeEach(async (to, from, next) => {
   const authStore = SaveSession(); // 取得 authStore 實例
 
   // ... 你的路由守衛邏輯 ...
-  if (to.meta.requiresAuth) {
-    if (!(await authStore.checkstatus())) {
-      // 使用 authStore 實例來訪問 store 的資料 (例如 isLoggedIn getter)
-      alert("login please");
-      next("/login");
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    // 現在可以安全地使用 router.toast
+    if (router.toast) {
+      router.toast.add({
+        severity: "error",
+        summary: "請先登入",
+        detail: "請先登入才能訪問此頁面。",
+        life: 3000,
+      });
     } else {
-      next();
+      console.error("Toast service is not available on router.");
     }
+    next({ name: "login" });
   } else {
     next();
   }

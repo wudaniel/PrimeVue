@@ -5,7 +5,7 @@ import Button from "primevue/button";
 import Menu from "primevue/menu"; // 使用 Menu 作為導航
 import Toast from "primevue/toast";
 import Avatar from "primevue/avatar"; // 新增導入 Avatar
-import { SaveSession } from "./stores/auth.ts"; // 確認路徑正確
+import { SaveSession } from "./stores/auth"; // 確認路徑正確
 
 import { useRouter, RouterView } from "vue-router";
 const router = useRouter();
@@ -104,11 +104,12 @@ const menuItems = ref([
   <div class="app-layout">
     <!-- 觸發按鈕 (固定在左上角) -->
     <Button
+      v-if="userStore.isLoggedIn"
       icon="pi pi-bars"
       @click="sidebarVisible = true"
       class="p-button-secondary p-button-rounded p-button-text fixed-sidebar-button"
       aria-label="Toggle Menu"
-    />
+    ></Button>
     <!-- **新增：右上角用戶選單** -->
     <div v-if="userStore.isLoggedIn" class="user-menu-corner">
       <Button
