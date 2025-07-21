@@ -1,12 +1,10 @@
 import axios from "axios";
 import { SaveSession } from "../stores/auth"; // 保持導入 Store Hook
+import router from "../router";
 
 // 1. 創建 Axios 實例時，先不設定 Authorization header
 const apiHandler = axios.create({
-  baseURL: "http://192.168.60.200:8000",
-  // headers: { // <-- 移除這裡的靜態 header
-  //   Authorization: userStore.token,
-  // },
+  baseURL: "http://192.168.60.200:8080/api",
 });
 
 // 2. 添加請求攔截器 (Request Interceptor)
@@ -50,7 +48,7 @@ apiHandler.interceptors.response.use(
       const userStore = SaveSession();
       userStore.logout(); // 假設你有登出 action
       // 可能需要導向到登入頁
-      // window.location.href = '/login';
+      router.push("/login");
     }
     return Promise.reject(error);
   },

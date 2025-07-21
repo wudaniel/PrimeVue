@@ -63,13 +63,6 @@ const app = createApp(App);
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate); // <-- 將插件 use 到 pinia 實例上
 app.use(pinia);
-app.use(ToastService);
-
-router.toast = app.config.globalProperties.$toast;
-app.use(router); // 如果你有使用 Vue Router+
-
-// 3. 配置 PrimeVue 使用主題預設集
-
 app.use(PrimeVue, {
   // unstyled: true, // 確保這不是 true，或者直接移除這行以使用主題
   theme: {
@@ -82,4 +75,11 @@ app.use(PrimeVue, {
   },
 });
 app.use(PrimeVue);
+app.use(ToastService);
+
+router.toast = app.config.globalProperties.$toast;
+app.use(router); // 如果你有使用 Vue Router+
+
+// 3. 配置 PrimeVue 使用主題預設集
+
 app.mount("#app");

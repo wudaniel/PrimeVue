@@ -103,8 +103,8 @@ const menuItems = ref([
 <template>
   <div class="app-layout">
     <!-- 觸發按鈕 (固定在左上角) -->
+    <!-- v-if="userStore.isLoggedIn" -->
     <Button
-      v-if="userStore.isLoggedIn"
       icon="pi pi-bars"
       @click="sidebarVisible = true"
       class="p-button-secondary p-button-rounded p-button-text fixed-sidebar-button"

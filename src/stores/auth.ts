@@ -43,12 +43,12 @@ export const SaveSession = defineStore("Session", {
           permission: string;
         }>("/login", { username, password });
 
-        if (response.data && response.data.token) {
-          this.token = `Bearer ${response.data.token}`;
+        if (response.data && response.data.data.token) {
+          this.token = `Bearer ${response.data.data.token}`;
           // 更新 state 中的純數據
           this.userData = {
-            userfullname: response.data.fullname,
-            permission: response.data.permission,
+            userfullname: response.data.data.fullname,
+            permission: response.data.data.permission,
           };
           return true; // 登入成功
         } else {
