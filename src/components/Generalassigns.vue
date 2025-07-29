@@ -392,9 +392,6 @@ const { value: caseDetail, errorMessage: caseDetailError } = useField<string>(
 const { value: selectedworkers, errorMessage: workerError } = useField<
   number | null
 >("worker", "required");
-// const { value: selectedNeeds, errorMessage: needsError } = useField<number[] | null>('needs', 'required'); // For MultiSelect
-// const { value: otherNeedsInput, errorMessage: otherNeedsError } = useField<string>('otherNeeds', validateOtherNeeds);
-
 // --- API 選項數據 ref ---
 const Nationality_List = ref<{ id: number; name: string }[]>([]);
 const sourceCats_List = ref<{ id: number; name: string }[]>([]);
@@ -414,7 +411,9 @@ onMounted(() => {
   apiHandler
     .get("/option/nationalities")
     .then((response) => {
-      Nationality_List.value = response.data;
+      Nationality_List.value = response.data.data;
+      console.error(response);
+      console.log(Nationality_List.value);
     })
     .catch((error) => {
       console.error(error);
@@ -422,7 +421,7 @@ onMounted(() => {
   apiHandler
     .get("/option/sourceCats")
     .then((response) => {
-      sourceCats_List.value = response.data;
+      sourceCats_List.value = response.data.data;
     })
     .catch((error) => {
       console.error(error);
@@ -430,7 +429,7 @@ onMounted(() => {
   apiHandler
     .get("/option/sources")
     .then((response) => {
-      sources_List.value = response.data;
+      sources_List.value = response.data.data;
     })
     .catch((error) => {
       console.error(error);
@@ -438,7 +437,7 @@ onMounted(() => {
   apiHandler
     .get("/option/towns")
     .then((response) => {
-      town_List.value = response.data;
+      town_List.value = response.data.data;
     })
     .catch((error) => {
       console.error(error);
@@ -446,13 +445,11 @@ onMounted(() => {
   apiHandler
     .get("/option/workers")
     .then((response) => {
-      workers_List.value = response.data;
+      workers_List.value = response.data.data;
     })
     .catch((error) => {
       console.error(error);
     });
-
-  // apiHandler.get("/option/needs").then((response) => { Needs_List.value = response.data; }).catch((error) => { console.error(error); });
 });
 
 // --- 清除歸化選項 ---

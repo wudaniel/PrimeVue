@@ -40,18 +40,31 @@
               class="p-inputtext-sm w-full"
             />
           </div>
-
+          <!-- ⭐ 3. 新增：日期區間篩選 -->
+          <div class="field col-12 md:col-6 lg:col-3">
+            <label for="filterDateRange">日期區間</label>
+            <Calendar
+              id="filterDateRange"
+              v-model="filters.dateRange.value"
+              selectionMode="range"
+              :manualInput="false"
+              dateFormat="yy/mm/dd"
+              placeholder="選擇日期範圍"
+              showIcon
+              class="p-inputtext-sm w-full"
+            />
+          </div>
           <!-- 狀態篩選 -->
           <div class="field col-12 md:col-6 lg:col-3">
             <label for="filterStatus">狀態</label>
-            <Dropdown
+            <MultiSelect
               id="filterStatus"
-              v-model="filters['status'].value"
+              v-model="filters.status.value"
               :options="statusFilterOptions"
               optionLabel="label"
               optionValue="value"
-              placeholder="所有狀態"
-              showClear
+              placeholder="可選多個狀態"
+              display="chip"
               class="p-inputtext-sm w-full"
             />
           </div>
@@ -59,14 +72,14 @@
           <!-- 類別篩選 -->
           <div class="field col-12 md:col-6 lg:col-3">
             <label for="filterType">類別</label>
-            <Dropdown
+            <MultiSelect
               id="filterType"
-              v-model="filters['type'].value"
+              v-model="filters.type.value"
               :options="typeFilterOptions"
               optionLabel="label"
               optionValue="value"
-              placeholder="所有類別"
-              showClear
+              placeholder="可選多個類別"
+              display="chip"
               class="p-inputtext-sm w-full"
             />
           </div>
@@ -231,11 +244,13 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Chip from "primevue/chip";
 import Button from "primevue/button";
-import FilterMatchMode from "primevue/datatable";
+//import FilterMatchMode from "primevue/datatable";
 import InputText from "primevue/inputtext"; // <-- **新增導入**
 import Dropdown from "primevue/dropdown"; // <-- **新增導入**
 import { Transition } from "vue"; // <-- **新增導入 (可選)**
-import { list } from "@primeuix/themes/aura/autocomplete";
+import Calendar from "primevue/calendar"; // ⭐ 1. 導入 Calendar 元件
+import MultiSelect from "primevue/multiselect"; // ⭐ 1. 新增導入 MultiSelect 元件
+//import { list } from "@primeuix/themes/aura/autocomplete";
 
 // 移除了 Button, ProgressSpinner, Message, Card, Divider
 
@@ -263,8 +278,9 @@ const toggleFilterRow = () => {
 const filters = ref({
   caseNumber: { value: null },
   worker: { value: null },
-  status: { value: null },
-  type: { value: Array },
+  status: { value: [] as number[] },
+  type: { value: [] as number[] },
+  dateRange: { value: null as Date[] | null },
 });
 //新增結束
 // --- 對應關係與格式化  ---
@@ -277,7 +293,6 @@ const statusMap: { [key: number]: string } = {
 const typeMap: { [key: number]: string } = { 1: "一般", 2: "新入境" };
 const shouldShowWorkerColumn = computed(() => {
   const permission = userStore?.getPermission;
-  console.log(permission);
   return typeof permission === "number" && permission >= 10;
 });
 // --- 新增：為 Dropdown 準備選項陣列 ---
@@ -355,7 +370,29 @@ const formatDate = (dateString: string | null | undefined): string => {
 // ⭐⭐ 新增/重構：核心資料載入函式 ⭐⭐
 const loadLazyData = async () => {
   loading.value = true;
+  // --- 日期處理 ---
+  // 從 filters 中取出日期陣列 [dateStart, dateEnd]
+  const dateRange = filters.value.dateRange.value;
+  let dateStart = null;
+  let dateEnd = null;
 
+  // 檢查日期陣列是否存在且有效
+  if (dateRange && Array.isArray(dateRange) && dateRange[0]) {
+    // 將 Date 物件格式化為後端看得懂的 'YYYY-MM-DD' 字串
+    // 這樣可以避免時區問題
+    const formatDateForApi = (date: Date) => {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    dateStart = formatDateForApi(dateRange[0]);
+    // 如果使用者只選了一個日期，第二個日期會是 null
+    if (dateRange[1]) {
+      dateEnd = formatDateForApi(dateRange[1]);
+    }
+  }
   // 1. 組合 API 參數
   const apiParams = {
     // 分頁參數
@@ -375,6 +412,8 @@ const loadLazyData = async () => {
     worker: filters.value.worker.value,
     status: filters.value.status.value,
     type: filters.value.type.value,
+    dateStart: dateStart, // 加入開始日期參數
+    dateEnd: dateEnd, // 加入結束日期參數
   };
 
   // 過濾掉值為 null 或空字串的參數，避免送到後端
@@ -397,7 +436,8 @@ const loadLazyData = async () => {
     // }
     // 請根據您的實際 API 回應調整
     form_data.value = response.data.data; // 填充表格資料
-    totalRecords.value = response.data.total; // 更新總筆數
+    totalRecords.value = response.data.meta.total; // 更新總筆數
+    console.log(response.data.meta.total);
   } catch (error) {
     console.error("載入資料失敗:", error);
     // 可以在此處加入錯誤提示，例如使用 PrimeVue Toast
@@ -433,8 +473,9 @@ const handleClearFilters = () => {
   filters.value = {
     caseNumber: { value: null },
     worker: { value: null },
-    status: { value: null },
-    type: { value: null },
+    status: { value: [] },
+    type: { value: [] },
+    dateRange: { value: null }, // 確保清除時也重置日期
   };
   // 清除後也重新查詢
   handleSearch();
@@ -558,9 +599,6 @@ onMounted(() => {
 }
 .font-medium {
   font-weight: 500;
-}
-.text-sm {
-  font-size: 0.875rem;
 }
 .text-color-secondary {
   color: var(--p-text-color-secondary);
