@@ -3,6 +3,7 @@
     <h3 class="text-center mb-4">新入境派案表</h3>
     <form @submit="onSubmit">
       <div class="grid formgrid">
+        <!-- 填表日期 -->
         <div class="field col-12 md:col-6">
           <label for="filingDate">填表日期:</label>
           <Calendar
@@ -12,36 +13,42 @@
             showIcon
             placeholder="YYYY-MM-DD"
             class="w-full"
-            :class="{ 'p-invalid': errors.filingDate }"
+            :class="{ 'p-invalid': !!filingDateError }"
           />
-
-          <ErrorMessage name="filingDate" as="small" class="p-error" />
+          <small class="p-error" v-if="filingDateError">{{
+            filingDateError
+          }}</small>
         </div>
 
+        <!-- 案號 -->
         <div class="field col-12 md:col-6">
           <label for="caseNumber">案號:</label>
           <InputText
             id="caseNumber"
             v-model="caseNumber"
             class="w-full"
-            :class="{ 'p-invalid': errors.caseNumber }"
+            :class="{ 'p-invalid': !!caseNumberError }"
           />
-
-          <ErrorMessage name="caseNumber" as="small" class="p-error" />
+          <small class="p-error" v-if="caseNumberError">{{
+            caseNumberError
+          }}</small>
         </div>
 
+        <!-- 全名 -->
         <div class="field col-12 md:col-6">
           <label for="fullName">全名:</label>
           <InputText
             id="fullName"
             v-model="FullName"
             class="w-full"
-            :class="{ 'p-invalid': errors.FullName }"
+            :class="{ 'p-invalid': !!FullNameError }"
           />
-
-          <ErrorMessage name="FullName" as="small" class="p-error" />
+          <small class="p-error" v-if="FullNameError">{{
+            FullNameError
+          }}</small>
         </div>
 
+        <!-- 原母國籍 -->
         <div class="field col-12 md:col-6">
           <label for="nationalityDropdown">原母國籍</label>
           <Dropdown
@@ -53,23 +60,28 @@
             placeholder="請選擇國籍"
             class="w-full"
             filter
-            :class="{ 'p-invalid': errors.nationality }"
+            :class="{ 'p-invalid': !!nationalityError }"
           />
-
-          <ErrorMessage name="nationality" as="small" class="p-error" />
+          <small class="p-error" v-if="nationalityError">{{
+            nationalityError
+          }}</small>
         </div>
 
+        <!-- 其他國籍 -->
         <div class="field col-12 md:col-6" v-if="selectednationalities === -1">
           <label for="othernationalities">請輸入其他國籍:</label>
           <InputText
             id="othernationalities"
             v-model="othernationalities"
             class="w-full"
-            :class="{ 'p-invalid': errors.othernationalities }"
+            :class="{ 'p-invalid': !!othernationalitiesError }"
           />
-          <ErrorMessage name="othernationalities" as="small" class="p-error" />
+          <small class="p-error" v-if="othernationalitiesError">{{
+            othernationalitiesError
+          }}</small>
         </div>
 
+        <!-- 性別 -->
         <div class="field col-12 md:col-6">
           <label class="mb-2 block">性別:</label>
           <div class="flex flex-wrap gap-3">
@@ -79,6 +91,7 @@
                 name="gender"
                 :value="0"
                 v-model="selectedGender"
+                :class="{ 'p-invalid': !!genderError }"
               />
               <label for="gender0" class="ml-2">男</label>
             </div>
@@ -88,6 +101,7 @@
                 name="gender"
                 :value="1"
                 v-model="selectedGender"
+                :class="{ 'p-invalid': !!genderError }"
               />
               <label for="gender1" class="ml-2">女</label>
             </div>
@@ -97,14 +111,17 @@
                 name="gender"
                 :value="2"
                 v-model="selectedGender"
+                :class="{ 'p-invalid': !!genderError }"
               />
               <label for="gender2" class="ml-2">其他</label>
             </div>
           </div>
-
-          <ErrorMessage name="gender" as="small" class="p-error mt-1" />
+          <small class="p-error mt-1" v-if="genderError">{{
+            genderError
+          }}</small>
         </div>
 
+        <!-- 鄉鎮市區 -->
         <div class="field col-12 md:col-6">
           <label for="townDropdown">鄉鎮市區</label>
           <Dropdown
@@ -116,22 +133,26 @@
             placeholder="請選擇鄉鎮市區"
             class="w-full"
             filter
-            :class="{ 'p-invalid': errors.town }"
+            :class="{ 'p-invalid': !!townError }"
           />
-          <ErrorMessage name="town" as="small" class="p-error" />
+          <small class="p-error" v-if="townError">{{ townError }}</small>
         </div>
 
+        <!-- 其他鄉鎮市區 -->
         <div class="field col-12 md:col-6" v-if="selectedtown === -1">
           <label for="othertown">請輸入其他鄉鎮市區:</label>
           <InputText
             id="othertown"
             v-model="othertown"
             class="w-full"
-            :class="{ 'p-invalid': errors.othertown }"
+            :class="{ 'p-invalid': !!othertownError }"
           />
-          <ErrorMessage name="othertown" as="small" class="p-error" />
+          <small class="p-error" v-if="othertownError">{{
+            othertownError
+          }}</small>
         </div>
 
+        <!-- 主責社工 -->
         <div class="field col-12 md:col-6">
           <label for="mainworkerDropdown">主責社工</label>
           <Dropdown
@@ -139,15 +160,16 @@
             v-model="selectedworkers"
             :options="workers_List"
             optionLabel="name"
-            optionValue="id"
+            optionValue="name"
             placeholder="請選擇主責社工"
             class="w-full"
             filter
-            :class="{ 'p-invalid': errors.worker }"
+            :class="{ 'p-invalid': !!workerError }"
           />
-          <ErrorMessage name="worker" as="small" class="p-error" />
+          <small class="p-error" v-if="workerError">{{ workerError }}</small>
         </div>
 
+        <!-- 提交按鈕 -->
         <div class="field col-12 flex justify-content-end">
           <Button
             type="submit"
@@ -162,105 +184,117 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"; // 導入 computed
+import { ref, onMounted } from "vue";
 import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
+import { useRouter } from "vue-router";
+
 // --- PrimeVue 元件導入 ---
 import Calendar from "primevue/calendar";
 import InputText from "primevue/inputtext";
-// import SelectButton from "primevue/selectbutton"; // 假設你改用 Dropdown 了
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
-// --- VeeValidate 導入 ---
-import { useForm, useField, ErrorMessage } from "vee-validate";
+import { useToast } from "primevue/usetoast";
 
+// --- VeeValidate 導入 ---
+import { useForm, useField } from "vee-validate";
+
+const toast = useToast();
+const router = useRouter();
+
+// --- VeeValidate 表單設定 ---
+const { handleSubmit, meta } = useForm({
+  initialValues: {
+    filingDate: null,
+    caseNumber: "",
+    FullName: "",
+    nationality: null,
+    othernationalities: "",
+    gender: null,
+    town: null,
+    othertown: "",
+    worker: null,
+  },
+});
+
+// --- 自訂驗證規則 ---
 const validateOtherNationality = (value: string | undefined | null) => {
-  // 依賴於 selectednationalities ref 的當前值
   if (selectednationalities.value === -1 && !value?.trim()) {
-    return "請輸入其他國籍"; // 返回錯誤訊息
+    return "請輸入其他國籍";
   }
-  return true; // 驗證通過
+  return true;
 };
 
 const validateOtherTown = (value: string | undefined | null) => {
-  // 依賴於 selectedtown ref 的當前值
   if (selectedtown.value === -1 && !value?.trim()) {
     return "請輸入其他鄉鎮市區";
   }
   return true;
 };
-// --- 為每個欄位使用 useField ---
-const { handleSubmit, errors, meta, setFieldValue } = useForm({});
-// useField 返回一個包含 value ref 和其他屬性的物件
-const { value: filingDate, errorMessage: filingDateError } =
-  useField<Date | null>("filingDate", "required", { initialValue: null });
 
+// --- 為每個欄位使用 useField ---
+const { value: filingDate, errorMessage: filingDateError } =
+  useField<Date | null>("filingDate", "required");
 const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
   "caseNumber",
   "required",
-  { initialValue: "" },
 );
-
 const { value: FullName, errorMessage: FullNameError } = useField<string>(
   "FullName",
   "required",
-  { initialValue: "" },
 );
 const { value: selectednationalities, errorMessage: nationalityError } =
-  useField<number | null>("nationality", "required", { initialValue: null });
-
+  useField<number | null>("nationality", "required");
 const { value: othernationalities, errorMessage: othernationalitiesError } =
-  useField<string>("othernationalities", validateOtherNationality, {
-    initialValue: "",
-  });
+  useField<string>("othernationalities", validateOtherNationality);
 const { value: selectedGender, errorMessage: genderError } = useField<
   number | null
->("gender", "required", { initialValue: null });
+>("gender", "required");
 const { value: selectedtown, errorMessage: townError } = useField<
   number | null
->("town", "required", { initialValue: null });
-
+>("town", "required");
 const { value: othertown, errorMessage: othertownError } = useField<string>(
   "othertown",
   validateOtherTown,
-  { initialValue: "" },
 );
 const { value: selectedworkers, errorMessage: workerError } = useField<
   number | null
->("worker", "required", { initialValue: null });
+>("worker", "required");
 
+// --- API 選項數據 ---
 const Nationality_List = ref<{ id: number; name: string }[]>([]);
 const town_List = ref<{ id: number; name: string }[]>([]);
 const workers_List = ref<{ id: number; name: string }[]>([]);
 
+// --- 生命週期鉤子 ---
 onMounted(() => {
-  apiHandler
-    .get("/option/nationalities")
-    .then((response) => {
-      Nationality_List.value = response.data;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  apiHandler
-    .get("/option/towns")
-    .then((response) => {
-      console.log(response.data);
-      town_List.value = response.data;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  apiHandler
-    .get("/option/workers")
-    .then((response) => {
-      workers_List.value = response.data;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+  const fetchOptions = (endpoint: string, listRef: any) => {
+    apiHandler
+      .get(endpoint)
+      .then((response) => {
+        // 假設後端回應結構為 { success: boolean, data: [...] }
+        if (response.data && Array.isArray(response.data.data)) {
+          listRef.value = response.data.data;
+        }
+      })
+      .catch((error) => {
+        console.error(`獲取 ${endpoint} 選項失敗:`, error);
+        toast.add({
+          severity: "error",
+          summary: "資料載入失敗",
+          detail: `無法從 ${endpoint} 載入選項`,
+          life: 3000,
+        });
+      });
+  };
+
+  fetchOptions("/option/nationalities", Nationality_List);
+  fetchOptions("/option/towns", town_List);
+  fetchOptions("/option/workers", workers_List);
 });
+
+// --- 提交處理 ---
 const onSubmit = handleSubmit(async (values) => {
   let formattedDate = null;
   if (
@@ -270,53 +304,58 @@ const onSubmit = handleSubmit(async (values) => {
     try {
       formattedDate = format(values.filingDate, "yyyy-MM-dd");
     } catch (e) {
-      console.error(e);
+      console.error("日期格式化失敗:", e);
     }
   }
+
+  // 從 values 構建 payload
   const payload = {
-    filing_date: formattedDate,
-    case_number: values.caseNumber?.trim(),
-    full_name: values.FullName?.trim(), // 使用 values 中的 FullName
-    nationality_id: values.nationality,
-    nationality_other:
+    filingDate: formattedDate,
+    caseNumber: values.caseNumber?.trim(),
+    fullName: values.FullName?.trim(),
+    nationalityID: values.nationality,
+    nationalityOther:
       values.nationality === -1 ? values.othernationalities?.trim() : null,
-    gender: values.gender,
-    town_id: values.town,
-    town_other: values.town === -1 ? values.othertown?.trim() : null,
-    worker_id: values.worker,
+    gender: Number(values.gender),
+    town: values.town,
+    townOther: values.town === -1 ? values.othertown?.trim() : null,
+    worker: values.worker,
   };
-  console.log("Submitting:", payload);
-  apiHandler
-    .post("/form/assign/arrival", {
-      filing_date: formattedDate,
-      case_number: values.caseNumber?.trim(),
-      full_name: values.FullName?.trim(), // 使用 values 中的 FullName
-      nationality_id: values.nationality,
-      nationality_other:
-        values.nationality === -1 ? values.othernationalities?.trim() : null,
-      gender: values.gender,
-      town_id: values.town,
-      town_other: values.town === -1 ? values.othertown?.trim() : null,
-      worker_id: values.worker,
-    })
-    .then((response) => {
-      console.log(response);
-    })
-    .catch((error) => {
-      console.error(error);
+
+  try {
+    // 注意: API 端點是 /form/assign/arrival
+    await apiHandler.post("/form/assign/arrival", payload);
+
+    toast.add({
+      severity: "success",
+      summary: "提交成功",
+      detail: "您的表單已成功送出！",
+      life: 1500,
     });
+
+    setTimeout(() => {
+      router.push("/");
+    }, 1500);
+  } catch (error: any) {
+    toast.add({
+      severity: "error",
+      summary: "提交失敗",
+      detail:
+        error.response?.data?.error?.message || "發生未知錯誤，請稍後再試。",
+      life: 3000,
+    });
+  }
 });
 </script>
 
 <style scoped>
-.p-fluid {
-  padding: 20px;
-}
-
-.p-field {
-  margin-bottom: 20px;
-}
 #arrival-form-card .field {
   margin-bottom: 1rem;
+}
+.p-error {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--p-red-500);
+  font-size: 0.875rem;
 }
 </style>

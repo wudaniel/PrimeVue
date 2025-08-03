@@ -108,35 +108,40 @@ const fetchDetailData = async (currentType: string, currentId: string) => {
     const apiUrl = `/form/assign/${currentType}/${currentId}`;
     console.log("AssignItemDetail: 呼叫 API:", apiUrl);
     const response = await apiHandler.get(apiUrl);
-    console.log("AssignItemDetail: API 回應:", response.data);
+    console.log("AssignItemDetail: API 回應:", response.data.data);
 
     // 處理 API 回應的邏輯 (與你 Firstprimevue.vue 中的 handleIdClick 內部邏輯類似)
-    if (Array.isArray(response.data)) {
-      detailData.value = response.data;
+    if (Array.isArray(response.data.data)) {
+      detailData.value = response.data.data;
     } else if (
-      typeof response.data === "object" &&
-      response.data !== null &&
-      Array.isArray(response.data.details)
+      typeof response.data.data === "object" &&
+      response.data.data !== null &&
+      Array.isArray(response.data.data.details)
     ) {
-      detailData.value = response.data.details;
-    } else if (typeof response.data === "object" && response.data !== null) {
-      detailData.value = Object.entries(response.data).map(([key, value]) => ({
-        title: key.charAt(0).toUpperCase() + key.slice(1),
-        description:
-          typeof value === "object" ? JSON.stringify(value) : String(value),
-        value:
-          typeof value === "object"
-            ? "..."
-            : String(value).length > 50
-              ? String(value).substring(0, 47) + "..."
-              : String(value),
-      }));
+      detailData.value = response.data.data.details;
+    } else if (
+      typeof response.data.data === "object" &&
+      response.data.data !== null
+    ) {
+      detailData.value = Object.entries(response.data.data).map(
+        ([key, value]) => ({
+          title: key.charAt(0).toUpperCase() + key.slice(1),
+          description:
+            typeof value === "object" ? JSON.stringify(value) : String(value),
+          value:
+            typeof value === "object"
+              ? "..."
+              : String(value).length > 50
+                ? String(value).substring(0, 47) + "..."
+                : String(value),
+        }),
+      );
     } else {
       console.warn("AssignItemDetail: 資料格式非預期");
       detailData.value = [];
       if (
-        !response.data ||
-        (Array.isArray(response.data) && response.data.length === 0)
+        !response.data.data ||
+        (Array.isArray(response.data.data) && response.data.data.length === 0)
       ) {
         detailError.value = `找不到 ID ${currentId} (類型: ${currentType}) 的資料。`;
       }

@@ -355,9 +355,6 @@ const formatDate = (dateString: string | null | undefined): string => {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
       })
       .replace(/\//g, "-");
   } catch (e) {
@@ -429,15 +426,8 @@ const loadLazyData = async () => {
       params: cleanParams,
     });
 
-    // **重要**：假設您的 API 回應格式如下
-    // {
-    //   "data": [...],
-    //   "pagination": { "totalItems": 100 }
-    // }
-    // 請根據您的實際 API 回應調整
     form_data.value = response.data.data; // 填充表格資料
     totalRecords.value = response.data.meta.total; // 更新總筆數
-    console.log(response.data.meta.total);
   } catch (error) {
     console.error("載入資料失敗:", error);
     // 可以在此處加入錯誤提示，例如使用 PrimeVue Toast

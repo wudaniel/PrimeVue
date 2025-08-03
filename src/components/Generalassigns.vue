@@ -265,7 +265,7 @@
             v-model="selectedworkers"
             :options="workers_List"
             optionLabel="name"
-            optionValue="id"
+            optionValue="name"
             placeholder="請選擇主責社工"
             class="w-full"
             filter
@@ -291,6 +291,7 @@
 import { ref, onMounted, watch } from "vue"; // 保留 watch
 import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
+import { useRouter } from "vue-router";
 // --- PrimeVue 元件導入 ---
 import Calendar from "primevue/calendar";
 import InputText from "primevue/inputtext";
@@ -301,7 +302,10 @@ import Dropdown from "primevue/dropdown";
 import Textarea from "primevue/textarea"; // 導入 Textarea
 // --- VeeValidate 導入 ---
 import { useForm, useField } from "vee-validate"; // ErrorMessage 這次沒直接用
-
+import { useToast } from "primevue/usetoast"; // 用於顯示成功/失敗提示
+import { value } from "@primeuix/themes/aura/knob";
+const toast = useToast(); // 初始化 Toast 服務
+const router = useRouter();
 // --- VeeValidate 表單設定 ---
 // 添加了對應 Snippet 1 的所有欄位
 const { handleSubmit, errors, meta, setFieldValue, values } = useForm({
@@ -315,9 +319,9 @@ const { handleSubmit, errors, meta, setFieldValue, values } = useForm({
     selectedYear: null,
     gender: null,
     naturalized: null,
-    sources: null,
-    othersources: "",
-    caseSource: null, // 個案來源類別
+    sourceID: null, //轉借單位
+    sourceOther: "",
+    sourceCatID: null, // 個案來源類別
     town: null,
     othertown: "",
     caseDetail: "",
@@ -471,9 +475,8 @@ watch(selectedsources, (newSourceId) => {
   );
 
   if (selectedSourceObject) {
-    // 從 source 物件找到對應的 sourceCatID
     const sourceCatID = selectedSourceObject.sourceCatID;
-
+    // 從 source 物件找到對應的 sourceCatID
     if (sourceCatID !== undefined) {
       // 從 sourceCats_List 找到對應的類別物件
       const result = sourceCats_List.value.find(
@@ -523,27 +526,40 @@ const onSubmit = handleSubmit(async (values) => {
     yearOfBirth: values.selectedYear ? values.selectedYear : null, // key 同 Snippet 1
     gender: Number(values.gender), // key 同 Snippet 1
     naturalized:
-      values.naturalized !== null ? Boolean(Number(values.naturalized)) : null, // key 同 Snippet 1
-    sourceID: values.sources,
-    sourceOther: values.sources === -1 ? values.othersources?.trim() : null,
-    sourceCatID: values.caseSource,
+      values.naturalized !== null ? Boolean(Number(values.naturalized)) : null,
+
+    sourceID: values.sourceID, //轉借單位
+    sourceOther: values.sourceID === -1 ? values.sourceOther.trim() : null,
+    sourceCatID: values.sourceCatID, //個案來源
+
     town: values.town, // key 同 Snippet 1
     townOther: values.town === -1 ? values.othertown?.trim() : null,
     detail: values.caseDetail?.trim(), // key 同 Snippet 1
     worker: values.worker, // key 同 Snippet 1
-    // needs: values.needs, // 如果處理 Needs MultiSelect
-    // needs_other: values.needs?.includes(-1) ? values.otherNeeds?.trim() : null
   };
-  console.log("Submitting:", payload);
 
-  // 發送 API 請求到 Snippet 1 的端點
+  // 發送 API 請求到
   try {
-    const response = await apiHandler.post("/form/assign/general", payload); // 使用 general 端點
-    console.log("提交成功:", response);
-    alert("提交成功！");
+    const response = await apiHandler.post("/form/assign/general", payload);
+    toast.add({
+      severity: "success", // 狀態：成功 (綠色)
+      summary: "提交成功", // 標題
+      detail: "您的表單已成功送出！", // 詳細內容
+      life: 1500, // 顯示 1.5 秒後自動消失
+    });
+
+    // 6. 在 Toast 消失後轉跳到主頁
+    setTimeout(() => {
+      router.push("/"); // 轉跳到主頁
+    }, 1500);
   } catch (error) {
-    console.error("提交失敗:", error);
-    alert("提交失敗，請檢查欄位或稍後再試");
+    // 7. 顯示失敗的 Toast 通知
+    toast.add({
+      severity: "error", // 狀態：失敗 (紅色)
+      summary: "提交失敗", // 標題
+      detail: error.response.data.error.message, // 詳細內容 (從 API 回應中取得更佳)
+      life: 3000, // 錯誤訊息顯示久一點
+    });
   }
 });
 </script>
