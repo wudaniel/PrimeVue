@@ -266,7 +266,7 @@ const lazyParams = ref({
   rows: 10, // 每頁筆數
   page: 0, // 目前頁碼 (0-indexed)
   sortField: "fillingdate", // 預設排序欄位
-  sortOrder: 1, // 預設排序方向 (1=asc, -1=desc)
+  sortOrder: -1, // 預設排序方向 (1=asc, -1=desc)
 });
 // --- 新增：篩選功能相關狀態 ---
 const isFilterRowVisible = ref(false); // 控制篩選區塊是否可見，預設隱藏

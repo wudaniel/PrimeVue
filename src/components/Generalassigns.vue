@@ -376,12 +376,12 @@ const { value: selectednaturalized, errorMessage: naturalizedError } = useField<
 >("naturalized" /*, 'required'*/); // 歸化可能非必填
 const { value: selectedsources, errorMessage: sourcesError } = useField<
   number | null
->("sources", "required");
+>("sourceID", "required");
 const { value: othersources, errorMessage: othersourcesError } =
-  useField<string>("othersources", validateOtherSources);
+  useField<string>("sourceOther", validateOtherSources);
 const { value: selectedCaseSource, errorMessage: caseSourceError } = useField<
   number | null
->("caseSource", "required"); // 個案來源類別
+>("sourceCatID", "required"); // 個案來源類別
 const { value: selectedtown, errorMessage: townError } = useField<
   number | null
 >("town", "required");
@@ -411,49 +411,30 @@ const CategoryLock = ref(true); // 控制個案來源類別是否禁用
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
-  // --- API 呼叫，獲取選項列表 ---
-  apiHandler
-    .get("/option/nationalities")
-    .then((response) => {
-      Nationality_List.value = response.data.data;
-      console.error(response);
-      console.log(Nationality_List.value);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  apiHandler
-    .get("/option/sourceCats")
-    .then((response) => {
-      sourceCats_List.value = response.data.data;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  apiHandler
-    .get("/option/sources")
-    .then((response) => {
-      sources_List.value = response.data.data;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  apiHandler
-    .get("/option/towns")
-    .then((response) => {
-      town_List.value = response.data.data;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  apiHandler
-    .get("/option/workers")
-    .then((response) => {
-      workers_List.value = response.data.data;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+  const fetchOptions = (endpoint: string, listRef: any) => {
+    apiHandler
+      .get(endpoint)
+      .then((response) => {
+        // 假設後端回應結構為 { success: boolean, data: [...] }
+        if (response.data && Array.isArray(response.data.data)) {
+          listRef.value = response.data.data;
+        }
+      })
+      .catch((error) => {
+        console.error(`獲取 ${endpoint} 選項失敗:`, error);
+        toast.add({
+          severity: "error",
+          summary: "資料載入失敗",
+          detail: `無法從 ${endpoint} 載入選項`,
+          life: 3000,
+        });
+      });
+  };
+  fetchOptions("/option/nationalities", Nationality_List);
+  fetchOptions("/option/sourceCats", sourceCats_List);
+  fetchOptions("/option/sources", sources_List);
+  fetchOptions("/option/towns", town_List);
+  fetchOptions("/option/workers", workers_List);
 });
 
 // --- 清除歸化選項 ---
@@ -529,7 +510,7 @@ const onSubmit = handleSubmit(async (values) => {
       values.naturalized !== null ? Boolean(Number(values.naturalized)) : null,
 
     sourceID: values.sourceID, //轉借單位
-    sourceOther: values.sourceID === -1 ? values.sourceOther.trim() : null,
+    sourceOther: othersources.value,
     sourceCatID: values.sourceCatID, //個案來源
 
     town: values.town, // key 同 Snippet 1

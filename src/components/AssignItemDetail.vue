@@ -1,285 +1,291 @@
 <template>
   <div class="surface-card p-4 shadow-2 border-round">
-    <div class="flex justify-content-between align-items-center mb-4">
-      <Button
-        @click="goBack"
-        class="mb-4 p-button-secondary p-button-sm"
-        label="返回列表"
-        icon="pi pi-arrow-left"
-      />
-      <Button
-        @click="goToAddRecord"
-        class="p-button-success p-button-sm"
-        label="新增紀錄"
-        icon="pi pi-plus"
-      />
+    <!-- 標題與操作區 (保持不變) -->
+    <div
+      class="flex flex-wrap justify-content-between align-items-center gap-3 mb-4"
+    >
+      <div>
+        <h3 class="m-0 text-xl font-semibold">案件詳細資料</h3>
+        <span class="text-color-secondary text-sm"
+          >案件類型: {{ type }} / 案號: {{ id }}</span
+        >
+      </div>
+      <div class="flex gap-2">
+        <Button
+          @click="goBack"
+          class="p-button-secondary p-button-outlined p-button-sm"
+          label="返回列表"
+          icon="pi pi-arrow-left"
+        />
+        <Button
+          @click="goToAddRecord"
+          class="p-button-success p-button-sm"
+          label="新增紀錄"
+          icon="pi pi-plus"
+        />
+      </div>
     </div>
-    <div v-if="loadingDetailData" class="text-center pa-5">
+
+    <!-- 狀態處理 (保持不變) -->
+    <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
-      <p class="mt-4 text-grey">
-        正在載入 ID {{ id }} (類型: {{ type }}) 的詳細資料...
-      </p>
+      <p class="mt-3 text-color-secondary">{{ loadingStatusText }}</p>
     </div>
-    <div v-else-if="detailError" class="pa-5">
-      <Message severity="error" :closable="false">{{ detailError }}</Message>
+
+    <div v-else-if="error" class="p-5">
+      <Message severity="error" :closable="false">{{ error }}</Message>
     </div>
-    <div v-else-if="detailData && detailData.length > 0">
-      <Card class="mt-3">
-        <template #title> 詳細資料 (ID: {{ id }}, 類型: {{ type }}) </template>
-        <template #content>
-          <div class="detail-list">
-            <div
-              v-for="(detailItem, index) in detailData"
-              :key="index"
-              class="detail-list-item"
-            >
-              <i
-                class="pi pi-circle-fill mr-2"
-                style="font-size: 0.7rem; color: var(--p-primary-color)"
-              ></i>
-              <div class="detail-content">
-                <div class="font-medium">
-                  {{ detailItem.title || `資料項 ${index + 1}` }}
-                </div>
-                <div class="text-sm text-color-secondary">
-                  {{ detailItem.description || "無描述" }}
-                </div>
-              </div>
-              <Chip
-                :label="detailItem.value || 'N/A'"
-                severity="info"
-                size="small"
-                class="ml-auto"
+
+    <!-- 主要內容區 (保持不變) -->
+    <div v-else-if="processedData && processedData.length > 0">
+      <div class="grid detail-grid">
+        <div
+          v-for="item in processedData"
+          :key="item.key"
+          :class="item.isFullWidth ? 'col-12' : 'col-12 md:col-6 lg:col-4'"
+        >
+          <div class="detail-item-card p-3 h-full">
+            <div class="text-sm text-color-secondary mb-1">
+              {{ item.title }}
+            </div>
+            <div :class="item.isFullWidth ? 'text-base' : 'font-bold text-lg'">
+              <Tag
+                v-if="isBoolean(item.originalValue)"
+                :severity="item.originalValue ? 'success' : 'danger'"
+                :value="item.displayValue"
               />
+              <Chip v-else-if="isChip(item.title)" :label="item.displayValue" />
+              <span v-else class="pre-wrap">{{ item.displayValue }}</span>
             </div>
           </div>
-        </template>
-      </Card>
+        </div>
+      </div>
     </div>
-    <div v-else class="text-center text-grey pa-5 mt-3">
-      <i class="pi pi-info-circle mb-2" style="font-size: 2rem"></i>
-      <p>沒有 ID {{ id }} (類型: {{ type }}) 的相關詳細資料。</p>
+
+    <div v-else class="text-center text-color-secondary p-5 mt-3">
+      <i class="pi pi-inbox mb-3" style="font-size: 3rem"></i>
+      <p class="m-0">查無此案件的相關詳細資料。</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
-// import { useRoute, useRouter } from 'vue-router'; // 如果用 props: true, useRoute 不是必須的
-import { useRouter, useRoute } from "vue-router"; // 為了 goBack 和初始獲取 params
-import { apiHandler } from "../class/apiHandler"; // 確認路徑
+import { ref, onMounted, watch, computed } from "vue";
+import { useRouter } from "vue-router";
+import { apiHandler } from "../class/apiHandler";
 
-// 導入需要的 PrimeVue 元件
+// 導入 PrimeVue 元件
 import Button from "primevue/button";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
-import Card from "primevue/card";
-import Chip from "primevue/chip"; // 假設你詳細列表用了 Chip
+import Chip from "primevue/chip";
+import Tag from "primevue/tag";
 
-// 1. 接收路由參數作為 props (因為路由配置了 props: true)
 const props = defineProps<{
-  type: string; // 來自 URL 的 :type 參數 (例如 'general' 或 'arrival')
-  id: string; // 來自 URL 的 :id 參數
+  type: string;
+  id: string;
 }>();
 
-const router = useRouter(); // 用於返回按鈕
-const route = useRoute(); // 也可以用 route.params 訪問，但 props 更直接
+const router = useRouter();
 
-// 狀態變數與你 Firstprimevue.vue 中詳細視圖部分類似
-const detailData = ref<any[]>([]);
-const loadingDetailData = ref(true);
-const detailError = ref<string | null>(null);
+// --- 狀態變數 ---
+const rawData = ref<any>(null);
+const isLoading = ref(true);
+const error = ref<string | null>(null);
+const loadingStatusText = ref("正在載入資料...");
 
-// 獲取詳細資料的函數
-const fetchDetailData = async (currentType: string, currentId: string) => {
-  console.log(
-    `AssignItemDetail: 正在獲取 type=${currentType}, id=${currentId} 的資料`,
+// 移除了 towns 的對照表，因為不再需要
+const optionMaps = ref({
+  sourceCats: new Map<number, string>(),
+  sources: new Map<number, string>(),
+  nationalities: new Map<number, string>(),
+});
+const areOptionsLoaded = ref(false);
+
+// --- 輔助函式 (用於模板) ---
+const isBoolean = (value: any) => typeof value === "boolean";
+// '鄉鎮' 已由 meta 對應，這裡直接用中文
+const isChip = (title: string) =>
+  ["主責社工", "個案來源編號", "鄉鎮", "國籍", "個案來源類別編號"].includes(
+    title,
   );
-  loadingDetailData.value = true;
-  detailData.value = [];
-  detailError.value = null;
 
-  try {
-    // 注意：這裡的 API URL 格式需要與你 Firstprimevue.vue 中的一致
-    // const apitypeMap: { [key: number]: string } = { 1: "general", 2: "arrival" };
-    // const getApiTypeText = (type: number): string => apitypeMap[type] || "unknown";
-    // ^^^ 這段邏輯現在不需要了，因為 props.type 直接就是 'general' 或 'arrival'
+// --- 核心邏輯：使用 computed 處理資料 ---
+const processedData = computed(() => {
+  if (!rawData.value?.data || !rawData.value?.meta || !areOptionsLoaded.value) {
+    return [];
+  }
 
-    const apiUrl = `/form/assign/${currentType}/${currentId}`;
-    console.log("AssignItemDetail: 呼叫 API:", apiUrl);
-    const response = await apiHandler.get(apiUrl);
-    console.log("AssignItemDetail: API 回應:", response.data.data);
+  const caseData = rawData.value.data;
+  const meta = rawData.value.meta;
 
-    // 處理 API 回應的邏輯 (與你 Firstprimevue.vue 中的 handleIdClick 內部邏輯類似)
-    if (Array.isArray(response.data.data)) {
-      detailData.value = response.data.data;
-    } else if (
-      typeof response.data.data === "object" &&
-      response.data.data !== null &&
-      Array.isArray(response.data.data.details)
-    ) {
-      detailData.value = response.data.data.details;
-    } else if (
-      typeof response.data.data === "object" &&
-      response.data.data !== null
-    ) {
-      detailData.value = Object.entries(response.data.data).map(
-        ([key, value]) => ({
-          title: key.charAt(0).toUpperCase() + key.slice(1),
-          description:
-            typeof value === "object" ? JSON.stringify(value) : String(value),
-          value:
-            typeof value === "object"
-              ? "..."
-              : String(value).length > 50
-                ? String(value).substring(0, 47) + "..."
-                : String(value),
-        }),
-      );
-    } else {
-      console.warn("AssignItemDetail: 資料格式非預期");
-      detailData.value = [];
-      if (
-        !response.data.data ||
-        (Array.isArray(response.data.data) && response.data.data.length === 0)
-      ) {
-        detailError.value = `找不到 ID ${currentId} (類型: ${currentType}) 的資料。`;
+  const statusMap: { [key: number]: string } = {
+    0: "未開案",
+    1: "已開案",
+    2: "不開案",
+    3: "已結案",
+  };
+  const genderMap: { [key: number]: string } = { 0: "男", 1: "女", 2: "其他" };
+  const keysToKeepZero = ["status", "gender"];
+
+  return Object.entries(caseData)
+    .map(([key, value]) => {
+      let displayValue = value;
+      let title = meta[key] || key; // 先取得預設標題
+
+      // 格式化特殊值
+      if (key === "nationalityID" && typeof value === "number") {
+        displayValue =
+          optionMaps.value.nationalities.get(value) || displayValue;
+      } else if (key === "sourceCatID" && typeof value === "number") {
+        displayValue = optionMaps.value.sourceCats.get(value) || displayValue;
+      } else if (key === "sourceID" && typeof value === "number") {
+        displayValue = optionMaps.value.sources.get(value) || displayValue;
+      } else if (value === -1) {
+        displayValue = "其他";
+      } else if (key === "status" && typeof value === "number") {
+        displayValue = statusMap[value] || "未知狀態";
+      } else if (key === "gender" && typeof value === "number") {
+        displayValue = genderMap[value] || "未知性別";
+      } else if (key === "naturalized" && typeof value === "boolean") {
+        displayValue = value ? "是" : "否";
       }
-    }
-    if (detailData.value.length === 0 && !detailError.value) {
-      // 如果 API 成功但返回空數據
-      detailError.value = `找不到 ID ${currentId} (類型: ${currentType}) 的資料。`;
-    }
-  } catch (err: any) {
-    console.error("AssignItemDetail: 讀取詳細資料失敗:", err);
-    detailError.value =
-      err.response?.data?.message || err.message || "請求失敗";
-  } finally {
-    loadingDetailData.value = false;
-  }
-};
 
-// 返回按鈕的方法
-const goBack = () => {
-  router.go(-1); // 返回上一頁
-  // 或者 router.push('/your-list-page-path'); // 跳轉到指定的列表頁
-};
-// --- 修改 goToAddRecord 函數 ---
-const goToAddRecord = () => {
-  console.log(`準備為 ID: ${props.id} (類型: ${props.type}) 新增紀錄`);
+      // --- 修改點 1: 處理 townOther 的標題 ---
+      if (key === "townOther") {
+        title = meta["town"] || "鄉鎮"; // 將 'townOther' 的標題強制設定為 'town' 的中文名
+      }
 
-  let targetRouteName = ""; // 目標路由的名稱
+      return {
+        key: key,
+        title: title,
+        displayValue: displayValue,
+        originalValue: value,
+        isFullWidth: key === "detail",
+      };
+    })
+    .filter((item) => {
+      // --- 修改點 2: 過濾掉原始的 'town' 欄位 ---
+      if (item.key === "town") {
+        return false;
+      }
 
-  // 根據 props.type 決定要跳轉到哪個路由名稱
-  // 這些路由名稱 (AddArrivalRecord, AddGeneralRecord) 必須與你在 router/index.ts 中定義的完全一致
-  if (props.type === "arrival") {
-    targetRouteName = "arrivalRecords"; // <--- 修改為路由表中的 name
-  } else if (props.type === "general") {
-    targetRouteName = "generalRecords"; // <--- 修改為路由表中的 name
-  } else {
-    console.error(
-      "goToAddRecord: 未知的類型，無法跳轉到新增紀錄頁面:",
-      props.type,
-    );
-    alert("錯誤：未知的記錄類型，無法新增記錄！");
-    return;
-  }
-
-  // 使用 router.push 進行跳轉
-  // 將案號 (props.id) 作為查詢參數 (query parameter) `caseNumber` 傳遞
-  router.push({
-    name: targetRouteName, // 使用路由名稱
-    query: {
-      caseNumber: props.id, // 將當前詳情的 ID 作為 'caseNumber' 查詢參數
-      // 目標表單頁面需要配置 props 來接收這個查詢參數
-    },
-  });
-};
-// --- 修改結束 ---
-
-// 元件掛載時獲取數據
-onMounted(() => {
-  fetchDetailData(props.type, props.id);
+      const val = item.originalValue;
+      if (val === null || val === undefined || val === "") return false;
+      if (val === 0 && keysToKeepZero.includes(item.key)) return true;
+      if (val === 0) return false;
+      return true;
+    });
 });
 
-// 監聽 props 變化，如果路由參數改變但元件被複用，則重新獲取數據
-watch(
-  () => [props.type, props.id], // 監聽一個包含 props 的陣列
-  (newValues, oldValues) => {
-    const [newType, newId] = newValues;
-    const [oldType, oldId] = oldValues || [null, null]; // 處理 oldValues 可能為 undefined 的情況
+// --- 資料獲取 ---
+const fetchOptionMaps = async () => {
+  loadingStatusText.value = "正在載入選項對照表...";
+  try {
+    // --- 修改點 3: 移除對 towns API 的請求 ---
+    const responses = await Promise.all([
+      apiHandler.get("/option/sourceCats"),
+      apiHandler.get("/option/sources"),
+      apiHandler.get("/option/nationalities"),
+    ]);
 
-    if (newType && newId && (newType !== oldType || newId !== oldId)) {
-      console.log(
-        `AssignItemDetail: Props 變化，重新獲取資料 type=${newType}, id=${newId}`,
-      );
-      fetchDetailData(newType, newId);
+    const [sourceCatsRes, sourcesRes, nationalitiesRes] = responses;
+
+    optionMaps.value.sourceCats = new Map(
+      sourceCatsRes.data.data.map((item: any) => [item.id, item.name]),
+    );
+    optionMaps.value.sources = new Map(
+      sourcesRes.data.data.map((item: any) => [item.id, item.name]),
+    );
+    optionMaps.value.nationalities = new Map(
+      nationalitiesRes.data.data.map((item: any) => [item.id, item.name]),
+    );
+
+    areOptionsLoaded.value = true;
+  } catch (err) {
+    error.value = "讀取選項對照表失敗，部分資料可能顯示為 ID。";
+    console.error("Fetch option maps failed:", err);
+    areOptionsLoaded.value = true;
+  }
+};
+
+const fetchData = async (currentType: string, currentId: string) => {
+  loadingStatusText.value = "正在載入案件資料...";
+  isLoading.value = true;
+  error.value = null;
+  rawData.value = null;
+  try {
+    const apiUrl = `/form/assign/${currentType}/${currentId}`;
+    const response = await apiHandler.get(apiUrl);
+
+    if (response.data && response.data.success) {
+      rawData.value = response.data;
+    } else {
+      throw new Error(response.data.message || "API 回應格式錯誤");
+    }
+  } catch (err: any) {
+    error.value = err.response?.data?.message || err.message || "請求失敗";
+    console.error("讀取資料失敗:", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// --- 生命週期鉤子 (保持不變) ---
+onMounted(() => {
+  const initialize = async () => {
+    isLoading.value = true;
+    await fetchOptionMaps();
+    await fetchData(props.type, props.id);
+    isLoading.value = false;
+  };
+
+  initialize();
+});
+
+watch(
+  () => [props.type, props.id],
+  ([newType, newId]) => {
+    if (newType && newId) {
+      fetchData(newType, newId);
     }
   },
 );
+
+// --- 頁面導航 (保持不變) ---
+const goBack = () => router.go(-1);
+const goToAddRecord = () => {
+  let targetRouteName = "";
+  if (props.type === "arrival") targetRouteName = "arrivalRecords";
+  else if (props.type === "general") targetRouteName = "generalRecords";
+  else {
+    console.error("未知的類型:", props.type);
+    return;
+  }
+  router.push({ name: targetRouteName, query: { caseNumber: props.id } });
+};
 </script>
 
 <style scoped>
-/* 添加你需要的詳細頁面樣式 */
-.text-grey {
-  color: var(--p-text-color-secondary);
+/* 樣式保持不變 */
+.detail-grid {
+  row-gap: 1rem;
 }
-.pa-5 {
-  padding: 1.25rem;
-}
-.mt-4 {
-  margin-top: 1rem;
-}
-.mb-4 {
-  margin-bottom: 1rem;
-}
-/* 複製 Firstprimevue.vue 中的 .detail-list 等相關樣式過來 */
-.detail-list {
+.detail-item-card {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--border-radius);
+  background-color: var(--surface-a);
+  transition: background-color 0.2s;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
 }
-.detail-list-item {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--p-content-border-color);
+.detail-item-card:hover {
+  background-color: var(--surface-b);
 }
-.detail-list-item:last-child {
-  border-bottom: none;
+.h-full {
+  height: 100%;
 }
-.detail-content {
-  flex-grow: 1;
-  margin-right: 1rem;
-}
-.font-medium {
-  font-weight: 500;
-}
-.text-sm {
-  font-size: 0.875rem;
-}
-.text-color-secondary {
-  color: var(--p-text-color-secondary);
-}
-.ml-auto {
-  margin-left: auto;
-}
-.mr-2 {
-  margin-right: 0.5rem;
-}
-.mt-3 {
-  margin-top: 0.75rem;
-}
-.flex {
-  display: flex;
-} /* 確保 PrimeFlex class 生效 */
-.justify-content-between {
-  justify-content: space-between;
-}
-.align-items-center {
-  align-items: center;
-}
-.mb-4 {
-  margin-bottom: 1rem;
+.pre-wrap {
+  white-space: pre-wrap;
 }
 </style>
