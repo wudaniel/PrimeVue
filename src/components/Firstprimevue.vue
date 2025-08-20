@@ -191,35 +191,37 @@
           </template>
         </Column>
 
-        <Column header="操作" style="min-width: 200px; text-align: center">
+        <Column header="操作" style="min-width: 200px">
           <template #body="slotProps">
-            <Button
-              label="開案"
-              class="p-button-sm p-button-success"
-              @click="handleOpenCase(slotProps.data)"
-              :disabled="slotProps.data.status !== 0"
-              :aria-label="
-                '為 caseNumber ' + slotProps.data.caseNumber + ' 開案'
-              "
-            />
-            <Button
-              label="不開案"
-              icon="pi pi-times-circle"
-              class="p-button-sm p-button-warning"
-              @click="handleDoNotOpenCase(slotProps.data)"
-              :disabled="slotProps.data.status !== 0"
-              :aria-label="
-                '將案號 ' + slotProps.data.caseNumber + ' 設為不開案'
-              "
-            />
-            <Button
-              label="結案"
-              icon="pi pi-times-circle"
-              class="p-button-sm p-button-warning"
-              @click="handleFinishCase(slotProps.data)"
-              :disabled="slotProps.data.status !== 1"
-              :aria-label="'將案號 ' + slotProps.data.caseNumber + ' 設為結案'"
-            />
+            <div class="flex gap-2 justify-content-center">
+              <Button
+                label="開案"
+                class="p-button-sm p-button-success"
+                @click="handleOpenCase(slotProps.data)"
+                :disabled="slotProps.data.status !== 0"
+                :aria-label="
+                  '為 caseNumber ' + slotProps.data.caseNumber + ' 開案'
+                "
+              />
+              <Button
+                label="不開案"
+                class="p-button-sm p-button-warning"
+                @click="handleDoNotOpenCase(slotProps.data)"
+                :disabled="slotProps.data.status !== 0"
+                :aria-label="
+                  '將案號 ' + slotProps.data.caseNumber + ' 設為不開案'
+                "
+              />
+              <Button
+                label="結案"
+                class="p-button-sm p-button-warning"
+                @click="handleFinishCase(slotProps.data)"
+                :disabled="slotProps.data.status !== 1"
+                :aria-label="
+                  '將案號 ' + slotProps.data.caseNumber + ' 設為結案'
+                "
+              />
+            </div>
           </template>
         </Column>
 
@@ -495,89 +497,67 @@ const handlecaseNumberClick = (item: { caseNumber: string; type: number }) => {
   const targetPath = `/assigns/${typeName}/${item.caseNumber}`;
   console.log("列表元件：準備跳轉到:", targetPath);
   router.push(targetPath);
-
-  // 或者使用命名路由 (更推薦，如果已在 router/index.ts 中定義 name)
-  // router.push({ name: 'AssignDetail', params: { type: typeName, id: item.id } });
 };
+// 輔助函式：將案件類型數字轉換為路由可用的字串
+const getTypeNameString = (type: number): string => {
+  return type === 1 ? "general" : "arrival";
+};
+
+// 統一的導航函式
+const navigateToOperationPage = (
+  item: { caseNumber: string; type: number },
+  operation: "open" | "refuse" | "close",
+) => {
+  console.log(`導航至 ${operation} 頁面，案號:`, item.caseNumber);
+  const typeName = getTypeNameString(item.type);
+
+  router.push({
+    // 使用單一的路由名稱
+    name: "AssignOperation", // <-- 請確保這個路由名稱與 router/index.ts 中定義的一致
+    params: {
+      type: typeName,
+      id: item.caseNumber,
+      operation: operation, // <-- 動態傳入操作類型
+    },
+  });
+};
+
 // ---未開案>>開案---
 const handleOpenCase = (item: {
   caseNumber: string;
   type: number;
   status: number;
 }) => {
-  console.log(
-    "準備為案號:",
-    item.caseNumber,
-    "類型:",
-    item.type,
-    "進行開案操作",
-  );
-  // 新增/修改 START：明確只有 status 0 (未開案) 才能開案
-  if (item.status === 0) {
-    // 新增/修改 END
-    alert(`模擬為 ID: ${item.caseNumber} 進行開案 (實際應調用API)`);
-    const index = testdata.value.findIndex(
-      (d) => d.caseNumber === item.caseNumber,
-    );
-    if (index !== -1) {
-      testdata.value[index].status = 1; // 更新為已開案
-    }
-  } else {
-    alert(`案號: ${item.caseNumber} 的當前狀態無法執行開案操作。`);
-  }
+  if (item.status !== 0) return;
+  navigateToOperationPage(item, "open");
 };
-// ---已開案>>結案---
-const handleFinishCase = (item: {
-  caseNumber: string;
-  type: number;
-  status: number;
-}) => {
-  console.log(
-    "準備為案號:",
-    item.caseNumber,
-    "類型:",
-    item.type,
-    "設為已開案轉結案",
-  );
-  if (item.status === 1) {
-    // 只能從 "已開" (1) 變為 "結案" (3)
-    // 模擬 API 調用
-    alert(`模擬將案號: ${item.caseNumber} 狀態從 '已開' 改為 '結案'`);
-    const index = testdata.value.findIndex(
-      (d) => d.caseNumber === item.caseNumber,
-    );
-    if (index !== -1) {
-      testdata.value[index].status = 3; // 更新為結案
-    }
-  } else {
-    alert(`案號: ${item.caseNumber} 。`);
-  }
-};
+
 // ---未開案>>不開案---
 const handleDoNotOpenCase = (item: {
   caseNumber: string;
   type: number;
   status: number;
 }) => {
-  console.log("準備為案號:", item.caseNumber, "類型:", item.type, "設為不開案");
-  if (item.status === 0) {
-    // 只能從 "未開案" (0) 變為 "不開案" (2)
-    // 模擬 API 調用
-    alert(`模擬將案號: ${item.caseNumber} 狀態從 '未開案' 改為 '不開案'`);
-    const index = testdata.value.findIndex(
-      (d) => d.caseNumber === item.caseNumber,
-    );
-    if (index !== -1) {
-      testdata.value[index].status = 2; // 更新為不開案
-    }
-  } else {
-    alert(`案號: ${item.caseNumber} 的當前狀態無法執行不開案操作。`);
-  }
+  if (item.status !== 0) return;
+  navigateToOperationPage(item, "refuse");
+};
+
+// ---已開案>>結案---
+const handleFinishCase = (item: {
+  caseNumber: string;
+  type: number;
+  status: number;
+}) => {
+  if (item.status !== 1) return;
+  navigateToOperationPage(item, "close");
 };
 
 // --- 生命週期鉤子 ---
 // ⭐⭐ 修改：onMounted 改為呼叫新的 loadLazyData 函式 ⭐⭐
 onMounted(() => {
+  console.log(apiHandler.get("option/closingReasons"));
+  console.log(apiHandler.get("option/needs"));
+  console.log(apiHandler.get("/option/refusingReasons"));
   loadLazyData();
 });
 </script>

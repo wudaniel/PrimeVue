@@ -1,5 +1,5 @@
 <template>
-  <div class="surface-card p-4 shadow-2 border-round">
+  <div class="surface-card p-2 sm:p-4 shadow-2 border-round">
     <!-- 標題與操作區 (保持不變) -->
     <div
       class="flex flex-wrap justify-content-between align-items-center gap-3 mb-4"
@@ -36,35 +36,88 @@
       <Message severity="error" :closable="false">{{ error }}</Message>
     </div>
 
-    <!-- 主要內容區 (保持不變) -->
-    <div v-else-if="processedData && processedData.length > 0">
-      <div class="grid detail-grid">
-        <div
-          v-for="item in processedData"
-          :key="item.key"
-          :class="item.isFullWidth ? 'col-12' : 'col-12 md:col-6 lg:col-4'"
-        >
-          <div class="detail-item-card p-3 h-full">
-            <div class="text-sm text-color-secondary mb-1">
-              {{ item.title }}
-            </div>
-            <div :class="item.isFullWidth ? 'text-base' : 'font-bold text-lg'">
-              <Tag
-                v-if="isBoolean(item.originalValue)"
-                :severity="item.originalValue ? 'success' : 'danger'"
-                :value="item.displayValue"
-              />
-              <Chip v-else-if="isChip(item.title)" :label="item.displayValue" />
-              <span v-else class="pre-wrap">{{ item.displayValue }}</span>
+    <!-- 主要內容區 -->
+    <div v-else>
+      <!-- 案件詳細資料區塊 -->
+      <div v-if="processedData && processedData.length > 0">
+        <div class="grid detail-grid">
+          <div
+            v-for="item in processedData"
+            :key="item.key"
+            :class="item.isFullWidth ? 'col-12' : 'col-12 lg:col-6 xl:col-3'"
+          >
+            <div class="detail-item-card p-2 md:p-3">
+              <div class="text-color-secondary mb-1 item-title">
+                {{ item.title }}
+              </div>
+              <div
+                :class="item.isFullWidth ? 'text-base' : 'font-bold text-lg'"
+                class="item-value"
+              >
+                <span v-if="item.key === 'naturalized'" class="pre-wrap">{{
+                  item.displayValue
+                }}</span>
+                <Tag
+                  v-else-if="isBoolean(item.originalValue)"
+                  :severity="item.originalValue ? 'success' : 'danger'"
+                  :value="item.displayValue"
+                />
+                <Chip
+                  v-else-if="isChip(item.title)"
+                  :label="item.displayValue"
+                />
+                <span v-else class="pre-wrap">{{ item.displayValue }}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <div v-else class="text-center text-color-secondary p-5 mt-3">
+        <i class="pi pi-inbox mb-3" style="font-size: 3rem"></i>
+        <p class="m-0">查無此案件的相關詳細資料。</p>
+      </div>
 
-    <div v-else class="text-center text-color-secondary p-5 mt-3">
-      <i class="pi pi-inbox mb-3" style="font-size: 3rem"></i>
-      <p class="m-0">查無此案件的相關詳細資料。</p>
+      <!-- --- 新增：服務紀錄列表區塊 --- -->
+      <div class="mt-5">
+        <h4 class="m-0 mb-3 text-lg font-semibold">服務紀錄列表</h4>
+        <DataTable
+          :value="records"
+          responsiveLayout="scroll"
+          :paginator="true"
+          :rows="5"
+          :rowsPerPageOptions="[5, 10, 20]"
+          stripedRows
+          paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          currentPageReportTemplate="顯示 {first} 到 {last} 項，共 {totalRecords} 項紀錄"
+        >
+          <Column field="recordID" header="紀錄ID" :sortable="true"></Column>
+          <Column field="date" header="日期" :sortable="true"></Column>
+          <Column field="author" header="人員" :sortable="true"></Column>
+          <Column field="methodID" header="服務方式" :sortable="true">
+            <template #body="slotProps">
+              <!-- 
+                  這裡使用三元運算子來判斷：
+                  1. 如果 methodID 是 -1，就顯示 '其他'。
+                  2. 否則，就去 optionMaps 裡面找對應的名稱。
+                  3. 如果找不到對應名稱 (以防萬一)，就顯示 '未知'。
+                -->
+              <span>
+                {{
+                  slotProps.data.methodID === -1
+                    ? "其他"
+                    : optionMaps.serviceMethods.get(slotProps.data.methodID) ||
+                      "未知"
+                }}
+              </span>
+            </template>
+          </Column>
+
+          <template #empty>
+            <div class="text-center text-color-secondary p-4">尚無服務紀錄</div>
+          </template>
+        </DataTable>
+      </div>
+      <!-- --- 新增區塊結束 --- -->
     </div>
   </div>
 </template>
@@ -74,12 +127,14 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { apiHandler } from "../class/apiHandler";
 
-// 導入 PrimeVue 元件
+// --- 修改：導入新增的 DataTable 元件 ---
 import Button from "primevue/button";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import Chip from "primevue/chip";
 import Tag from "primevue/tag";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
 
 const props = defineProps<{
   type: string;
@@ -93,32 +148,33 @@ const rawData = ref<any>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const loadingStatusText = ref("正在載入資料...");
+// --- 新增：一個 ref 來儲存服務紀錄列表 ---
+const records = ref<any[]>([]);
 
-// 移除了 towns 的對照表，因為不再需要
 const optionMaps = ref({
   sourceCats: new Map<number, string>(),
   sources: new Map<number, string>(),
   nationalities: new Map<number, string>(),
+  needs: new Map<number, string>(),
+  // --- 新增：服務方式的對照表 ---
+  serviceMethods: new Map<number, string>(),
 });
 const areOptionsLoaded = ref(false);
 
-// --- 輔助函式 (用於模板) ---
+// --- 輔助函式 (保持不變) ---
 const isBoolean = (value: any) => typeof value === "boolean";
-// '鄉鎮' 已由 meta 對應，這裡直接用中文
 const isChip = (title: string) =>
   ["主責社工", "個案來源編號", "鄉鎮", "國籍", "個案來源類別編號"].includes(
     title,
   );
 
-// --- 核心邏輯：使用 computed 處理資料 ---
+// --- 核心邏輯 (保持不變) ---
 const processedData = computed(() => {
   if (!rawData.value?.data || !rawData.value?.meta || !areOptionsLoaded.value) {
     return [];
   }
-
   const caseData = rawData.value.data;
   const meta = rawData.value.meta;
-
   const statusMap: { [key: number]: string } = {
     0: "未開案",
     1: "已開案",
@@ -126,14 +182,12 @@ const processedData = computed(() => {
     3: "已結案",
   };
   const genderMap: { [key: number]: string } = { 0: "男", 1: "女", 2: "其他" };
-  const keysToKeepZero = ["status", "gender"];
+  const keysToKeepZero = ["status", "gender", "yearOfBirth"];
 
   return Object.entries(caseData)
     .map(([key, value]) => {
       let displayValue = value;
-      let title = meta[key] || key; // 先取得預設標題
-
-      // 格式化特殊值
+      let title = meta[key] || key;
       if (key === "nationalityID" && typeof value === "number") {
         displayValue =
           optionMaps.value.nationalities.get(value) || displayValue;
@@ -141,6 +195,18 @@ const processedData = computed(() => {
         displayValue = optionMaps.value.sourceCats.get(value) || displayValue;
       } else if (key === "sourceID" && typeof value === "number") {
         displayValue = optionMaps.value.sources.get(value) || displayValue;
+      } else if (key === "needsID" && Array.isArray(value)) {
+        const needsText: string[] = [];
+        value.forEach((id) => {
+          if (id !== -1) {
+            const needName = optionMaps.value.needs.get(id);
+            if (needName) needsText.push(needName);
+          }
+        });
+        if (value.includes(-1) && caseData.needsOther) {
+          needsText.push(caseData.needsOther);
+        }
+        displayValue = needsText.length > 0 ? needsText.join("、") : "無";
       } else if (value === -1) {
         displayValue = "其他";
       } else if (key === "status" && typeof value === "number") {
@@ -149,29 +215,25 @@ const processedData = computed(() => {
         displayValue = genderMap[value] || "未知性別";
       } else if (key === "naturalized" && typeof value === "boolean") {
         displayValue = value ? "是" : "否";
+      } else if (key === "yearOfBirth" && value === 0) {
+        displayValue = "N/A";
       }
-
-      // --- 修改點 1: 處理 townOther 的標題 ---
       if (key === "townOther") {
-        title = meta["town"] || "鄉鎮"; // 將 'townOther' 的標題強制設定為 'town' 的中文名
+        title = meta["town"] || "鄉鎮";
       }
-
       return {
-        key: key,
-        title: title,
-        displayValue: displayValue,
+        key,
+        title,
+        displayValue,
         originalValue: value,
         isFullWidth: key === "detail",
       };
     })
     .filter((item) => {
-      // --- 修改點 2: 過濾掉原始的 'town' 欄位 ---
-      if (item.key === "town") {
-        return false;
-      }
-
+      if (item.key === "town" || item.key === "needsOther") return false;
       const val = item.originalValue;
       if (val === null || val === undefined || val === "") return false;
+      if (Array.isArray(val) && val.length === 0) return false;
       if (val === 0 && keysToKeepZero.includes(item.key)) return true;
       if (val === 0) return false;
       return true;
@@ -182,15 +244,21 @@ const processedData = computed(() => {
 const fetchOptionMaps = async () => {
   loadingStatusText.value = "正在載入選項對照表...";
   try {
-    // --- 修改點 3: 移除對 towns API 的請求 ---
     const responses = await Promise.all([
       apiHandler.get("/option/sourceCats"),
       apiHandler.get("/option/sources"),
       apiHandler.get("/option/nationalities"),
+      apiHandler.get("/option/needs"),
+      // --- 修改：同時獲取服務方式的對照表 ---
+      apiHandler.get("/option/serviceMethods"),
     ]);
-
-    const [sourceCatsRes, sourcesRes, nationalitiesRes] = responses;
-
+    const [
+      sourceCatsRes,
+      sourcesRes,
+      nationalitiesRes,
+      needsRes,
+      serviceMethodsRes,
+    ] = responses;
     optionMaps.value.sourceCats = new Map(
       sourceCatsRes.data.data.map((item: any) => [item.id, item.name]),
     );
@@ -200,7 +268,12 @@ const fetchOptionMaps = async () => {
     optionMaps.value.nationalities = new Map(
       nationalitiesRes.data.data.map((item: any) => [item.id, item.name]),
     );
-
+    optionMaps.value.needs = new Map(
+      needsRes.data.data.map((item: any) => [item.id, item.name]),
+    );
+    optionMaps.value.serviceMethods = new Map(
+      serviceMethodsRes.data.data.map((item: any) => [item.id, item.name]),
+    );
     areOptionsLoaded.value = true;
   } catch (err) {
     error.value = "讀取選項對照表失敗，部分資料可能顯示為 ID。";
@@ -210,18 +283,32 @@ const fetchOptionMaps = async () => {
 };
 
 const fetchData = async (currentType: string, currentId: string) => {
-  loadingStatusText.value = "正在載入案件資料...";
+  loadingStatusText.value = "正在載入案件資料與服務紀錄...";
   isLoading.value = true;
   error.value = null;
   rawData.value = null;
+  records.value = []; // 清空舊資料
   try {
-    const apiUrl = `/form/assign/${currentType}/${currentId}`;
-    const response = await apiHandler.get(apiUrl);
+    // --- 修改：使用 Promise.all 同時發送兩個 API 請求 ---
+    const detailUrl = `/form/assign/${currentType}/${currentId}`;
+    const recordsUrl = `/form/assign/${currentType}/${currentId}/record`;
+    const [detailResponse, recordsResponse] = await Promise.all([
+      apiHandler.get(detailUrl),
+      apiHandler.get(recordsUrl),
+    ]);
 
-    if (response.data && response.data.success) {
-      rawData.value = response.data;
+    // 處理案件詳細資料
+    if (detailResponse.data && detailResponse.data.success) {
+      rawData.value = detailResponse.data;
     } else {
-      throw new Error(response.data.message || "API 回應格式錯誤");
+      throw new Error(detailResponse.data.message || "讀取案件詳細資料失敗");
+    }
+
+    // 處理服務紀錄列表
+    if (recordsResponse.data && recordsResponse.data.success) {
+      records.value = recordsResponse.data.data;
+    } else {
+      console.warn("讀取服務紀錄列表失敗:", recordsResponse.data.message);
     }
   } catch (err: any) {
     error.value = err.response?.data?.message || err.message || "請求失敗";
@@ -239,7 +326,6 @@ onMounted(() => {
     await fetchData(props.type, props.id);
     isLoading.value = false;
   };
-
   initialize();
 });
 
@@ -252,7 +338,7 @@ watch(
   },
 );
 
-// --- 頁面導航 (保持不變) ---
+// --- 頁面導航 ---
 const goBack = () => router.go(-1);
 const goToAddRecord = () => {
   let targetRouteName = "";
@@ -264,28 +350,36 @@ const goToAddRecord = () => {
   }
   router.push({ name: targetRouteName, query: { caseNumber: props.id } });
 };
+
+// --- 新增：導航到紀錄詳細頁的函式 ---
+// 請根據您的路由設定修改此函式
+const goToRecordDetail = (recordId: string | number) => {
+  console.log(`準備導航到紀錄 ${recordId}`);
+  // 範例: router.push({ name: 'recordDetail', params: { id: recordId } });
+};
 </script>
 
 <style scoped>
-/* 樣式保持不變 */
 .detail-grid {
-  row-gap: 1rem;
+  row-gap: 0.1rem;
 }
 .detail-item-card {
   border: 1px solid var(--surface-border);
+  border-block-color: gray;
   border-radius: var(--border-radius);
   background-color: var(--surface-a);
   transition: background-color 0.2s;
   display: flex;
   flex-direction: column;
+  min-height: 4.5rem;
 }
 .detail-item-card:hover {
   background-color: var(--surface-b);
 }
-.h-full {
-  height: 100%;
-}
 .pre-wrap {
   white-space: pre-wrap;
+}
+.item-value {
+  word-break: break-word;
 }
 </style>

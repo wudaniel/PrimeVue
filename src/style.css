@@ -1,80 +1,38 @@
+/* -------------------------------------------------- */
+/*      推薦的全域 CSS 檔案 (與 PrimeVue 搭配使用)     */
+/* -------------------------------------------------- */
+
 :root {
+  /* 1. 設定你偏好的基礎字體 */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* 2. 在這裡設定整個應用的基礎字體大小 */
+  /*    16px 是預設值，18px 會明顯放大 */
+  font-size: 24px;
 
+  /* 保留這些有益的瀏覽器渲染優化 */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
+  /* 移除 Vite 預設的 display:flex 等樣式，讓頁面正常佈局 */
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+
+  /* 3. 使用 PrimeVue 的 CSS 變數，這樣樣式才能跟隨主題變化 */
+  background-color: var(--surface-b); /* PrimeVue 的背景色變數 */
+  color: var(--text-color);       /* PrimeVue 的文字顏色變數 */
+
+  /* 設定最小高度，確保內容不足時頁腳也能在底部 */
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-.card {
-  padding: 2em;
-}
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
+/* 
+   其他 Vite 預設的樣式，如 a, h1, button, .card, #app 等都可以安全地移除，
+   因為 PrimeVue 會提供自己的樣式。
+   保持這個檔案的簡潔有助於未來的維護。
+*/

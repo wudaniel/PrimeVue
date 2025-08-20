@@ -28,7 +28,7 @@ import ToastService from "primevue/toastservice";
 
 import { localize, setLocale } from "@vee-validate/i18n"; // 多國語言相關
 import zh_TW from "@vee-validate/i18n/dist/locale/zh_TW.json"; // 導入繁體中文語言包
-
+import "./style.css"; // <-- 確保這個路徑和檔名正確
 defineRule("required", required);
 defineRule("min", min);
 defineRule("confirmed", confirmed);

@@ -63,6 +63,19 @@ const router = createRouter({
       name: "test",
       component: () => import("../components/test.vue"),
     },
+    {
+      // 路徑匹配 assigns/general/CASE123/open 這樣的格式
+      path: "/assigns/:type/:id/:operation",
+
+      // 路由名稱，必須與列表頁中使用的 'name' 完全一致
+      name: "AssignOperation",
+
+      // 指向一個能處理這三種操作的元件
+      component: () => import("../components/AssignOperationView.vue"), // 或者 () => import('../views/AssignOperationView.vue')
+
+      // 將路由參數 (:type, :id, :operation) 作為 props 傳遞給元件
+      props: true,
+    },
   ],
 });
 
