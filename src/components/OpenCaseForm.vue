@@ -45,7 +45,14 @@
 
         <!-- 提交按鈕 -->
         <div class="col-12 flex justify-content-end mt-4">
-          <Button label="提交開案" icon="pi pi-check" @click="handleSubmit" />
+          <!-- ★★★ 修改點：加入 loading 和 disabled 狀態 ★★★ -->
+          <Button
+            label="提交開案"
+            icon="pi pi-check"
+            :loading="isSubmitting"
+            :disabled="isSubmitting"
+            @click="handleSubmit"
+          />
         </div>
       </div>
     </template>
@@ -55,13 +62,15 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import { apiHandler } from "../class/apiHandler";
+import { useToast } from "primevue/usetoast"; // ★★★ 1. 導入 useToast ★★★
 
-// ★★★ 修改點：導入 MultiSelect ★★★
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import ProgressSpinner from "primevue/progressspinner";
+
+const toast = useToast(); // ★★★ 2. 實例化 toast ★★★
 
 const props = defineProps<{
   caseId: string;
@@ -69,28 +78,24 @@ const props = defineProps<{
 }>();
 
 const isLoading = ref(true);
+const isSubmitting = ref(false);
 const reasonOptions = ref<{ id: number; name: string }[]>([]);
-// ★★★ 修改點：v-model 的 ref 從單一值變為陣列 ★★★
 const selectedReasonIds = ref<number[]>([]);
 const otherReasonText = ref("");
 
-// ★★★ 修改點：更新 computed 屬性，檢查陣列中是否包含負數 ★★★
 const isOtherFieldVisible = computed(() => {
-  // 使用 .some() 方法來檢查陣列中是否有任何一個元素小於 0
   return selectedReasonIds.value.some((id) => id < 0);
 });
 
-// ★★★ 修改點：更新 watch 監聽器，監聽陣列變化 ★★★
 watch(
   selectedReasonIds,
   (newIds) => {
-    // 如果新的 ID 陣列中不再包含任何負數，就清空 "其他" 欄位
     if (!newIds.some((id) => id < 0)) {
       otherReasonText.value = "";
     }
   },
   { deep: true },
-); // 監聽陣列建議加上 deep: true
+);
 
 onMounted(() => {
   fetchOpeningReasons();
@@ -105,19 +110,80 @@ const fetchOpeningReasons = async () => {
     }
   } catch (error) {
     console.error("獲取開案原因選項失敗:", error);
+    // ★★★ 替換 alert ★★★
+    toast.add({
+      severity: "error",
+      summary: "載入失敗",
+      detail: "無法獲取開案原因選項，請稍後再試。",
+      life: 3000,
+    });
   } finally {
     isLoading.value = false;
   }
 };
 
-// ★★★ 修改點：更新 handleSubmit 來處理陣列資料 ★★★
-const handleSubmit = () => {
-  console.log("表單提交");
-  console.log("案號:", props.caseId);
-  console.log("選擇的原因 ID 列表:", selectedReasonIds.value);
+const handleSubmit = async () => {
+  // 1. 基本驗證
+  if (selectedReasonIds.value.length === 0) {
+    // ★★★ 替換 alert ★★★
+    toast.add({
+      severity: "warn",
+      summary: "提示",
+      detail: "請至少選擇一個開案原因",
+      life: 3000,
+    });
+    return;
+  }
 
-  if (isOtherFieldVisible.value) {
-    console.log("詳細說明:", otherReasonText.value);
+  if (isOtherFieldVisible.value && !otherReasonText.value.trim()) {
+    // ★★★ 替換 alert ★★★
+    toast.add({
+      severity: "warn",
+      summary: "提示",
+      detail: "請輸入詳細說明",
+      life: 3000,
+    });
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  try {
+    const payload = {
+      reasonID: selectedReasonIds.value,
+      reasonOther: otherReasonText.value,
+      status: 1,
+    };
+
+    const url = `/form/assign/${props.caseType}/${props.caseId}`;
+
+    const response = await apiHandler.patch(url, payload);
+
+    if (response.data && response.data.success) {
+      toast.add({
+        severity: "success",
+        summary: "成功",
+        detail: "案件已成功開案！",
+        life: 3000,
+      });
+      // 可以在此處執行成功後的操作，例如清空表單或跳轉頁面
+    } else {
+      throw new Error(
+        response.data.message || "開案失敗，但未收到詳細錯誤訊息",
+      );
+    }
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "發生未知錯誤";
+    toast.add({
+      severity: "error",
+      summary: "提交失敗",
+      detail: errorMessage,
+      life: 5000,
+    });
+    console.error("提交開案失敗:", error);
+  } finally {
+    isSubmitting.value = false;
   }
 };
 </script>
