@@ -445,7 +445,7 @@ const clearNaturalized = () => {
 // --- 監聽轉介單位變化，自動更新個案來源類別 ---
 watch(selectedsources, (newSourceId) => {
   if (newSourceId === null || newSourceId === undefined) {
-    setFieldValue("caseSource", null); // 清空個案來源
+    setFieldValue("sourceCatID", null); // 清空個案來源
     CategoryLock.value = true; // 可能需要重新鎖定
     return;
   }
@@ -464,20 +464,20 @@ watch(selectedsources, (newSourceId) => {
         (cat) => cat.id === sourceCatID,
       );
       if (result) {
-        setFieldValue("caseSource", result.id); // 更新 VeeValidate 的值
+        setFieldValue("sourceCatID", result.id); // 更新 VeeValidate 的值
         // 控制鎖定狀態
         CategoryLock.value = result.id !== -1; // 假設 -1 代表可編輯
       } else {
-        setFieldValue("caseSource", null); // 沒找到對應類別
+        setFieldValue("sourceCatID", null); // 沒找到對應類別
         CategoryLock.value = false; // 沒找到就解鎖？或者保持鎖定？根據需求調整
       }
     } else {
       // 如果選擇的 source 沒有 sourceCatID
-      setFieldValue("caseSource", null);
+      setFieldValue("sourceCatID", null);
       CategoryLock.value = false; // 或者保持鎖定
     }
   } else {
-    setFieldValue("caseSource", null); // 選擇項無效
+    setFieldValue("sourceCatID", null); // 選擇項無效
     CategoryLock.value = true; // 或者 false？
   }
 });

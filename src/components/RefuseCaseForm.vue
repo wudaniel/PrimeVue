@@ -48,6 +48,8 @@
             label="提交不開案"
             icon="pi pi-times"
             class="p-button-warning"
+            :loading="isSubmitting"
+            :disabled="isSubmitting"
             @click="handleSubmit"
           />
         </div>
@@ -57,9 +59,10 @@
 </template>
 
 <script setup lang="ts">
-// ★★★ 新增：導入 computed 和 watch ★★★
 import { ref, onMounted, computed, watch } from "vue";
 import { apiHandler } from "../class/apiHandler";
+import { useToast } from "primevue/usetoast";
+import { useRouter } from "vue-router";
 
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
@@ -67,24 +70,25 @@ import Dropdown from "primevue/dropdown";
 import Button from "primevue/button";
 import ProgressSpinner from "primevue/progressspinner";
 
+const toast = useToast();
+const router = useRouter();
+
 const props = defineProps<{
   caseId: string;
   caseType: string;
 }>();
 
 const isLoading = ref(true);
+const isSubmitting = ref(false); // ★★★ 新增：提交狀態
 const reasonOptions = ref<{ id: number; name: string }[]>([]);
 const selectedReasonId = ref<number | null>(null);
 const otherReasonText = ref("");
 
-// ★★★ 新增：computed 屬性，判斷ID是否為負數 ★★★
 const isOtherFieldVisible = computed(() => {
   return selectedReasonId.value !== null && selectedReasonId.value < 0;
 });
 
-// ★★★ 新增：watch 監聽器，優化使用者體驗 ★★★
 watch(selectedReasonId, (newId) => {
-  // 如果新選擇的 ID 不是負數，就清空 "其他" 欄位的文字
   if (newId === null || newId >= 0) {
     otherReasonText.value = "";
   }
@@ -103,17 +107,88 @@ const fetchRefusingReasons = async () => {
     }
   } catch (error) {
     console.error("獲取不開案原因選項失敗:", error);
+    // ★★★ 使用 Toast 提示 ★★★
+    toast.add({
+      severity: "error",
+      summary: "載入失敗",
+      detail: "無法獲取不開案原因選項，請稍後再試。",
+      life: 3000,
+    });
   } finally {
     isLoading.value = false;
   }
 };
 
-const handleSubmit = () => {
-  console.log("提交不開案表單");
-  console.log("案號:", props.caseId);
-  console.log("選擇的原因 ID:", selectedReasonId.value);
-  if (isOtherFieldVisible.value) {
-    console.log("詳細說明:", otherReasonText.value);
+// ★★★ 完整重寫 handleSubmit 函式 ★★★
+const handleSubmit = async () => {
+  // 1. 基本驗證
+  if (selectedReasonId.value === null) {
+    toast.add({
+      severity: "warn",
+      summary: "提示",
+      detail: "請選擇一個不開案原因",
+      life: 3000,
+    });
+    return;
+  }
+
+  if (isOtherFieldVisible.value && !otherReasonText.value.trim()) {
+    toast.add({
+      severity: "warn",
+      summary: "提示",
+      detail: "請輸入詳細說明",
+      life: 3000,
+    });
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  try {
+    // 2. 準備 payload
+    const payload = {
+      // 即使是單選，後端也可能期望一個陣列，保持格式一致性
+      reasonID: [selectedReasonId.value],
+      reasonOther: otherReasonText.value,
+      status: 2, // ★★★ 關鍵點：狀態設為 2 ★★★
+    };
+
+    // 3. 定義 API 端點
+    const url = `/form/assign/${props.caseType}/${props.caseId}`;
+
+    // 4. 呼叫 API
+    const response = await apiHandler.patch(url, payload);
+
+    if (response.data && response.data.success) {
+      // 5. 處理成功
+      toast.add({
+        severity: "success",
+        summary: "成功",
+        detail: "案件已成功設定為不開案！即將返回主頁...",
+        life: 1500,
+      });
+
+      // 延遲後跳轉
+      setTimeout(() => {
+        router.push("/");
+      }, 1500);
+    } else {
+      throw new Error(
+        response.data.message || "操作失敗，但未收到詳細錯誤訊息",
+      );
+    }
+  } catch (error) {
+    // 6. 處理失敗
+    const errorMessage =
+      error instanceof Error ? error.message : "發生未知錯誤";
+    toast.add({
+      severity: "error",
+      summary: "提交失敗",
+      detail: errorMessage,
+      life: 5000,
+    });
+    console.error("提交不開案失敗:", error);
+    isSubmitting.value = false; // 失敗時，重置按鈕狀態
   }
 };
 </script>

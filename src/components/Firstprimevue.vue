@@ -555,9 +555,6 @@ const handleFinishCase = (item: {
 // --- 生命週期鉤子 ---
 // ⭐⭐ 修改：onMounted 改為呼叫新的 loadLazyData 函式 ⭐⭐
 onMounted(() => {
-  console.log(apiHandler.get("option/closingReasons"));
-  console.log(apiHandler.get("option/needs"));
-  console.log(apiHandler.get("/option/refusingReasons"));
   loadLazyData();
 });
 </script>

@@ -62,7 +62,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import { apiHandler } from "../class/apiHandler";
-import { useToast } from "primevue/usetoast"; // ★★★ 1. 導入 useToast ★★★
+import { useToast } from "primevue/usetoast";
+import { useRouter } from "vue-router"; // ★★★ 1. 導入 useRouter ★★★
 
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
@@ -70,7 +71,8 @@ import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import ProgressSpinner from "primevue/progressspinner";
 
-const toast = useToast(); // ★★★ 2. 實例化 toast ★★★
+const toast = useToast();
+const router = useRouter(); // ★★★ 2. 實例化 router ★★★
 
 const props = defineProps<{
   caseId: string;
@@ -110,7 +112,6 @@ const fetchOpeningReasons = async () => {
     }
   } catch (error) {
     console.error("獲取開案原因選項失敗:", error);
-    // ★★★ 替換 alert ★★★
     toast.add({
       severity: "error",
       summary: "載入失敗",
@@ -125,7 +126,6 @@ const fetchOpeningReasons = async () => {
 const handleSubmit = async () => {
   // 1. 基本驗證
   if (selectedReasonIds.value.length === 0) {
-    // ★★★ 替換 alert ★★★
     toast.add({
       severity: "warn",
       summary: "提示",
@@ -136,7 +136,6 @@ const handleSubmit = async () => {
   }
 
   if (isOtherFieldVisible.value && !otherReasonText.value.trim()) {
-    // ★★★ 替換 alert ★★★
     toast.add({
       severity: "warn",
       summary: "提示",
@@ -156,17 +155,20 @@ const handleSubmit = async () => {
     };
 
     const url = `/form/assign/${props.caseType}/${props.caseId}`;
-
     const response = await apiHandler.patch(url, payload);
 
     if (response.data && response.data.success) {
       toast.add({
         severity: "success",
         summary: "成功",
-        detail: "案件已成功開案！",
-        life: 3000,
+        detail: "案件已成功開案！即將返回主頁...",
+        life: 1500, // 縮短一點時間，因為馬上要跳轉了
       });
-      // 可以在此處執行成功後的操作，例如清空表單或跳轉頁面
+
+      // ★★★ 3. 延遲 1.5 秒後跳轉到主頁 ★★★
+      setTimeout(() => {
+        router.push("/"); // 跳轉到根路徑，也就是主頁
+      }, 1500); // 延遲時間應與 toast 的 life 差不多或稍長
     } else {
       throw new Error(
         response.data.message || "開案失敗，但未收到詳細錯誤訊息",
@@ -182,9 +184,9 @@ const handleSubmit = async () => {
       life: 5000,
     });
     console.error("提交開案失敗:", error);
-  } finally {
-    isSubmitting.value = false;
+    isSubmitting.value = false; // ★★★ 錯誤時也要重置按鈕狀態 ★★★
   }
+  // ★★★ finally 區塊可以移除了，因為成功時會跳轉，失敗時在 catch 處理 ★★★
 };
 </script>
 
