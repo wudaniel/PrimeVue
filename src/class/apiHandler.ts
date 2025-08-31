@@ -4,7 +4,7 @@ import router from "../router";
 
 // 1. 創建 Axios 實例時，先不設定 Authorization header
 const apiHandler = axios.create({
-  baseURL: "/api",
+  baseURL: "http://192.168.60.200:8080/api",
 });
 
 // 2. 添加請求攔截器 (Request Interceptor)

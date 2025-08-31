@@ -461,11 +461,11 @@ onMounted(async () => {
     const [natRes, metRes, sobjRes] = await Promise.all([
       apiHandler.get("/option/nationalities"),
       apiHandler.get("/option/serviceMethods"),
-      apiHandler.get("/option/serviceObjects"), // Original uses type: 1 or 2? Fetch all for now.
+      apiHandler.get("/option/serviceObjects"), // Original uses type: 1 or 2? Fetch all for now
     ]);
-    nationalityList.value = natRes.data ?? [];
-    serviceMethodsList.value = metRes.data ?? [];
-    serviceObjectList.value = sobjRes.data ?? [];
+    nationalityList.value = natRes.data.data ?? [];
+    serviceMethodsList.value = metRes.data.data ?? [];
+    serviceObjectList.value = sobjRes.data.data ?? [];
     console.log("Options fetched.");
   } catch (error) {
     console.error("Failed to fetch options:", error);
