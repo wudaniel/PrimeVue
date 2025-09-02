@@ -23,6 +23,7 @@
 import { ref, onMounted } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
+import { apiHandler } from "../class/apiHandler";
 
 // --- 1. 狀態管理 ---
 const cases = ref([]); // 存放從 API 取得的當頁資料
@@ -69,7 +70,9 @@ const onPage = (event) => {
 };
 
 // --- 4. 元件掛載後，進行首次資料載入 ---
-onMounted(() => {
+onMounted(async () => {
+  const response = await apiHandler.get("report/NationalityToIdentity");
+  console.log(response);
   // 初始化 lazyParams，觸發第一次載入
   lazyParams.value = {
     first: 0,

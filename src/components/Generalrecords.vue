@@ -164,14 +164,14 @@
         </div>
 
         <div class="field col-12">
-          <label for="taskObject">關於該案的工作目標:</label>
+          <label for="taskObject">工作目標:</label>
           <Textarea
             id="taskObject"
             v-model="taskObject"
             rows="5"
             class="w-full"
             :class="{ 'p-invalid': !!taskObjectError }"
-            placeholder="關於該案的工作目標"
+            placeholder="工作目標"
             autoResize
           />
           <small class="p-error" v-if="taskObjectError">{{
@@ -180,14 +180,14 @@
         </div>
 
         <div class="field col-12">
-          <label for="detail">關於該案的服務目標:</label>
+          <label for="detail">處遇摘要及評估:</label>
           <Textarea
             id="detail"
             v-model="detail"
             rows="5"
             class="w-full"
             :class="{ 'p-invalid': !!detailError }"
-            placeholder="關於該案的服務目標"
+            placeholder="處遇摘要及評估"
             autoResize
           />
           <small class="p-error" v-if="detailError">{{ detailError }}</small>

@@ -7,6 +7,7 @@ import PrimeVue from "primevue/config";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate"; // <-- 導入插件
 import router from "./router";
+import "primeicons/primeicons.css";
 import Calendar from "primevue/calendar";
 
 // --- PrimeVue v4+ 設定 (再次修改) ---

@@ -98,6 +98,14 @@ const menuItems = ref([
       sidebarVisible.value = false;
     },
   },
+  {
+    label: "報表",
+    icon: "pi pi-chart-bar",
+    command: () => {
+      router.push("/none");
+      sidebarVisible.value = false;
+    },
+  },
 ]);
 </script>
 <template>
