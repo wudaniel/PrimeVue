@@ -92,7 +92,7 @@
         >
           <Column field="recordID" header="紀錄ID" :sortable="true"></Column>
           <Column field="date" header="日期" :sortable="true"></Column>
-          <Column field="author" header="人員" :sortable="true"></Column>
+          <Column field="author" header="社工" :sortable="true"></Column>
           <Column field="methodID" header="服務方式" :sortable="true">
             <template #body="slotProps">
               <!-- 
