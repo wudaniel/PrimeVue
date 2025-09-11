@@ -275,25 +275,31 @@ const props = defineProps<{ caseNumberQuery?: string }>();
 // ★★★ 新增：提交狀態 ★★★
 const isSubmitting = ref(false);
 
-// ★★★ 重構後的欄位定義 (語法更簡潔) ★★★
 const { value: filingDate, errorMessage: filingDateError } =
-  useField<Date | null>("建檔日", "required");
+  useField<Date | null>("filingDate", "required"); // 原本是 "建檔日"
+
 const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
-  "案號",
+  "caseNumber", // 原本是 "案號"
   "required",
   { initialValue: props.caseNumberQuery || "" },
 );
+
 const { value: selectednationalities, errorMessage: nationalityError } =
-  useField<number | null>("原母國籍", "required");
+  useField<number | null>("nationalityID", "required"); // 原本是 "原母國籍"
+
 const { value: target, errorMessage: targetError } = useField<string>(
-  "對象名稱",
+  "target", // 原本是 "對象名稱"
   "required",
 );
+
 const { value: selectedGender, errorMessage: genderError } = useField<
   number | null
->("性別", "required");
+>("gender", "required"); // 原本是 "性別"
+
 const { value: selectedServicemethods, errorMessage: servicemethodsError } =
-  useField<number | null>("服務方式", "required");
+  useField<number | null>("serviceMethod", "required"); // 原本是 "服務方式"
+
+// 下面這幾個本來就是對的，保持不變
 const { value: taskObject, errorMessage: taskObjectError } =
   useField<string>("taskObject");
 const { value: detail, errorMessage: detailError } = useField<string>("detail");
@@ -303,7 +309,6 @@ const { value: selectedServiceobject, errorMessage: serviceObjectError } =
     (value) => (value && value.length > 0 ? true : "請選擇至少一個服務項目"),
     { initialValue: [] },
   );
-
 // --- 手動管理的 Ref ---
 const othernationalities = ref("");
 const otherServicemethods = ref("");
@@ -427,9 +432,10 @@ const onSubmit = handleSubmit(async (values) => {
   }
 
   // 建立 Payload
-  const formattedDate = values.filingDate
-    ? format(values.filingDate, "yyyy-MM-dd")
+  const formattedDate = filingDate.value // 直接用 ref
+    ? format(filingDate.value, "yyyy-MM-dd")
     : null;
+
   const extraInfo = selectedExtraItems.value.map((item) => ({
     id: item.id,
     unit: extraInputValues[item.id].unit.trim(),
@@ -438,28 +444,34 @@ const onSubmit = handleSubmit(async (values) => {
 
   const payload = {
     filingDate: formattedDate,
-    caseNumber: values.caseNumber?.trim(),
-    nationalityID: values.nationality,
+    caseNumber: caseNumber.value?.trim(), // 使用 caseNumber.value
+    nationalityID: selectednationalities.value, // 使用 selectednationalities.value
     nationalityOther:
-      values.nationality === -1 ? othernationalities.value.trim() : null,
-    target: values.target?.trim(),
-    gender: values.gender,
-    serviceMethod: values.serviceMethod,
+      selectednationalities.value === -1
+        ? othernationalities.value.trim()
+        : null,
+    target: target.value?.trim(), // 使用 target.value
+    gender: selectedGender.value, // 使用 selectedGender.value
+    serviceMethod: selectedServicemethods.value, // 使用 selectedServicemethods.value
     serviceMethodOther:
-      values.serviceMethod === -1 ? otherServicemethods.value.trim() : null,
-    taskObject: values.taskObject?.trim(),
-    detail: values.detail?.trim(),
-    serviceObjectID: values.serviceObjectID,
-    serviceObjectOther: (values.serviceObjectID ?? []).includes(-1)
+      selectedServicemethods.value === -1
+        ? otherServicemethods.value.trim()
+        : null,
+    taskObject: taskObject.value?.trim(), // 使用 taskObject.value
+    detail: detail.value?.trim(), // 使用 detail.value
+    serviceObjectID: selectedServiceobject.value, // 使用 selectedServiceobject.value
+    serviceObjectOther: (selectedServiceobject.value ?? []).includes(-1)
       ? otherServiceobject.value.trim()
       : null,
     extraInfo: extraInfo,
   };
 
-  // API 呼叫
+  // API 呼叫 (這裡也用 ref.value 比較保險)
   try {
-    // 如果您的端點不同，請替換這裡
-    await apiHandler.post(`/form/assign/arrival/FK/record`, payload);
+    await apiHandler.post(
+      `/form/assign/arrival/record/${caseNumber.value}`, // 使用 caseNumber.value
+      payload,
+    );
     toast.add({
       severity: "success",
       summary: "提交成功",

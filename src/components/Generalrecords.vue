@@ -308,26 +308,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, reactive } from "vue"; // 移除 nextTick (如果不用動態註冊)
+import { ref, onMounted, computed, watch, reactive } from "vue";
 import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
+import { useToast } from "primevue/usetoast";
+import { useRouter } from "vue-router";
+
 // --- PrimeVue Components ---
 import Calendar from "primevue/calendar";
 import InputText from "primevue/inputtext";
-import InputNumber from "primevue/inputnumber"; // 移除了，原表單沒有年份輸入
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
 import Textarea from "primevue/textarea";
 import MultiSelect from "primevue/multiselect";
-// --- VeeValidate (for static fields only) ---
+// --- VeeValidate ---
 import { useForm, useField } from "vee-validate";
 
 // --- Type Definitions ---
 interface SelectOption {
   id: number;
   name: string;
-  sourceCatID?: number;
 }
 interface ServiceObjectOption extends SelectOption {
   extra?: boolean;
@@ -337,27 +338,29 @@ interface ExtraInput {
   content: string;
 }
 
-// --- VeeValidate Setup (Static Fields) ---
-const { handleSubmit, errors, meta, values } = useForm({});
-// 在你的新增記錄表單元件 (例如 Arrivalassigns.vue) 的 <script setup lang="ts"> 中
+// --- Hooks ---
+const toast = useToast();
+const router = useRouter(); // 如果需要提交後跳轉
+
+// --- Props ---
 const props = defineProps<{
-  caseNumberQuery?: string; // 接收名為 caseNumberQuery 的 prop
+  caseNumberQuery?: string;
 }>();
 
-const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
-  "caseNumber", // VeeValidate 內部欄位名
-  "required",
-  {
-    initialValue: props.caseNumberQuery || "", // 使用 prop 的值作為初始值
-  },
-);
+// --- Form State ---
+const { handleSubmit, errors, meta } = useForm({});
+const isSubmitting = ref(false);
 
-// --- Refs for Static Fields (managed by VeeValidate) ---
+// --- VeeValidate Field Definitions (keys match API payload) ---
 const { value: filingDate, errorMessage: filingDateError } =
   useField<Date | null>("filingDate", "required");
-
+const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
+  "caseNumber",
+  "required",
+  { initialValue: props.caseNumberQuery || "" },
+);
 const { value: selectednationalities, errorMessage: nationalityError } =
-  useField<number | null>("nationality", "required");
+  useField<number | null>("nationalityID", "required"); // ★★★ FIX: Key is nationalityID
 const { value: target, errorMessage: targetError } = useField<string>(
   "target",
   "required",
@@ -371,46 +374,29 @@ const { value: taskObject, errorMessage: taskObjectError } =
   useField<string>("taskObject"); // Not required
 const { value: detail, errorMessage: detailError } = useField<string>("detail"); // Not required
 const { value: selectedServiceobject, errorMessage: serviceObjectError } =
-  useField<number[] | undefined>(
+  useField<number[]>(
     "serviceObjectID",
-    (value) => {
-      if (!value || value.length === 0) {
-        return "請選擇至少一個服務項目";
-      }
-      return true;
-    },
+    (value) => (value && value.length > 0 ? true : "請選擇至少一個服務項目"),
     { initialValue: [] },
   );
 
-// --- Refs for Manually Handled Fields ---
+// --- Manually Handled Fields ---
 const othernationalities = ref("");
 const otherServicemethods = ref("");
 const otherServiceobject = ref("");
+const extraInputValues = reactive<Record<number, ExtraInput>>({});
+const dynamicErrors = reactive<Record<string, string | null>>({});
 
 // --- API Option Lists ---
 const nationalityList = ref<SelectOption[]>([]);
 const serviceMethodsList = ref<SelectOption[]>([]);
 const serviceObjectList = ref<ServiceObjectOption[]>([]);
 
-// --- Dynamic Extra Fields Data ---
-const extraInputValues = reactive<Record<number, ExtraInput>>({});
-// --- Manual Errors for Dynamic Fields ---
-const dynamicErrors = reactive<Record<string, string | null>>({});
-
-// --- Original Error Flag (kept for compatibility if needed) ---
-const objectRequiredError = ref(false);
-
 // --- Computed Properties ---
 const selectedExtraItems = computed(() => {
   const selectedIds = selectedServiceobject.value ?? [];
-  const list = serviceObjectList.value ?? [];
-  if (!Array.isArray(selectedIds) || !Array.isArray(list)) return [];
-  return list.filter(
-    (item) =>
-      item &&
-      item.extra &&
-      typeof item.id === "number" &&
-      selectedIds.includes(item.id),
+  return serviceObjectList.value.filter(
+    (item) => item.extra && selectedIds.includes(item.id),
   );
 });
 
@@ -418,190 +404,158 @@ const isServiceObjectOtherSelected = computed(
   () => selectedServiceobject.value?.includes(-1) ?? false,
 );
 
-// Computed property to check overall form validity (static + dynamic)
 const isFormPotentiallyValid = computed(() => {
-  // Check if any dynamic error exists
-  const hasManualErrors = Object.values(dynamicErrors).some(
+  const hasDynamicErrors = Object.values(dynamicErrors).some(
     (error) => error !== null,
   );
-  // Return true only if VeeValidate state is valid AND no manual errors exist
-  return meta.value.valid && !hasManualErrors;
+  return meta.value.valid && !hasDynamicErrors;
 });
 
-// --- Watcher (Simplified: only manages extraInputValues data) ---
+// --- Watcher for Dynamic Fields ---
 watch(
   selectedExtraItems,
-  (newItems, oldItems) => {
-    if (!Array.isArray(newItems)) return;
-    oldItems = oldItems ?? [];
+  (newItems, oldItems = []) => {
     const currentExtraIds = new Set(newItems.map((item) => item.id));
-
-    // Initialize new items
     newItems.forEach((item) => {
-      if (item && typeof item.id === "number" && !extraInputValues[item.id]) {
+      if (!extraInputValues[item.id]) {
         extraInputValues[item.id] = { unit: "", content: "" };
       }
     });
-    // Clean up removed items and their errors
-    const oldIds = oldItems.map((item) => item.id);
-    oldIds.forEach((id) => {
-      if (typeof id === "number" && !currentExtraIds.has(id)) {
-        delete extraInputValues[id];
-        delete dynamicErrors[`extraUnit_${id}`];
-        delete dynamicErrors[`extraContent_${id}`];
+    oldItems.forEach((item) => {
+      if (!currentExtraIds.has(item.id)) {
+        delete extraInputValues[item.id];
+        delete dynamicErrors[`extraUnit_${item.id}`];
+        delete dynamicErrors[`extraContent_${item.id}`];
       }
     });
   },
-  { deep: true, flush: "post" },
+  { deep: true },
 );
 
-// --- onMounted ---
+// --- onMounted Hook ---
 onMounted(async () => {
   try {
     const [natRes, metRes, sobjRes] = await Promise.all([
       apiHandler.get("/option/nationalities"),
       apiHandler.get("/option/serviceMethods"),
-      apiHandler.get("/option/serviceObjects"), // Original uses type: 1 or 2? Fetch all for now
+      apiHandler.get("/option/serviceObjects"),
     ]);
     nationalityList.value = natRes.data.data ?? [];
     serviceMethodsList.value = metRes.data.data ?? [];
     serviceObjectList.value = sobjRes.data.data ?? [];
-    console.log("Options fetched.");
   } catch (error) {
     console.error("Failed to fetch options:", error);
+    toast.add({
+      severity: "error",
+      summary: "資料載入失敗",
+      detail: "無法載入表單選項，請刷新頁面再試。",
+      life: 3000,
+    });
   }
 });
 
-// --- Submit Handler (with manual validation) ---
-const onSubmit = handleSubmit(
-  async (values) => {
-    // values only contains static fields now
-    // 1. Manual Validation
-    let isFormValid = true;
-    Object.keys(dynamicErrors).forEach((key) => (dynamicErrors[key] = null)); // Reset dynamic errors
-    objectRequiredError.value = false; // Reset original error flag
+// --- Submit Handler ---
+const onSubmit = handleSubmit(async (values) => {
+  // 1. Reset and run manual validation for dynamic fields
+  Object.keys(dynamicErrors).forEach((key) => (dynamicErrors[key] = null));
+  let isDynamicPartValid = true;
 
-    // Validate othernationalities
-    if (values.nationality === -1 && !othernationalities.value?.trim()) {
-      dynamicErrors.othernationalities = "請輸入其他國籍";
-      isFormValid = false;
+  if (values.nationalityID === -1 && !othernationalities.value.trim()) {
+    dynamicErrors.othernationalities = "請輸入其他國籍";
+    isDynamicPartValid = false;
+  }
+  if (values.serviceMethod === -1 && !otherServicemethods.value.trim()) {
+    dynamicErrors.otherServicemethods = "請輸入其他服務方式";
+    isDynamicPartValid = false;
+  }
+  if (
+    values.serviceObjectID?.includes(-1) &&
+    !otherServiceobject.value.trim()
+  ) {
+    dynamicErrors.otherServiceobject = "請輸入其他需求";
+    isDynamicPartValid = false;
+  }
+  selectedExtraItems.value.forEach((item) => {
+    const input = extraInputValues[item.id];
+    if (!input?.unit?.trim()) {
+      dynamicErrors[`extraUnit_${item.id}`] = `${item.name} 單位為必填`;
+      isDynamicPartValid = false;
     }
-    // Validate otherServicemethods
-    if (values.serviceMethod === -1 && !otherServicemethods.value?.trim()) {
-      dynamicErrors.otherServicemethods = "請輸入其他服務方式";
-      isFormValid = false;
+    if (!input?.content?.trim()) {
+      dynamicErrors[`extraContent_${item.id}`] = `${item.name} 內容為必填`;
+      isDynamicPartValid = false;
     }
-    // Validate otherServiceobject
-    if (
-      values.serviceObjectID?.includes(-1) &&
-      !otherServiceobject.value?.trim()
-    ) {
-      dynamicErrors.otherServiceobject = "請輸入其他需求";
-      isFormValid = false;
-    }
-    // Validate dynamic extra fields
-    for (const extraItem of selectedExtraItems.value) {
-      const itemId = extraItem.id;
-      const unitFieldName = `extraUnit_${itemId}`;
-      const contentFieldName = `extraContent_${itemId}`;
-      if (!extraInputValues[itemId]) {
-        // Safety check
-        dynamicErrors[unitFieldName] = "數據錯誤";
-        dynamicErrors[contentFieldName] = "數據錯誤";
-        isFormValid = false;
-        continue;
-      }
-      if (!extraInputValues[itemId].unit?.trim()) {
-        dynamicErrors[unitFieldName] = `${extraItem.name} 單位為必填`;
-        isFormValid = false;
-      }
-      if (!extraInputValues[itemId].content?.trim()) {
-        dynamicErrors[contentFieldName] = `${extraItem.name} 內容為必填`;
-        isFormValid = false;
-      }
-    }
-    // Check original service object required error (if still needed alongside VeeValidate)
-    if (!values.serviceObjectID || values.serviceObjectID.length === 0) {
-      objectRequiredError.value = true; // Set original flag if needed
-      // VeeValidate error (`serviceObjectError`) should also trigger
-    }
+  });
 
-    // 2. Check overall validity
-    if (!isFormValid || !meta.value.valid) {
-      // Check both manual and VeeValidate state
-      console.error("表單驗證失敗", {
-        staticErrors: errors.value,
-        dynamicErrors,
-      });
-      alert("表單包含錯誤，請檢查後再提交！");
-      return;
-    }
+  // 2. Check overall validity
+  if (!isDynamicPartValid || !meta.value.valid) {
+    toast.add({
+      severity: "warn",
+      summary: "表單無效",
+      detail: "請檢查所有必填欄位後再提交。",
+      life: 3000,
+    });
+    return;
+  }
 
-    // 3. All Validations Passed - Proceed
-    console.log("表單驗證通過");
+  isSubmitting.value = true;
 
-    // 4. Format Date
-    let formattedDate = null;
-    if (
-      values.filingDate instanceof Date &&
-      !isNaN(values.filingDate.getTime())
-    ) {
-      try {
-        formattedDate = format(values.filingDate, "yyyy-MM-dd");
-      } catch (e) {
-        console.error(e);
-      }
-    }
+  // 3. Build Payload
+  const formattedDate = values.filingDate
+    ? format(values.filingDate, "yyyy-MM-dd")
+    : null;
+  const extraInfo = selectedExtraItems.value.map((item) => ({
+    id: item.id,
+    unit: extraInputValues[item.id].unit.trim(),
+    detail: extraInputValues[item.id].content.trim(),
+  }));
 
-    // 5. Build extraInfo
-    const extraInfo = selectedExtraItems.value.map((extraItem) => ({
-      id: extraItem.id,
-      unit: extraInputValues[extraItem.id]?.unit?.trim() ?? "",
-      detail: extraInputValues[extraItem.id]?.content?.trim() ?? "",
-    }));
+  const payload = {
+    filingDate: formattedDate,
+    caseNumber: values.caseNumber?.trim(),
+    nationalityID: values.nationalityID,
+    nationalityOther:
+      values.nationalityID === -1 ? othernationalities.value.trim() : null,
+    target: values.target?.trim(),
+    gender: values.gender,
+    serviceMethod: values.serviceMethod,
+    serviceMethodOther:
+      values.serviceMethod === -1 ? otherServicemethods.value.trim() : null,
+    taskObject: values.taskObject?.trim() || null,
+    detail: values.detail?.trim() || null,
+    serviceObjectID: values.serviceObjectID,
+    serviceObjectOther: values.serviceObjectID?.includes(-1)
+      ? otherServiceobject.value.trim()
+      : null,
+    extraInfo: extraInfo,
+  };
 
-    // 6. Build Payload (Combine values and local refs for manual fields)
-    const payload = {
-      filingDate: formattedDate,
-      caseNumber: values.caseNumber?.trim(),
-      nationalityID: values.nationality,
-      nationalityOther:
-        values.nationality === -1 ? othernationalities.value?.trim() : null, // Use ref
-      target: values.target?.trim(),
-      gender: Number(values.gender),
-      serviceMethod: values.serviceMethod,
-      serviceMethodOther:
-        values.serviceMethod === -1 ? otherServicemethods.value?.trim() : null, // Use ref
-      taskObject: values.taskObject?.trim(), // Use value from VeeValidate
-      detail: values.detail?.trim(), // Use value from VeeValidate
-      serviceObjectID: values.serviceObjectID,
-      serviceObjectOther: values.serviceObjectID?.includes(-1)
-        ? otherServiceobject.value?.trim()
-        : null, // Use ref
-      extraInfo: extraInfo,
-    };
-    console.log("Submitting:", payload);
-
-    // 7. API Call (to original endpoint)
-    try {
-      const response = await apiHandler.post(
-        `/form/assign/arrival/FK/record`,
-        payload,
-      );
-      console.log("提交成功:", response);
-      alert("提交成功！");
-    } catch (error) {
-      console.error("提交失敗:", error);
-      // Original code used alert, keeping it similar
-      alert("提交失敗，請檢查欄位或稍後再試");
-    }
-  },
-  (context) => {
-    // VeeValidate static field validation failure
-    console.log("靜態欄位驗證失敗", context.errors);
-    // Optional: alert here too, or rely on the combined check
-  },
-);
+  // 4. API Call
+  try {
+    await apiHandler.post(
+      `/form/assign/general/record/${values.caseNumber}`,
+      payload,
+    );
+    toast.add({
+      severity: "success",
+      summary: "提交成功",
+      detail: "紀錄已成功新增！",
+      life: 1500,
+    });
+    setTimeout(() => router.push("/"), 1500);
+  } catch (error: any) {
+    const errorMessage =
+      error.response?.data?.message || "提交失敗，請檢查網路或聯繫管理員。";
+    toast.add({
+      severity: "error",
+      summary: "提交失敗",
+      detail: errorMessage,
+      life: 5000,
+    });
+  } finally {
+    isSubmitting.value = false;
+  }
+});
 </script>
 
 <style scoped>
