@@ -7,7 +7,7 @@
       <div>
         <h3 class="m-0 text-xl font-semibold">案件詳細資料</h3>
         <span class="text-color-secondary text-sm"
-          >案件類型: {{ type }} / 案號: {{ id }}</span
+          >案件類型: {{ displayType }} / 案號: {{ id }}</span
         >
       </div>
       <div class="flex gap-2">
@@ -90,14 +90,22 @@
           paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
           currentPageReportTemplate="顯示 {first} 到 {last} 項，共 {totalRecords} 項紀錄"
         >
-          <Column field="recordID" header="紀錄ID" :sortable="true"></Column>
+          <Column field="listID" header="編號" :sortable="true">
+            <template #body="slotProps">
+              <Button
+                :label="slotProps.data.listID.toString()"
+                @click="goToRecordDetail(slotProps.data.recordID)"
+                class="p-button-link p-button-sm p-0"
+              /> </template
+          ></Column>
           <Column field="date" header="日期" :sortable="true"></Column>
           <Column field="author" header="社工" :sortable="true"></Column>
+          <Column field="target" header="服務目標" :sortable="true"></Column>
           <Column field="methodID" header="服務方式" :sortable="true">
             <template #body="slotProps">
               <!-- 
                   這裡使用三元運算子來判斷：
-                  1. 如果 methodID 是 -1，就顯示 '其他'。
+                  1. 如果 methodID 是 -1，就顯示 '其他'。 
                   2. 否則，就去 optionMaps 裡面找對應的名稱。
                   3. 如果找不到對應名稱 (以防萬一)，就顯示 '未知'。
                 -->
@@ -142,7 +150,15 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
-
+const typeMap: { [key: string]: string } = {
+  general: "一般案件",
+  arrival: "新入境案件",
+};
+const displayType = computed(() => {
+  // 從對照表中尋找 props.type 對應的值
+  // 如果找不到，就直接回傳原始的 props.type 作為備用 (Fallback)
+  return typeMap[props.type] || props.type;
+});
 // --- 狀態變數 ---
 const rawData = ref<any>(null);
 const isLoading = ref(true);
@@ -354,8 +370,16 @@ const goToAddRecord = () => {
 // --- 新增：導航到紀錄詳細頁的函式 ---
 // 請根據您的路由設定修改此函式
 const goToRecordDetail = (recordId: string | number) => {
-  console.log(`準備導航到紀錄 ${recordId}`);
-  // 範例: router.push({ name: 'recordDetail', params: { id: recordId } });
+  let params = {
+    type: props.type,
+    casenumber: props.id,
+    recordid: recordId,
+  };
+  // params 物件的 key (這裡的 'recordId') 必須和你的路由設定中的 :recordId 匹配
+  router.push({
+    name: "RecordsDetail", // 假設你的路由名稱是 'recordsDetail'
+    params: params,
+  });
 };
 </script>
 

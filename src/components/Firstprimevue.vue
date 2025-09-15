@@ -494,7 +494,6 @@ const handlecaseNumberClick = (item: { caseNumber: string; type: number }) => {
 
   // 假設你的詳細頁面路由是 /assigns/:type/:caseNumber
   const targetPath = `/assigns/${typeName}/${item.caseNumber}`;
-  console.log("列表元件：準備跳轉到:", targetPath);
   router.push(targetPath);
 };
 // 輔助函式：將案件類型數字轉換為路由可用的字串
@@ -507,7 +506,6 @@ const navigateToOperationPage = (
   item: { caseNumber: string; type: number },
   operation: "open" | "refuse" | "close",
 ) => {
-  console.log(`導航至 ${operation} 頁面，案號:`, item.caseNumber);
   const typeName = getTypeNameString(item.type);
 
   router.push({

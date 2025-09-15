@@ -58,15 +58,10 @@ const router = createRouter({
       component: () => import("../components/ChangePassword.vue"),
       meta: { requiresAuth: true },
     },
-    {
-      path: "/test",
-      name: "test",
-      component: () => import("../components/test.vue"),
-    },
+
     {
       // 路徑匹配 assigns/general/CASE123/open 這樣的格式
       path: "/assigns/:type/:id/:operation",
-
       // 路由名稱，必須與列表頁中使用的 'name' 完全一致
       name: "AssignOperation",
 
@@ -75,6 +70,12 @@ const router = createRouter({
 
       // 將路由參數 (:type, :id, :operation) 作為 props 傳遞給元件
       props: true,
+    },
+    {
+      path: "/form/assign/:type/:casenumber/record/:recordid",
+      name: "RecordsDetail", // 給它一個唯一的名稱，方便在程式中使用
+      component: () => import("../components/RecordsDetail.vue"),
+      props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
     },
   ],
 });

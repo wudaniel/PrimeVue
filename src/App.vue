@@ -58,16 +58,6 @@ const menuItems = ref([
       sidebarVisible.value = false; // 點擊後關閉 Sidebar
     },
   },
-
-  {
-    label: "管理員測試",
-    icon: "pi pi-lock",
-    command: () => {
-      router.push("/test");
-      sidebarVisible.value = false;
-    },
-  },
-
   {
     label: "新入境派案表",
     icon: "pi pi-check",
