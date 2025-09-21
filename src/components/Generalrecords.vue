@@ -20,7 +20,6 @@
             filingDateError
           }}</small>
         </div>
-
         <div class="field col-12 md:col-6">
           <label for="caseNumber"
             >案號: <span class="text-red-500">*</span></label
@@ -36,7 +35,7 @@
             caseNumberError
           }}</small>
         </div>
-
+        <!-- ... 其他表單欄位 ... -->
         <div class="field col-12 md:col-6">
           <label for="nationalityDropdown"
             >原母國籍: <span class="text-red-500">*</span></label
@@ -56,7 +55,6 @@
             nationalityError
           }}</small>
         </div>
-
         <div class="field col-12 md:col-6" v-if="selectednationalities === -1">
           <label for="othernationalities"
             >請輸入其他國籍: <span class="text-red-500">*</span></label
@@ -73,7 +71,6 @@
             dynamicErrors.othernationalities
           }}</small>
         </div>
-
         <div class="field col-12 md:col-6">
           <label for="target"
             >對象名稱: <span class="text-red-500">*</span></label
@@ -87,7 +84,6 @@
           />
           <small class="p-error" v-if="targetError">{{ targetError }}</small>
         </div>
-
         <div class="field col-12 md:col-6">
           <label class="mb-2 block"
             >性別: <span class="text-red-500">*</span></label
@@ -99,8 +95,7 @@
                 name="gender"
                 :value="0"
                 v-model="selectedGender"
-              />
-              <label for="male" class="ml-2">男</label>
+              /><label for="male" class="ml-2">男</label>
             </div>
             <div class="flex align-items-center">
               <RadioButton
@@ -108,8 +103,7 @@
                 name="gender"
                 :value="1"
                 v-model="selectedGender"
-              />
-              <label for="female" class="ml-2">女</label>
+              /><label for="female" class="ml-2">女</label>
             </div>
             <div class="flex align-items-center">
               <RadioButton
@@ -117,15 +111,13 @@
                 name="gender"
                 :value="2"
                 v-model="selectedGender"
-              />
-              <label for="otherGenderRadio" class="ml-2">其他</label>
+              /><label for="otherGenderRadio" class="ml-2">其他</label>
             </div>
           </div>
           <small class="p-error mt-1" v-if="genderError">{{
             genderError
           }}</small>
         </div>
-
         <div class="field col-12 md:col-6">
           <label for="serviceMethodsDropdown"
             >服務方式: <span class="text-red-500">*</span></label
@@ -145,7 +137,6 @@
             servicemethodsError
           }}</small>
         </div>
-
         <div class="field col-12 md:col-6" v-if="selectedServicemethods === -1">
           <label for="otherServicemethods"
             >請輸入其他服務方式: <span class="text-red-500">*</span></label
@@ -162,7 +153,6 @@
             dynamicErrors.otherServicemethods
           }}</small>
         </div>
-
         <div class="field col-12">
           <label for="taskObject">工作目標:</label>
           <Textarea
@@ -178,7 +168,6 @@
             taskObjectError
           }}</small>
         </div>
-
         <div class="field col-12">
           <label for="detail">處遇摘要及評估:</label>
           <Textarea
@@ -194,103 +183,117 @@
         </div>
 
         <div class="field col-12">
-          <label for="serviceObject"
-            >服務項目: <span class="text-red-500">*</span></label
-          >
-          <MultiSelect
-            inputId="serviceObject"
-            v-model="selectedServiceobject"
-            :options="serviceObjectList"
-            optionLabel="name"
-            optionValue="id"
-            placeholder="服務項目 (可多選)"
-            display="chip"
-            class="w-full"
-            :class="{ 'p-invalid': !!serviceObjectError }"
-          />
-          <small class="p-error" v-if="serviceObjectError">{{
-            serviceObjectError
-          }}</small>
+          <label>服務項目: <span class="text-red-500">*</span></label>
 
           <div
-            v-if="objectRequiredError"
-            style="color: red; margin-top: 0.25rem"
+            class="grid mt-2"
+            :class="{
+              'border-2 border-red-500 border-round p-1': !!serviceItemError,
+            }"
           >
-            請選擇至少一個服務項目。
+            <div
+              v-for="item in serviceObjectList"
+              :key="item.id"
+              class="col-12 md:col-3 p-1"
+            >
+              <div class="flex align-items-center">
+                <Checkbox
+                  :inputId="'serviceItem-' + item.id"
+                  name="serviceItems"
+                  :value="item.id"
+                  v-model="selectedserviceItem"
+                />
+                <label :for="'serviceItem-' + item.id" class="ml-2">{{
+                  item.name
+                }}</label>
+              </div>
+            </div>
           </div>
+
+          <!-- 錯誤訊息顯示保持不變 -->
+          <small class="p-error" v-if="serviceItemError">{{
+            serviceItemError
+          }}</small>
         </div>
 
         <div class="col-12">
-          <div
-            v-for="extra in selectedExtraItems"
-            :key="extra.id"
-            class="grid formgrid p-fluid mt-3 border-top-1 surface-border pt-3"
-          >
-            <template v-if="extraInputValues[extra.id]">
-              <h4 class="col-12">{{ extra.name }}</h4>
-              <div class="field col-12 md:col-6">
-                <label :for="'unit-' + extra.id"
-                  >{{ extra.name }} 單位:
-                  <span class="text-red-500">*</span></label
-                >
-                <InputText
-                  :id="'unit-' + extra.id"
-                  v-model="extraInputValues[extra.id].unit"
-                  placeholder="請輸入單位"
-                  class="w-full"
-                  :class="{
-                    'p-invalid': !!dynamicErrors[`extraUnit_${extra.id}`],
-                  }"
-                />
-                <small
-                  class="p-error"
-                  v-if="dynamicErrors[`extraUnit_${extra.id}`]"
-                >
-                  {{ dynamicErrors[`extraUnit_${extra.id}`] }}
-                </small>
+          <!-- 1. 建立一個外層的 Grid 容器 -->
+          <div class="grid formgrid">
+            <!-- 2. v-for 迴圈現在生成 Grid 的列 (column) -->
+            <div
+              v-for="extra in selectedExtraItems"
+              :key="extra.id"
+              class="col-12 md:col-6 lg:col-4"
+            >
+              <!-- 3. 為每個項目建立一個卡片樣式，使其在視覺上分組 -->
+              <div class="p-3 border-1 surface-border border-round h-full">
+                <h4 class="mt-0 mb-3">{{ extra.name }}</h4>
+
+                <!-- 4. "單位" 欄位 -->
+                <div class="field">
+                  <label :for="'unit-' + extra.id">
+                    單位: <span class="text-red-500">*</span>
+                  </label>
+                  <InputText
+                    :id="'unit-' + extra.id"
+                    v-model="extraInputValues[extra.id].unit"
+                    placeholder="請輸入單位"
+                    class="w-full"
+                    :class="{
+                      'p-invalid': !!dynamicErrors[`extraUnit_${extra.id}`],
+                    }"
+                  />
+                  <small
+                    class="p-error"
+                    v-if="dynamicErrors[`extraUnit_${extra.id}`]"
+                  >
+                    {{ dynamicErrors[`extraUnit_${extra.id}`] }}
+                  </small>
+                </div>
+
+                <!-- 5. "內容" 欄位 (單位和內容會自然地上下排列) -->
+                <div class="field">
+                  <label :for="'content-' + extra.id">
+                    內容: <span class="text-red-500">*</span>
+                  </label>
+                  <Textarea
+                    :id="'content-' + extra.id"
+                    v-model="extraInputValues[extra.id].content"
+                    placeholder="請輸入內容"
+                    rows="3"
+                    autoResize
+                    class="w-full"
+                    :class="{
+                      'p-invalid': !!dynamicErrors[`extraContent_${extra.id}`],
+                    }"
+                  />
+                  <small
+                    class="p-error"
+                    v-if="dynamicErrors[`extraContent_${extra.id}`]"
+                  >
+                    {{ dynamicErrors[`extraContent_${extra.id}`] }}
+                  </small>
+                </div>
               </div>
-              <div class="field col-12 md:col-6">
-                <label :for="'content-' + extra.id"
-                  >{{ extra.name }} 內容:
-                  <span class="text-red-500">*</span></label
-                >
-                <Textarea
-                  :id="'content-' + extra.id"
-                  v-model="extraInputValues[extra.id].content"
-                  placeholder="請輸入內容"
-                  rows="3"
-                  autoResize
-                  class="w-full"
-                  :class="{
-                    'p-invalid': !!dynamicErrors[`extraContent_${extra.id}`],
-                  }"
-                />
-                <small
-                  class="p-error"
-                  v-if="dynamicErrors[`extraContent_${extra.id}`]"
-                >
-                  {{ dynamicErrors[`extraContent_${extra.id}`] }}
-                </small>
-              </div>
-            </template>
-            <div v-else class="col-12"><small>Initializing...</small></div>
+            </div>
           </div>
         </div>
+        <!-- ★★★ 修改結束 ★★★ -->
 
-        <div class="field col-12" v-if="isServiceObjectOtherSelected">
-          <label for="otherServiceobject"
+        <div class="field col-12" v-if="isserviceItemOtherSelected">
+          <label for="otherserviceItem"
             >請輸入其他需求：<span class="text-red-500">*</span></label
           >
           <Textarea
-            id="otherServiceobject"
-            v-model="otherServiceobject"
+            id="otherserviceItem"
+            v-model="otherserviceItem"
             class="w-full"
-            :class="{ 'p-invalid': !!dynamicErrors.otherServiceobject }"
+            :class="{ 'p-invalid': !!dynamicErrors.otherserviceItem }"
             rows="3"
             autoResize
           />
-          <small class="p-error" v-if="dynamicErrors.otherServiceobject">{{
-            dynamicErrors.otherServiceobject
+          <small class="p-error" v-if="dynamicErrors.otherserviceItem">{{
+            dynamicErrors.otherserviceItem
           }}</small>
         </div>
 
@@ -321,7 +324,8 @@ import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
 import Textarea from "primevue/textarea";
-import MultiSelect from "primevue/multiselect";
+import Checkbox from "primevue/checkbox"; // ★★★ 修改: 引入 Checkbox ★★★
+
 // --- VeeValidate ---
 import { useForm, useField } from "vee-validate";
 
@@ -340,7 +344,7 @@ interface ExtraInput {
 
 // --- Hooks ---
 const toast = useToast();
-const router = useRouter(); // 如果需要提交後跳轉
+const router = useRouter();
 
 // --- Props ---
 const props = defineProps<{
@@ -351,7 +355,8 @@ const props = defineProps<{
 const { handleSubmit, errors, meta } = useForm({});
 const isSubmitting = ref(false);
 
-// --- VeeValidate Field Definitions (keys match API payload) ---
+// --- VeeValidate Field Definitions ---
+// (這整個區塊無需修改)
 const { value: filingDate, errorMessage: filingDateError } =
   useField<Date | null>("filingDate", "required");
 const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
@@ -360,7 +365,7 @@ const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
   { initialValue: props.caseNumberQuery || "" },
 );
 const { value: selectednationalities, errorMessage: nationalityError } =
-  useField<number | null>("nationalityID", "required"); // ★★★ FIX: Key is nationalityID
+  useField<number | null>("nationalityID", "required");
 const { value: target, errorMessage: targetError } = useField<string>(
   "target",
   "required",
@@ -371,39 +376,41 @@ const { value: selectedGender, errorMessage: genderError } = useField<
 const { value: selectedServicemethods, errorMessage: servicemethodsError } =
   useField<number | null>("serviceMethod", "required");
 const { value: taskObject, errorMessage: taskObjectError } =
-  useField<string>("taskObject"); // Not required
-const { value: detail, errorMessage: detailError } = useField<string>("detail"); // Not required
-const { value: selectedServiceobject, errorMessage: serviceObjectError } =
-  useField<number[]>(
-    "serviceObjectID",
-    (value) => (value && value.length > 0 ? true : "請選擇至少一個服務項目"),
-    { initialValue: [] },
-  );
+  useField<string>("taskObject");
+const { value: detail, errorMessage: detailError } = useField<string>("detail");
+const { value: selectedserviceItem, errorMessage: serviceItemError } = useField<
+  number[]
+>(
+  "serviceItemID",
+  (value) => (value && value.length > 0 ? true : "請選擇至少一個服務項目"),
+  { initialValue: [] },
+);
 
 // --- Manually Handled Fields ---
+// (這整個區塊無需修改)
 const othernationalities = ref("");
 const otherServicemethods = ref("");
-const otherServiceobject = ref("");
+const otherserviceItem = ref("");
 const extraInputValues = reactive<Record<number, ExtraInput>>({});
 const dynamicErrors = reactive<Record<string, string | null>>({});
 
 // --- API Option Lists ---
+// (這整個區塊無需修改)
 const nationalityList = ref<SelectOption[]>([]);
 const serviceMethodsList = ref<SelectOption[]>([]);
 const serviceObjectList = ref<ServiceObjectOption[]>([]);
 
 // --- Computed Properties ---
+// (這整個區塊無需修改)
 const selectedExtraItems = computed(() => {
-  const selectedIds = selectedServiceobject.value ?? [];
+  const selectedIds = selectedserviceItem.value ?? [];
   return serviceObjectList.value.filter(
     (item) => item.extra && selectedIds.includes(item.id),
   );
 });
-
-const isServiceObjectOtherSelected = computed(
-  () => selectedServiceobject.value?.includes(-1) ?? false,
+const isserviceItemOtherSelected = computed(
+  () => selectedserviceItem.value?.includes(-1) ?? false,
 );
-
 const isFormPotentiallyValid = computed(() => {
   const hasDynamicErrors = Object.values(dynamicErrors).some(
     (error) => error !== null,
@@ -412,6 +419,7 @@ const isFormPotentiallyValid = computed(() => {
 });
 
 // --- Watcher for Dynamic Fields ---
+// (這整個區塊無需修改)
 watch(
   selectedExtraItems,
   (newItems, oldItems = []) => {
@@ -433,12 +441,13 @@ watch(
 );
 
 // --- onMounted Hook ---
+// (這整個區塊無需修改)
 onMounted(async () => {
   try {
     const [natRes, metRes, sobjRes] = await Promise.all([
       apiHandler.get("/option/nationalities"),
       apiHandler.get("/option/serviceMethods"),
-      apiHandler.get("/option/serviceObjects"),
+      apiHandler.get("/option/serviceItems"),
     ]);
     nationalityList.value = natRes.data.data ?? [];
     serviceMethodsList.value = metRes.data.data ?? [];
@@ -455,6 +464,7 @@ onMounted(async () => {
 });
 
 // --- Submit Handler ---
+// (這整個區塊無需修改)
 const onSubmit = handleSubmit(async (values) => {
   // 1. Reset and run manual validation for dynamic fields
   Object.keys(dynamicErrors).forEach((key) => (dynamicErrors[key] = null));
@@ -468,11 +478,8 @@ const onSubmit = handleSubmit(async (values) => {
     dynamicErrors.otherServicemethods = "請輸入其他服務方式";
     isDynamicPartValid = false;
   }
-  if (
-    values.serviceObjectID?.includes(-1) &&
-    !otherServiceobject.value.trim()
-  ) {
-    dynamicErrors.otherServiceobject = "請輸入其他需求";
+  if (values.serviceItemID?.includes(-1) && !otherserviceItem.value.trim()) {
+    dynamicErrors.otherserviceItem = "請輸入其他需求";
     isDynamicPartValid = false;
   }
   selectedExtraItems.value.forEach((item) => {
@@ -523,9 +530,9 @@ const onSubmit = handleSubmit(async (values) => {
       values.serviceMethod === -1 ? otherServicemethods.value.trim() : null,
     taskObject: values.taskObject?.trim() || null,
     detail: values.detail?.trim() || null,
-    serviceObjectID: values.serviceObjectID,
-    serviceObjectOther: values.serviceObjectID?.includes(-1)
-      ? otherServiceobject.value.trim()
+    serviceItemID: values.serviceItemID,
+    serviceItemOther: values.serviceItemID?.includes(-1)
+      ? otherserviceItem.value.trim()
       : null,
     extraInfo: extraInfo,
   };
@@ -533,7 +540,7 @@ const onSubmit = handleSubmit(async (values) => {
   // 4. API Call
   try {
     await apiHandler.post(
-      `/form/assign/general/record/${values.caseNumber}`,
+      `/form/assign/general/${values.caseNumber}/record`,
       payload,
     );
     toast.add({
@@ -559,9 +566,9 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <style scoped>
-/* Styles from original + PrimeFlex error style */
+/* 樣式無需修改，PrimeFlex 的 Grid 和 utility class 可以處理佈局 */
 .p-field {
-  margin-bottom: 1.5rem; /* Adjust as needed */
+  margin-bottom: 1.5rem;
 }
 .p-error {
   display: block;
@@ -573,33 +580,4 @@ const onSubmit = handleSubmit(async (values) => {
   color: var(--p-red-500);
   margin-left: 0.25rem;
 }
-.extra-fields {
-  border-left: 3px solid var(--p-primary-color);
-  padding-left: 1rem;
-  margin-left: 0.5rem;
-  margin-top: 1rem;
-}
-
-/* Original Textarea Styles (if needed, adjust selectors) */
-.input-set {
-  display: inline-block;
-}
-.textarea-label {
-  display: block;
-  margin-bottom: 4px;
-}
-.textarea-container {
-  position: relative;
-  display: inline-block;
-}
-.auto-resizing-textarea {
-  /* Style PrimeVue Textarea via :deep if needed */
-}
-.fixed-placeholder {
-  /* May not be needed with PrimeVue Placeholder */
-}
-.MainWorker {
-  color: black;
-  background: field;
-} /* Keep if styling needed */
 </style>

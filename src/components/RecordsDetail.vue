@@ -124,8 +124,7 @@ const areOptionsLoaded = ref(false);
 const isChip = (key: string) =>
   ["author", "caseNumber", "filingDate", "gender"].includes(key);
 
-const isTag = (key: string) =>
-  ["nationalityID", "serviceMethodID"].includes(key);
+const isTag = (key: string) => ["nationalityID"].includes(key);
 
 const getTagSeverity = (key: string, value: any) => {
   if ((key === "nationalityID" || key === "serviceMethodID") && value === -1)
@@ -147,23 +146,11 @@ const processedData = computed(() => {
     { key: "filingDate", title: "填寫日期" },
     { key: "caseNumber", title: "案件編號" },
     { key: "author", title: "填寫社工" },
-    { key: "target", title: "服務目標對象簡述" },
-    { key: "gender", title: "性別" },
-    { key: "nationalityID", title: "國籍" },
-    {
-      key: "nationalityOther",
-      title: "其他國籍說明",
-      dependsOn: (data: any) => data.nationalityID === -1,
-    },
+    { key: "targets", title: "詳細服務對象" },
     { key: "serviceMethodID", title: "服務方式" },
-    {
-      key: "serviceMethodOther",
-      title: "其他服務方式說明",
-      dependsOn: (data: any) => data.serviceMethodID === -1,
-    },
     { key: "taskObject", title: "工作目標", isFullWidth: true },
     { key: "detail", title: "服務內容", isFullWidth: true },
-    { key: "targets", title: "詳細服務對象", isFullWidth: true },
+
     { key: "serviceItems", title: "服務項目明細", isFullWidth: true },
   ];
 
@@ -197,11 +184,17 @@ const processedData = computed(() => {
               `ID: ${value}`;
         break;
       case "serviceMethodID":
-        displayValue =
-          value === -1
-            ? "其他"
-            : optionMaps.value.serviceMethods.get(value as number) ||
-              `ID: ${value}`;
+        if (value === -1) {
+          // 如果是 "其他"，則組合說明文字
+          displayValue = recordData.serviceMethodOther
+            ? `其他 (${recordData.serviceMethodOther})`
+            : "其他";
+        } else {
+          // 否則，正常從 Map 中查找
+          displayValue =
+            optionMaps.value.serviceMethods.get(value as number) ||
+            `ID: ${value}`;
+        }
         break;
       case "targets":
         if (Array.isArray(value) && value.length > 0) {
@@ -223,8 +216,34 @@ const processedData = computed(() => {
       // 'serviceItems' 在範例中是 null，如果未來有資料，可以在此處添加處理邏輯
       case "serviceItems":
         if (Array.isArray(value) && value.length > 0) {
-          // 假設的處理邏輯
-          displayValue = value.map((item) => `項目: ${item.name}`).join("\n");
+          displayValue = value
+            .map((item) => {
+              // 1. 先從 Map 取得項目的基本名稱
+              const itemName =
+                optionMaps.value.serviceItems.get(item.id) ||
+                `項目ID: ${item.id}`;
+
+              // 2. 建立一個陣列來存放額外的資訊
+              const extras = [];
+              if (item.detail) {
+                // 如果 detail 有值 (不為空字串、null 或 undefined)
+                extras.push(`說明: ${item.detail}`);
+              }
+              if (item.unit) {
+                // 如果 unit 有值
+                extras.push(`單位: ${item.unit}`);
+              }
+
+              // 3. 組合最終的顯示字串
+              if (extras.length > 0) {
+                // 如果有額外資訊，就用括號包起來
+                return `${itemName} (${extras.join("、")})`;
+              } else {
+                // 如果沒有，就只顯示基本名稱
+                return itemName;
+              }
+            })
+            .join("\n"); // 將所有項目用換行符隔開
         } else {
           continue; // 如果是空陣列或 null，則不顯示
         }
