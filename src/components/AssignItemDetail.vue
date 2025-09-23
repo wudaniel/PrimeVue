@@ -180,9 +180,7 @@ const areOptionsLoaded = ref(false);
 // --- 輔助函式 (保持不變) ---
 const isBoolean = (value: any) => typeof value === "boolean";
 const isChip = (title: string) =>
-  ["主責社工", "個案來源編號", "鄉鎮", "國籍", "個案來源類別編號"].includes(
-    title,
-  );
+  ["個案來源編號", "國籍", "個案來源類別編號"].includes(title);
 
 // --- 核心邏輯 (保持不變) ---
 const processedData = computed(() => {

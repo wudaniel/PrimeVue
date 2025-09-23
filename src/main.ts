@@ -24,9 +24,6 @@ import { required, min, confirmed } from "@vee-validate/rules";
 import * as AllRules from "@vee-validate/rules"; // 導入所有內建規則 (方便)
 // 或者，如果你只想用幾個特定規則，可以這樣導入：
 import ToastService from "primevue/toastservice";
-
-// import { required, email, min, max } from '@vee-validate/rules';
-
 import { localize, setLocale } from "@vee-validate/i18n"; // 多國語言相關
 import zh_TW from "@vee-validate/i18n/dist/locale/zh_TW.json"; // 導入繁體中文語言包
 import "./style.css"; // <-- 確保這個路徑和檔名正確
@@ -77,7 +74,6 @@ app.use(PrimeVue, {
 });
 app.use(PrimeVue);
 app.use(ToastService);
-
 router.toast = app.config.globalProperties.$toast;
 app.use(router); // 如果你有使用 Vue Router+
 

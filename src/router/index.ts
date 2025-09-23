@@ -58,6 +58,12 @@ const router = createRouter({
       component: () => import("../components/ChangePassword.vue"),
       meta: { requiresAuth: true },
     },
+    {
+      path: "/test",
+      name: "test",
+      component: () => import("../components/Report/SourceCatPercentage.vue"),
+      meta: { requiresAuth: true },
+    },
 
     {
       // 路徑匹配 assigns/general/CASE123/open 這樣的格式

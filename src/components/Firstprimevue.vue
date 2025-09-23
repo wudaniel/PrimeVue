@@ -420,6 +420,13 @@ const loadLazyData = async () => {
       ([_, v]) => v !== null && v !== undefined && v !== "",
     ),
   );
+  //test api report
+  try {
+    const testresponse = await apiHandler.get("/report/AgeToNationality");
+    console.log(testresponse.data);
+  } catch (error) {
+  } finally {
+  }
 
   // 2. 呼叫 API
   try {
