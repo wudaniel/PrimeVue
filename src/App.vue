@@ -6,6 +6,7 @@ import Menu from "primevue/menu"; // 使用 Menu 作為導航
 import Toast from "primevue/toast";
 import Avatar from "primevue/avatar"; // 新增導入 Avatar
 import { SaveSession } from "./stores/auth"; // 確認路徑正確
+import PanelMenu from "primevue/panelmenu";
 
 import { useRouter, RouterView } from "vue-router";
 const router = useRouter();
@@ -91,10 +92,104 @@ const menuItems = ref([
   {
     label: "報表",
     icon: "pi pi-chart-bar",
-    command: () => {
-      router.push("/none");
-      sidebarVisible.value = false;
-    },
+    items: [
+      {
+        label: "個案來源",
+        icon: "pi pi-users",
+        command: () => {
+          router.push("/report/general/SourceCatPercentage");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "個案國籍及身份別",
+        icon: "pi pi-globe",
+        command: () => {
+          router.push("/report/general/NationalityToIdentity");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "居住鄉鎮分析",
+        icon: "pi pi-map-marker",
+        command: () => {
+          router.push("/report/general/TownPercentage");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "未開案案件分析",
+        icon: "pi pi-folder",
+        command: () => {
+          router.push("/report/general/RefusingReason");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "結案分析",
+        icon: "pi pi-folder-open",
+        command: () => {
+          router.push("/report/general/ClosingReason");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "區間新入境訪視國籍別",
+        icon: "pi pi-calendar-plus",
+        command: () => {
+          router.push("/report/arrival/Nationality");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "服務方式 (新入境)",
+        icon: "pi pi-briefcase",
+        command: () => {
+          router.push("/report/arrival/ServiceMethod");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "服務內容 (新入境)",
+        icon: "pi pi-book",
+        command: () => {
+          router.push("/report/arrival/ServiceItem");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "服務方式及內容",
+        icon: "pi pi-sitemap",
+        command: () => {
+          router.push("/report/general/ServiceMethod");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "個案年齡層",
+        icon: "pi pi-chart-line",
+        command: () => {
+          router.push("/report/general/AgeToNationality");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "統計服務期程",
+        icon: "pi pi-clock",
+        command: () => {
+          router.push("/report/general/ServiceSource");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "開案個案問題類型分析",
+        icon: "pi pi-question-circle",
+        command: () => {
+          router.push("/report/general/OpeningReason");
+          sidebarVisible.value = false;
+        },
+      },
+    ],
   },
 ]);
 </script>
@@ -140,7 +235,7 @@ const menuItems = ref([
         <h3>導覽選單</h3>
       </template>
       <!-- 使用 Menu 元件顯示導航 -->
-      <Menu :model="menuItems" class="w-full" />
+      <panelMenu :model="menuItems" class="w-full" />
       <!-- 你也可以在這裡放其他 Sidebar 內容 -->
     </Sidebar>
 

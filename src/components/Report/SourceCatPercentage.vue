@@ -100,7 +100,9 @@ const fetchData = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await apiHandler.get("/report/SourceCatPercentage");
+    const response = await apiHandler.get(
+      "/report/general/SourceCatPercentage",
+    );
     const responseData = response.data;
 
     if (responseData && responseData.success) {

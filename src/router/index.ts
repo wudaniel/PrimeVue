@@ -59,21 +59,82 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: "/test",
-      name: "test",
+      path: "/report/general/SourceCatPercentage",
+      name: "SourceCatPercentage",
       component: () => import("../components/Report/SourceCatPercentage.vue"),
       meta: { requiresAuth: true },
     },
-
     {
-      // 路徑匹配 assigns/general/CASE123/open 這樣的格式
+      path: "/report/general/NationalityToIdentity",
+      name: "NationalityToIdentity",
+      component: () => import("../components/Report/NationalityToIdentity.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/general/TownPercentage",
+      name: "TownPercentage",
+      component: () => import("../components/Report/TownPercentage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/general/RefusingReason",
+      name: "RefusingReason",
+      component: () => import("../components/Report/RefusingReason.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/general/ClosingReason",
+      name: "ClosingReason",
+      component: () => import("../components/Report/ClosingReason.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/general/ServiceMethod",
+      name: "ServiceMethod",
+      component: () => import("../components/Report/ServiceMethod.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/general/ServiceSource",
+      name: "ServiceSource",
+      component: () => import("../components/Report/ServiceSource.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/general/AgeToNationality",
+      name: "AgeToNationality",
+      component: () => import("../components/Report/AgeToNationality.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/general/OpeningReason",
+      name: "OpeningReason",
+      component: () => import("../components/Report/OpeningReason.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/arrival/ArrivalNationality",
+      name: "ArrivalNationality",
+      component: () => import("../components/Report/ArrivalNationality.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/arrival/ArrivalServiceMethod",
+      name: "ArrivalServiceMethod",
+      component: () => import("../components/Report/ArrivalServiceMethod.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/report/arrival/ArrivalServiceItem",
+      name: "ArrivalServiceItem",
+      component: () => import("../components/Report/ArrivalServiceItem.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
       path: "/assigns/:type/:id/:operation",
-      // 路由名稱，必須與列表頁中使用的 'name' 完全一致
       name: "AssignOperation",
-
       // 指向一個能處理這三種操作的元件
-      component: () => import("../components/AssignOperationView.vue"), // 或者 () => import('../views/AssignOperationView.vue')
-
+      component: () => import("../components/AssignOperationView.vue"),
       // 將路由參數 (:type, :id, :operation) 作為 props 傳遞給元件
       props: true,
     },
@@ -92,10 +153,6 @@ router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   // 2. 如果需要驗證，但用戶未登入
   if (requiresAuth && !userStore.isLoggedIn) {
-    console.log("導航守衛：需要驗證但未登入。");
-    console.log("來源路由(from):", from);
-    console.log("目標路由(to):", to);
-
     // 3. **判斷是否為初始加載**
     // from.name === undefined 且 from.path === '/' 是初始加載的一個典型特徵
     // Vue Router v4 中，初始導航時 from.name 是 undefined，from.fullPath 是 '/'
