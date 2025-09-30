@@ -101,7 +101,7 @@ const fetchData = async () => {
   error.value = null;
   try {
     const response = await apiHandler.get(
-      "/report/general/SourceCatPercentage",
+      "/report/general/sourceCatPercentage",
     );
     const responseData = response.data;
 

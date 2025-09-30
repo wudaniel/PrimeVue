@@ -1,49 +1,81 @@
 <template>
-  <div class="card">
-    <h2 class="text-2xl font-bold mb-4">統計分析表</h2>
+  <div class="card p-4">
+    <h3 class="text-xl font-bold text-center mb-4">年齡層與國籍交叉分析表</h3>
 
     <!-- 狀態處理 -->
     <div v-if="isLoading" class="text-center p-5">
-      <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
-      <p class="mt-3 text-color-secondary">正在載入統計資料...</p>
+      <ProgressSpinner />
+      <p class="mt-2">正在載入統計資料...</p>
     </div>
-
     <div v-else-if="error" class="p-5">
-      <Message severity="error" :closable="false">{{ error }}</Message>
+      <Message severity="error">{{ error }}</Message>
     </div>
 
-    <!-- 主要表格內容 -->
+    <!-- 
+      ★ 主要修改 1: 合併成單一 DataTable ★
+      我們不再需要第二個表格，而是使用 ColumnGroup 的 footer 功能來顯示合計行。
+      這可以確保欄位寬度完美對齊。
+    -->
     <div v-else>
       <DataTable
         :value="tableData"
         responsiveLayout="scroll"
-        stripedRows
         showGridlines
-        :rowClass="rowClass"
-        size="small"
+        class="p-datatable-sm"
       >
-        <!-- ★★★ 核心渲染邏輯: v-for 動態生成所有欄位 ★★★ -->
+        <!-- 固定欄位: 年齡層 -->
         <Column
-          v-for="col in columns"
+          field="ageGroupName"
+          header="年齡層"
+          style="min-width: 120px"
+          frozen
+          class="font-bold"
+        ></Column>
+
+        <!-- ★ 主要修改 2: 動態欄位加上寬度限制與換行樣式 ★ -->
+        <Column
+          v-for="col in dynamicColumns"
           :key="col.field"
           :field="col.field"
           :header="col.header"
-          :class="columnClass(col)"
-          sortable
-        >
-          <!-- 使用 #body 插槽來自訂儲存格樣式 -->
-          <template #body="slotProps">
-            <!-- 讓合計欄的數字也加粗 -->
-            <strong
-              v-if="col.field === 'total' || slotProps.data.meta === '合計'"
-            >
-              {{ getNestedValue(slotProps.data, col.field) }}
-            </strong>
-            <span v-else>
-              {{ getNestedValue(slotProps.data, col.field) }}
-            </span>
-          </template>
-        </Column>
+          bodyClass="text-center"
+          :sortable="true"
+          headerClass="wrappable-header"
+          style="max-width: 150px"
+        ></Column>
+
+        <!-- 固定欄位: 合計 & 百分比 -->
+        <Column
+          field="total"
+          header="合計"
+          bodyClass="text-center"
+          :sortable="true"
+          class="font-bold"
+        ></Column>
+        <Column
+          field="percentage"
+          header="百分比"
+          bodyClass="text-center"
+          class="font-bold"
+        ></Column>
+
+        <!-- ★ 主要修改 1 (續): 使用 ColumnGroup 定義頁腳 (合計行) ★ -->
+        <ColumnGroup type="footer">
+          <Row>
+            <Column footer="合計" :frozen="true" />
+            <Column
+              v-for="col in dynamicColumns"
+              :key="col.field + '-footer'"
+              :footer="getFooterValue(col.field)"
+              class="text-center"
+            />
+            <Column :footer="getFooterValue('total')" class="text-center" />
+            <Column
+              :footer="getFooterValue('percentage')"
+              class="text-center"
+            />
+          </Row>
+        </ColumnGroup>
 
         <template #empty>
           <div class="text-center p-4">沒有可顯示的統計資料。</div>
@@ -55,116 +87,164 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { apiHandler } from "../../class/apiHandler"; // 假設您有這個 API 處理器
+import { apiHandler } from "../../class/apiHandler";
 
-// PrimeVue 元件
+// ★ 新增 ColumnGroup 和 Row 的導入 ★
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
+import ColumnGroup from "primevue/columngroup";
+import Row from "primevue/row";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 
-// --- 類型定義 ---
-interface ColumnDefinition {
+// --- 類型定義 (無變動) ---
+interface ApiNationalityData {
+  nationalityID: number;
+  nationalityName: string;
+  ageGroup: number[];
+  total: number;
+}
+interface TableRow {
+  ageGroupName: string;
+  total: number;
+  percentage: string;
+  [key: string]: string | number;
+}
+interface DynamicColumn {
   field: string;
   header: string;
 }
 
-// --- 響應式狀態 ---
-const tableData = ref<any[]>([]); // 儲存 API 回傳的 data 陣列
-const columns = ref<ColumnDefinition[]>([]); // 儲存動態生成的欄位定義
+// --- 響應式狀態 (無變動) ---
+const tableData = ref<TableRow[]>([]);
+const totalRowData = ref<TableRow | null>(null);
+const dynamicColumns = ref<DynamicColumn[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-const firstColumnHeader = ref("數據維度"); // 第一個欄位的標題，也可以從 API 獲取
 
-// --- 輔助函式 ---
-// PrimeVue 的 field 屬性可以處理簡單的巢狀路徑，但 `counts[0]` 這種格式需要手動處理
-const getNestedValue = (obj: any, path: string) => {
-  // 檢查是否是 counts[index] 的格式
-  const match = path.match(/counts\[(\d+)\]/);
-  if (match) {
-    const index = parseInt(match[1], 10);
-    return obj.counts[index];
-  }
-  // 否則直接回傳屬性值
-  return obj[path];
-};
-
-// --- 核心資料處理與獲取 ---
+// --- 核心資料處理與獲取 (邏輯無變動) ---
 const fetchData = async () => {
   isLoading.value = true;
   error.value = null;
-
   try {
-    // 假設 API 端點是 '/statistics/age-by-nationality'
-    // 為了演示，我們直接使用您提供的資料
-    const response = await apiHandler.get("/report/AgeToNationality");
+    const response = await apiHandler.get("/report/general/ageToNationality");
     const responseData = response.data;
 
     if (responseData && responseData.success) {
-      // 1. 設定表格的資料來源
-      tableData.value = responseData.data;
+      const originalData: ApiNationalityData[] = responseData.data;
+      const meta = responseData.meta;
 
-      // 2. ★★★ 動態生成欄位定義 ★★★
-      const generatedColumns: ColumnDefinition[] = [];
+      dynamicColumns.value = originalData.map((nat) => ({
+        field: nat.nationalityName,
+        header: nat.nationalityName, // 標題不再加 "籍"，避免過長
+      }));
 
-      // a. 新增第一個固定的 "維度" 欄位 (例如：年齡分佈)
-      generatedColumns.push({
-        field: "meta",
-        header: firstColumnHeader.value, // 這個標題也可以是動態的
-      });
+      const pivotedData: TableRow[] = [];
+      const ageGroupsFromMeta = meta.columnMeta; // API 回傳的年齡層
 
-      // b. 根據頂層的 `meta` 陣列，遍歷生成中間的動態欄位
-      responseData.meta.forEach((colMeta: any, index: number) => {
-        generatedColumns.push({
-          // 這是關鍵：field 指向 counts 陣列中對應的索引
-          field: `counts[${index}]`,
-          header: colMeta.name,
+      // 檢查 meta.ageTotal 的長度是否與 ageGroupsFromMeta 匹配
+      if (meta.ageTotal.length < ageGroupsFromMeta.length) {
+        console.warn("meta.ageTotal 的資料長度不足，可能導致錯誤。");
+      }
+
+      ageGroupsFromMeta.forEach((ageName: string, ageIndex: number) => {
+        const newRow: TableRow = {
+          ageGroupName: ageName,
+          // 安全地訪問陣列
+          total: meta.ageTotal[ageIndex] ?? 0,
+          percentage: meta.percentageString[ageIndex] ?? "0.00 %",
+        };
+
+        originalData.forEach((nat) => {
+          newRow[nat.nationalityName] = nat.ageGroup[ageIndex] ?? 0;
         });
+
+        pivotedData.push(newRow);
       });
 
-      // c. 新增最後兩個固定的 "總計" 欄位
-      generatedColumns.push({ field: "total", header: "合計" });
-      generatedColumns.push({ field: "percentageString", header: "百分比" });
+      tableData.value = pivotedData;
 
-      // 3. 將生成好的欄位定義賦值給 ref
-      columns.value = generatedColumns;
+      const totalRow: TableRow = {
+        ageGroupName: "合計",
+        total: meta.total,
+        percentage: "100.00 %",
+      };
+      originalData.forEach((nat) => {
+        totalRow[nat.nationalityName] = nat.total;
+      });
+
+      totalRowData.value = totalRow;
     } else {
-      throw new Error("API 回應格式不正確或請求失敗");
+      throw new Error(responseData.message || "API 回應格式不正確或請求失敗");
     }
   } catch (err: any) {
-    error.value = "無法載入統計資料，請稍後再試。";
-    console.error("Fetch statistics failed:", err);
+    error.value =
+      err.response?.data?.message ||
+      err.message ||
+      "無法載入統計資料，請稍後再試。";
+    console.error("載入統計資料失敗:", err);
   } finally {
     isLoading.value = false;
   }
 };
-
-// --- 特殊樣式函式 ---
-// 給 "合計" 行加上特殊樣式
-const rowClass = (data: any) => {
-  if (data.meta === "合計") {
-    return "font-bold bg-bluegray-100"; // 加粗並給予淡灰色背景
+const getFooterValue = (field: string): string => {
+  // 步驟 1: 確保 totalRowData 存在，如果不存在，直接返回空字串
+  if (!totalRowData.value) {
+    return "";
   }
-  return "";
-};
 
-// 給 "合計" 欄加上特殊樣式
-const columnClass = (col: ColumnDefinition) => {
-  if (col.header === "合計") {
-    return "font-bold";
+  // 步驟 2: 從 totalRowData 中獲取對應的值
+  const value = totalRowData.value[field];
+
+  // 步驟 3: 檢查值是否為 null 或 undefined，如果是，返回空字串
+  if (value === null || value === undefined) {
+    return "";
   }
-  return "";
-};
 
-// --- 生命週期鉤子 ---
+  // 步驟 4: ★★★ 核心 ★★★
+  // 如果值存在 (包括 0, 123, "100%", 等)，將其轉換為字串並返回。
+  return String(value);
+};
 onMounted(() => {
   fetchData();
 });
 </script>
 
 <style scoped>
-/* 為了讓合計行的樣式能覆蓋 PrimeVue 的預設樣式，我們可能需要使用 :deep */
-:deep(.p-datatable .p-datatable-tbody > tr.bg-bluegray-100) {
-  background-color: #f1f5f9 !important; /* 使用 !important 確保生效 */
+/* 讓合計行 (tfoot) 的文字加粗並給予背景色 */
+:deep(.p-datatable-tfoot > tr > td) {
+  font-weight: bold;
+  background-color: var(--surface-200);
+}
+
+/* 凍結欄位的頁腳也要有背景色 */
+:deep(.p-datatable-tfoot > tr > td.p-frozen-column) {
+  background-color: var(--surface-200);
+}
+
+/* 確保表頭容器內的元素置中 (無變動) */
+:deep(.p-datatable .p-column-header-content) {
+  justify-content: center;
+}
+
+/* 
+  ★★★ 核心修正: 強制標題文字換行 ★★★ 
+*/
+
+/* 
+  步驟 1: 我們需要直接鎖定標題文字所在的 span 元素 (.p-column-title)。
+*/
+:deep(.wrappable-header .p-column-title) {
+  /* 覆寫 PrimeVue 預設的 nowrap，允許文字換行。使用 !important 確保最高優先級。 */
+  white-space: normal !important;
+
+  /* 
+    使用 break-word 在長單字或 URL 內部進行換行，比 break-all 更自然，
+    它會盡量在單字間換行。
+  */
+  word-break: break-word;
+
+  /* 確保換行後的文字塊本身是置中的 */
+  text-align: center;
 }
 </style>
