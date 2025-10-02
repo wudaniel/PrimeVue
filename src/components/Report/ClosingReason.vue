@@ -17,6 +17,7 @@
         responsiveLayout="scroll"
         showGridlines
         class="p-datatable-sm"
+        removableSort
       >
         <!-- 項次 -->
 
