@@ -2,6 +2,70 @@
   <div class="card p-4">
     <h3 class="text-xl font-bold text-center mb-4">各國籍歸化身份統計表</h3>
 
+    <!-- ★★★ 新增: 篩選器區域 ★★★ -->
+    <div class="flex flex-wrap md:flex-nowrap align-items-center gap-3 mb-3">
+      <!-- 日期區間 -->
+      <label for="date-range" class="font-bold white-space-nowrap"
+        >日期區間:</label
+      >
+      <div class="flex-grow-1">
+        <Calendar
+          id="date-range"
+          v-model="dateRange"
+          selectionMode="range"
+          :manualInput="false"
+          dateFormat="yy/mm/dd"
+          placeholder="請選擇開始至結束日期"
+          class="w-full"
+        />
+      </div>
+
+      <!-- 工作人員 -->
+      <label for="staff-select" class="font-bold white-space-nowrap"
+        >工作人員:</label
+      >
+      <div class="flex-grow-1">
+        <MultiSelect
+          id="staff-select"
+          v-model="selectedStaffIds"
+          :options="staffList"
+          :maxSelectedLabels="2"
+          selectedItemsLabel="已選擇 {0} 位"
+          optionLabel="name"
+          optionValue="name"
+          placeholder="可留空，預設查詢全部"
+          display="chip"
+          filter
+          class="w-full"
+        />
+      </div>
+
+      <!-- 性別 -->
+      <label for="gender-select" class="font-bold white-space-nowrap"
+        >性別:</label
+      >
+      <div style="min-width: 150px">
+        <Dropdown
+          id="gender-select"
+          v-model="selectedGender"
+          :options="genderOptions"
+          optionLabel="name"
+          optionValue="code"
+          placeholder="全部"
+          class="w-full"
+        />
+      </div>
+
+      <!-- 查詢按鈕 -->
+      <Button
+        label="查詢"
+        icon="pi pi-search"
+        @click="fetchData"
+        :loading="isLoading"
+        :disabled="isQueryDisabled"
+      />
+    </div>
+
     <!-- 狀態處理 -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
@@ -11,26 +75,26 @@
       <Message severity="error">{{ error }}</Message>
     </div>
 
-    <!-- 主要內容區 -->
+    <!-- ★★★ 修改點: 合併為單一 DataTable ★★★ -->
     <div v-else>
-      <!-- 表格 1: 只用於顯示和排序純資料 -->
       <DataTable
         :value="tableData"
         responsiveLayout="scroll"
         showGridlines
         class="p-datatable-sm"
+        removableSort
       >
-        <!-- 為確保兩個表格完美對齊，我們為欄位定義了固定的百分比寬度 -->
-        <Column field="name" header="籍別" :sortable="true" style="width: 40%">
-          <template #body="slotProps">
-            <!-- 動態為國籍名稱加上 "籍"，但 "其他" 除外 -->
-            <span>{{
-              slotProps.data.name === "其他"
-                ? "其他"
-                : slotProps.data.name + "籍"
-            }}</span>
-          </template>
-        </Column>
+        <template #empty>
+          <div class="text-center p-4">請選擇篩選條件後點擊查詢。</div>
+        </template>
+
+        <!-- 資料欄位 -->
+        <Column
+          field="name"
+          header="籍別"
+          :sortable="true"
+          style="width: 40%"
+        ></Column>
         <Column
           field="naturalized"
           header="已歸化"
@@ -59,114 +123,168 @@
           style="width: 15%"
         ></Column>
 
-        <template #empty>
-          <div class="text-center p-4">沒有可顯示的統計資料。</div>
-        </template>
-      </DataTable>
-
-      <!-- 表格 2: 只用於顯示固定的合計行 -->
-      <DataTable
-        v-if="totalRowData"
-        :value="[totalRowData]"
-        class="p-datatable-sm total-footer-table"
-        showGridlines
-      >
-        <!-- 這裡的欄位定義必須和上面的表格完全一致 (尤其是寬度)，以確保對齊 -->
-        <Column field="name" style="width: 40%"></Column>
-        <Column
-          field="naturalized"
-          bodyClass="text-center"
-          style="width: 15%"
-        ></Column>
-        <Column
-          field="not-naturalized"
-          bodyClass="text-center"
-          style="width: 15%"
-        ></Column>
-        <Column
-          field="total"
-          bodyClass="text-center"
-          style="width: 15%"
-        ></Column>
-        <Column
-          field="percentageString"
-          bodyClass="text-center"
-          style="width: 15%"
-        ></Column>
+        <!-- Footer -->
+        <ColumnGroup type="footer" v-if="totalRowData">
+          <Row>
+            <Column :footer="totalRowData.name" footerStyle="width: 40%" />
+            <Column
+              :footer="totalRowData.naturalized"
+              footerClass="text-center"
+              footerStyle="width: 15%"
+            />
+            <Column
+              :footer="totalRowData['not-naturalized']"
+              footerClass="text-center"
+              footerStyle="width: 15%"
+            />
+            <Column
+              :footer="totalRowData.total"
+              footerClass="text-center"
+              footerStyle="width: 15%"
+            />
+            <Column
+              :footer="totalRowData.percentageString"
+              footerClass="text-center"
+              footerStyle="width: 15%"
+            />
+          </Row>
+        </ColumnGroup>
       </DataTable>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { apiHandler } from "../../class/apiHandler"; // 請確保路徑正確
+import { ref, onMounted, computed } from "vue";
+import { apiHandler } from "../../class/apiHandler";
 
 // PrimeVue 元件
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
+import Calendar from "primevue/calendar";
+import MultiSelect from "primevue/multiselect";
+import Dropdown from "primevue/dropdown";
+import Button from "primevue/button";
+import ColumnGroup from "primevue/columngroup";
+import Row from "primevue/row";
 
 // --- 類型定義 ---
 interface ApiDataRow {
   id: number;
   name: string;
   naturalized: number;
-  "not-naturalized": number; // 注意：key 中有連字號，需要用引號
+  "not-naturalized": number;
   total: number;
   percentage: number;
   percentageString: string;
 }
+interface Staff {
+  name: string;
+}
+interface GenderOption {
+  name: string;
+  code: number | null;
+}
 
 // --- 響應式狀態 ---
-const tableData = ref<ApiDataRow[]>([]); // 只存放純資料
-const totalRowData = ref<any | null>(null); // 獨立存放合計行
-const isLoading = ref(true);
+const tableData = ref<ApiDataRow[]>([]);
+const totalRowData = ref<any | null>(null);
+const isLoading = ref(false);
 const error = ref<string | null>(null);
 
-// --- 核心資料處理與獲取 ---
+// 篩選器狀態
+const dateRange = ref<Date[] | null>(null);
+const staffList = ref<Staff[]>([]);
+const selectedStaffIds = ref<string[] | null>(null);
+const selectedGender = ref<number | null>(null); // null 代表全部
+const genderOptions = ref<GenderOption[]>([
+  { name: "全部", code: null },
+  { name: "男", code: 0 },
+  { name: "女", code: 1 },
+]);
+
+// 按鈕禁用狀態
+const isQueryDisabled = computed(() => {
+  return (
+    isLoading.value ||
+    !dateRange.value ||
+    dateRange.value.length < 2 ||
+    !dateRange.value[1]
+  );
+});
+
+// --- 輔助函式 ---
+const formatDate = (date: Date): string => date.toISOString().split("T")[0];
+
+// --- API 呼叫 ---
+const fetchStaffList = async () => {
+  try {
+    const response = await apiHandler.get("/option/workers");
+    if (response.data && response.data.success) {
+      staffList.value = response.data.data;
+    }
+  } catch (err) {
+    console.error("獲取工作人員列表失敗:", err);
+  }
+};
+
 const fetchData = async () => {
+  if (isQueryDisabled.value) return;
   isLoading.value = true;
   error.value = null;
+  tableData.value = [];
+  totalRowData.value = null;
+
+  // 準備 API 請求參數
+  const params: { [key: string]: any } = {};
+  if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
+    params.dateStart = formatDate(dateRange.value[0]);
+    params.dateEnd = formatDate(dateRange.value[1]);
+  }
+  if (selectedStaffIds.value && selectedStaffIds.value.length > 0) {
+    params["workers[]"] = selectedStaffIds.value;
+  }
+
+  if (selectedGender.value !== null) {
+    params.gender = selectedGender.value;
+  }
+
   try {
-    // 在實際應用中，您會使用真實的 API 呼叫
     const response = await apiHandler.get(
       "/report/general/nationalityToIdentity",
-    ); // 假設這是您的 API 端點
+      { params },
+    );
     const responseData = response.data;
 
     if (responseData && responseData.success) {
-      const originalData: ApiDataRow[] = responseData.data;
-
-      // 將純資料賦值給第一個表格
+      const originalData: ApiDataRow[] = responseData.data || [];
       tableData.value = originalData;
 
-      // ★★★ 動態計算合計值 ★★★
-      const totalNaturalized = originalData.reduce(
-        (sum, item) => sum + item.naturalized,
-        0,
-      );
-      const totalNotNaturalized = originalData.reduce(
-        (sum, item) => sum + item["not-naturalized"],
-        0,
-      );
-      const grandTotal = originalData.reduce(
-        (sum, item) => sum + item.total,
-        0,
-      );
+      // 如果有資料，才計算合計行
+      if (originalData.length > 0) {
+        const totalNaturalized = originalData.reduce(
+          (sum, item) => sum + item.naturalized,
+          0,
+        );
+        const totalNotNaturalized = originalData.reduce(
+          (sum, item) => sum + item["not-naturalized"],
+          0,
+        );
+        const grandTotal = originalData.reduce(
+          (sum, item) => sum + item.total,
+          0,
+        );
 
-      // 創建合計行物件
-      const totalRow = {
-        name: "合計",
-        naturalized: totalNaturalized,
-        "not-naturalized": totalNotNaturalized,
-        total: grandTotal,
-        percentageString: "100.00 %",
-      };
-
-      // 將合計行資料賦值給第二個表格
-      totalRowData.value = totalRow;
+        totalRowData.value = {
+          name: "合計",
+          naturalized: totalNaturalized,
+          "not-naturalized": totalNotNaturalized,
+          total: grandTotal,
+          percentageString: "100.00 %",
+        };
+      }
     } else {
       throw new Error(responseData.message || "API 回應格式不正確或請求失敗");
     }
@@ -183,25 +301,16 @@ const fetchData = async () => {
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
-  fetchData();
+  // 頁面載入時，只獲取工作人員列表以供選擇
+  fetchStaffList();
 });
 </script>
 
 <style scoped>
-/* 隱藏合計表格的表頭 */
-:deep(.total-footer-table .p-datatable-thead) {
-  display: none;
-}
-
-/* 讓合計行的文字加粗並給予背景色 */
-:deep(.total-footer-table .p-datatable-tbody > tr) {
+/* ★★★ 修改點: 簡化為單一表格的 Footer 樣式 ★★★ */
+:deep(.p-datatable-tfoot > tr > td) {
   font-weight: bold;
   background-color: var(--surface-200) !important;
-}
-
-/* 移除兩個表格之間的頂部邊框，讓它們看起來像一個整體 */
-:deep(.total-footer-table .p-datatable-wrapper) {
-  border-top: none;
 }
 
 /* 確保表頭文字置中 */

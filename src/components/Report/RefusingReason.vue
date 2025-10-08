@@ -1,16 +1,59 @@
 <template>
   <div class="card p-4">
     <h3 class="text-xl font-bold text-center mb-4">未開案案件分析</h3>
+
+    <!-- ★★★ 新增: 篩選器區域 ★★★ -->
+    <div class="flex align-items-center gap-3 mb-3">
+      <label for="date-range" class="font-bold white-space-nowrap"
+        >日期區間:</label
+      >
+      <div class="flex-grow-1">
+        <Calendar
+          id="date-range"
+          v-model="dateRange"
+          selectionMode="range"
+          :manualInput="false"
+          dateFormat="yy/mm/dd"
+          placeholder="請選擇開始至結束日期"
+          class="w-full"
+        />
+      </div>
+      <label for="staff-select" class="font-bold white-space-nowrap"
+        >工作人員:</label
+      >
+      <div class="flex-grow-1">
+        <MultiSelect
+          id="staff-select"
+          v-model="selectedStaffIds"
+          :options="staffList"
+          :maxSelectedLabels="2"
+          selectedItemsLabel="已選擇 {0} 位"
+          optionLabel="name"
+          optionValue="name"
+          placeholder="可留空，預設查詢全部"
+          display="chip"
+          filter
+          class="w-full"
+        />
+      </div>
+      <Button
+        label="查詢"
+        icon="pi pi-search"
+        @click="fetchData"
+        :loading="isLoading"
+        :disabled="isQueryDisabled"
+      />
+    </div>
+
     <!-- 狀態處理 -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
-      <p class="mt-2">正在載入統計資料...</p>
     </div>
     <div v-else-if="error" class="p-5">
       <Message severity="error">{{ error }}</Message>
     </div>
 
-    <!-- 主要內容區 -->
+    <!-- 主要內容區 (表格結構無變動) -->
     <div v-else>
       <DataTable
         :value="tableData"
@@ -18,8 +61,6 @@
         showGridlines
         class="p-datatable-sm"
       >
-        <!-- 項次 -->
-
         <!-- 未開案原因 -->
         <Column
           field="name"
@@ -27,35 +68,28 @@
           style="width: 70%"
           class="reason-cell"
         ></Column>
-
         <!-- 案數 -->
         <Column
           field="total"
           header="案數"
           bodyClass="text-center"
           :sortable="true"
-          style="width: 20%"
+          style="width: 30%"
         ></Column>
 
-        <!-- 使用 ColumnGroup 定義與欄位完美對齊的頁腳 (合計行) -->
+        <!-- Footer -->
         <ColumnGroup type="footer">
           <Row>
-            <!-- 
-              使用 colspan="2" 將前兩個欄位合併成一個儲存格，
-              並設定文字靠右對齊，更符合一般表格習慣
-            -->
             <Column
               footer="合計"
-              :colspan="1"
               footerStyle="text-align: left; padding-left: 1.5rem;"
             />
-            <!-- 在第三個欄位的位置顯示計算好的總數 -->
             <Column :footer="grandTotal" footerClass="text-center" />
           </Row>
         </ColumnGroup>
 
         <template #empty>
-          <div class="text-center p-4">沒有可顯示的統計資料。</div>
+          <div class="text-center p-4">請選擇篩選條件後點擊查詢。</div>
         </template>
       </DataTable>
     </div>
@@ -64,7 +98,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { apiHandler } from "../../class/apiHandler"; // 請確保路徑正確
+import { apiHandler } from "../../class/apiHandler";
 
 // PrimeVue 元件
 import DataTable from "primevue/datatable";
@@ -73,6 +107,10 @@ import ColumnGroup from "primevue/columngroup";
 import Row from "primevue/row";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
+// ★★★ 新增: 引入篩選器元件 ★★★
+import Calendar from "primevue/calendar";
+import MultiSelect from "primevue/multiselect";
+import Button from "primevue/button";
 
 // --- 類型定義 ---
 interface RefusingReason {
@@ -81,28 +119,72 @@ interface RefusingReason {
   name: string;
   total: number;
 }
+interface Staff {
+  name: string;
+} // 新增 Staff 類型
 
 // --- 響應式狀態 ---
 const tableData = ref<RefusingReason[]>([]);
-const isLoading = ref(true);
+const isLoading = ref(false); // 初始設為 false
 const error = ref<string | null>(null);
 
-// ★ 使用 computed 屬性動態計算總計 ★
-// 這樣當 tableData 變化時，grandTotal 會自動更新
+// ★★★ 新增: 篩選器相關狀態 ★★★
+const dateRange = ref<Date[] | null>(null);
+const staffList = ref<Staff[]>([]);
+const selectedStaffIds = ref<string[] | null>(null);
+const isQueryDisabled = computed(() => {
+  return (
+    isLoading.value ||
+    !dateRange.value ||
+    dateRange.value.length < 2 ||
+    !dateRange.value[1]
+  );
+});
+
+// 計算總計 (無變動)
 const grandTotal = computed(() => {
   return tableData.value.reduce((sum, item) => sum + item.total, 0);
 });
 
-// --- 資料獲取 ---
+// --- API 呼叫 ---
+const formatDate = (date: Date): string => date.toISOString().split("T")[0];
+
+const fetchStaffList = async () => {
+  try {
+    const response = await apiHandler.get("/option/workers");
+    if (response.data && response.data.success) {
+      staffList.value = response.data.data;
+    }
+  } catch (err) {
+    console.error("獲取工作人員列表失敗:", err);
+  }
+};
+
+// ★★★ 修改: fetchData 函式以包含篩選參數 ★★★
 const fetchData = async () => {
+  if (isQueryDisabled.value) return; // 防護
   isLoading.value = true;
   error.value = null;
+  tableData.value = []; // 清空舊資料
+
+  // 準備 API 請求參數
+  const params: { [key: string]: any } = {};
+  if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
+    params.dateStart = formatDate(dateRange.value[0]);
+    params.dateEnd = formatDate(dateRange.value[1]);
+  }
+  if (selectedStaffIds.value && selectedStaffIds.value.length > 0) {
+    params["workers[]"] = selectedStaffIds.value;
+  }
+
   try {
-    const response = await apiHandler.get("/report/general/refusingReason");
+    const response = await apiHandler.get("/report/general/refusingReason", {
+      params,
+    });
     const responseData = response.data;
 
     if (responseData && responseData.success) {
-      tableData.value = responseData.data;
+      tableData.value = responseData.data || [];
     } else {
       throw new Error(responseData.message || "API 回應格式不正確或請求失敗");
     }
@@ -117,25 +199,21 @@ const fetchData = async () => {
   }
 };
 
-// --- 生命週期鉤子 ---
+// ★★★ 修改: onMounted 只獲取選項，不查詢資料 ★★★
 onMounted(() => {
-  fetchData();
+  fetchStaffList();
 });
 </script>
 
 <style scoped>
-/* 讓合計行 (tfoot) 的文字加粗並給予一個淡淡的背景色，使其更突出 */
+/* 樣式無變動 */
 :deep(.p-datatable-tfoot > tr > td) {
   font-weight: bold;
   background-color: var(--surface-100);
 }
-
-/* 確保表頭文字置中 */
 :deep(.p-datatable .p-column-header-content) {
   justify-content: center;
 }
-
-/* 讓"未開案原因"的文字可以自動換行，避免過長時版面跑掉 */
 :deep(.reason-cell) {
   white-space: normal;
   word-break: break-word;

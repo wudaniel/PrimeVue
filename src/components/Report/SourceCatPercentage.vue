@@ -2,7 +2,62 @@
   <div class="card p-4">
     <h3 class="text-xl font-bold text-center mb-4">個案來源統計表</h3>
 
-    <!-- 狀態處理 (無變動) -->
+    <!-- ★★★ 使用 PrimeFlex 實現的最終佈局 ★★★ -->
+    <!-- .flex: 啟用 Flexbox -->
+    <!-- .align-items-center: 垂直居中 -->
+    <div class="flex align-items-center gap-3 mb-3">
+      <!-- 日期區間 -->
+      <label
+        for="date-range"
+        class="font-bold white-space-nowrap font-family:inherit"
+        >日期區間:</label
+      >
+      <!-- .flex-grow-1: 讓此元素伸展以填滿可用空間 -->
+      <div class="flex-grow-1">
+        <Calendar
+          id="date-range"
+          v-model="dateRange"
+          selectionMode="range"
+          :manualInput="false"
+          dateFormat="yy/mm/dd"
+          placeholder="請選擇開始至結束日期"
+          class="w-full"
+        />
+      </div>
+
+      <!-- 工作人員 -->
+      <label for="staff-select" class="font-bold white-space-nowrap"
+        >工作人員:</label
+      >
+      <!-- .flex-grow-1: 讓此元素也伸展以填滿可用空間 -->
+      <div class="flex-grow-1">
+        <MultiSelect
+          id="staff-select"
+          v-model="selectedStaffIds"
+          :options="staffList"
+          :maxSelectedLabels="3"
+          selectedItemsLabel="已選擇 {0} 項"
+          optionLabel="name"
+          optionValue="name"
+          placeholder="可留空，預設查詢全部"
+          display="chip"
+          filter
+          class="w-full"
+        />
+      </div>
+
+      <!-- 查詢按鈕 -->
+      <!-- 按鈕不需要特殊 class，它會自動保持其內容寬度 -->
+      <Button
+        label="查詢"
+        icon="pi pi-search"
+        @click="fetchData"
+        :loading="isLoading"
+        :disabled="isQueryDisabled"
+      />
+    </div>
+
+    <!-- 狀態處理與表格部分 (完全無變動) -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
       <p class="mt-2">正在載入統計資料...</p>
@@ -10,17 +65,17 @@
     <div v-else-if="error" class="p-5">
       <Message severity="error">{{ error }}</Message>
     </div>
-
-    <!-- ★★★ 修改點 1: 表格容器 ★★★ -->
     <div v-else>
-      <!-- 表格 1: 只用於顯示和排序純資料 -->
       <DataTable
         :value="tableData"
         responsiveLayout="scroll"
         showGridlines
+        removableSort
         class="p-datatable-sm"
       >
-        <!-- 我們為欄位定義了固定的百分比寬度，以確保兩個表格能完美對齊 -->
+        <template #empty>
+          <div class="text-center p-4">請選擇篩選條件後點擊查詢。</div>
+        </template>
         <Column
           field="name"
           header="個案來源"
@@ -40,47 +95,39 @@
           bodyClass="text-center"
           style="width: 25%"
         ></Column>
-
-        <template #empty>
-          <div class="text-center p-4">沒有可顯示的統計資料。</div>
-        </template>
-      </DataTable>
-
-      <!-- 表格 2: 只用於顯示固定的合計行 -->
-      <DataTable
-        v-if="totalRowData"
-        :value="[totalRowData]"
-        class="p-datatable-sm total-footer-table"
-        showGridlines
-      >
-        <!-- 這裡的欄位定義必須和上面的表格完全一致，以確保對齊 -->
-        <Column field="name" style="width: 50%"></Column>
-        <Column
-          field="total"
-          bodyClass="text-center"
-          style="width: 25%"
-        ></Column>
-        <Column
-          field="percentageString"
-          bodyClass="text-center"
-          style="width: 25%"
-        ></Column>
+        <ColumnGroup type="footer" v-if="totalRowData">
+          <Row>
+            <Column :footer="totalRowData.name" footerStyle="width: 50%" />
+            <Column
+              :footer="totalRowData.total"
+              footerClass="text-center"
+              footerStyle="width: 25%"
+            />
+            <Column
+              :footer="totalRowData.percentageString"
+              footerClass="text-center"
+              style="width: 25%"
+            />
+          </Row>
+        </ColumnGroup>
       </DataTable>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+// <script setup> 區塊完全不需要修改，之前的版本是正確的。
+import { ref, onMounted, computed } from "vue";
 import { apiHandler } from "../../class/apiHandler";
-
-// ★★★ 修改點 2: 移除不再需要的導入 ★★★
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
-
-// --- 類型定義 (無變動) ---
+import ColumnGroup from "primevue/columngroup";
+import Row from "primevue/row";
+import Calendar from "primevue/calendar";
+import MultiSelect from "primevue/multiselect";
+import Button from "primevue/button";
 interface ApiDataRow {
   id: number;
   name: string;
@@ -88,50 +135,78 @@ interface ApiDataRow {
   percentage: number;
   percentageString: string;
 }
-
-// ★★★ 修改點 3: 簡化狀態，不再需要手動排序邏輯 ★★★
-const tableData = ref<ApiDataRow[]>([]); // 只存放純資料
-const totalRowData = ref<ApiDataRow | null>(null); // 獨立存放合計行
-const isLoading = ref(true);
+interface Staff {
+  name: string;
+}
+const tableData = ref<ApiDataRow[]>([]);
+const totalRowData = ref<ApiDataRow | null>(null);
+const isLoading = ref(false);
 const error = ref<string | null>(null);
-
-// ★★★ 修改點 4: fetchData 邏輯簡化 ★★★
+const dateRange = ref<Date[] | null>(null);
+const staffList = ref<Staff[]>([]);
+const selectedStaffIds = ref<string[] | null>(null);
+const isQueryDisabled = computed(() => {
+  return (
+    isLoading.value ||
+    !dateRange.value ||
+    dateRange.value.length < 2 ||
+    !dateRange.value[1]
+  );
+});
+const formatDate = (date: Date): string => date.toISOString().split("T")[0];
+const fetchStaffList = async () => {
+  try {
+    const response = await apiHandler.get("/option/workers");
+    if (response.data && response.data.success) {
+      staffList.value = response.data.data;
+    } else {
+      console.error("無法獲取工作人員列表");
+    }
+  } catch (err) {
+    console.error("獲取工作人員列表失敗:", err);
+  }
+};
 const fetchData = async () => {
+  if (isQueryDisabled.value) return;
   isLoading.value = true;
   error.value = null;
+  tableData.value = [];
+  totalRowData.value = null;
+  const params: { [key: string]: any } = {};
+  if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
+    params.dateStart = formatDate(dateRange.value[0]);
+    params.dateEnd = formatDate(dateRange.value[1]);
+  }
+  if (selectedStaffIds.value && selectedStaffIds.value.length > 0) {
+    params["workers[]"] = selectedStaffIds.value;
+  }
   try {
-    const response = await apiHandler.get(
-      "/report/general/sourceCatPercentage",
-    );
+    const response = await apiHandler.get("/report/general/sourceCat", {
+      params,
+    });
     const responseData = response.data;
-
     if (responseData && responseData.success) {
-      const dataFromServer: ApiDataRow[] = responseData.data;
-
+      const dataFromServer: ApiDataRow[] = responseData.data || [];
       const processedData = dataFromServer.map((item) => {
         if (item.name.includes("(")) {
           return { ...item, name: item.name.split("(")[0].trim() };
         }
         return item;
       });
-
-      // 將純資料賦值給第一個表格
       tableData.value = processedData;
-
-      const totalCount = processedData.reduce(
-        (sum, item) => sum + item.total,
-        0,
-      );
-      const totalRow = {
-        id: -999,
-        name: "合計",
-        total: totalCount,
-        percentage: 1,
-        percentageString: "100.00 %",
-      };
-
-      // 將合計行資料賦值給第二個表格
-      totalRowData.value = totalRow;
+      if (processedData.length > 0) {
+        const totalCount = processedData.reduce(
+          (sum, item) => sum + item.total,
+          0,
+        );
+        totalRowData.value = {
+          id: -999,
+          name: "合計",
+          total: totalCount,
+          percentage: 1,
+          percentageString: "100.00 %",
+        };
+      }
     } else {
       throw new Error(responseData.message || "API 回應格式不正確或請求失敗");
     }
@@ -145,33 +220,41 @@ const fetchData = async () => {
     isLoading.value = false;
   }
 };
-
-// --- 生命週期鉤子 (無變動) ---
 onMounted(() => {
-  fetchData();
+  fetchStaffList();
 });
 </script>
-
 <style scoped>
-/* ★★★ 修改點 5: 為合計表格添加特殊樣式 ★★★ */
+.flex {
+  display: block;
+}
+.filter-grid-layout {
+  display: grid;
 
-/* 隱藏合計表格的表頭 */
-:deep(.total-footer-table .p-datatable-thead) {
-  display: none;
+  /*
+    ★★★ 核心：定義網格的欄位藍圖 ★★★
+    auto:  欄寬由內容決定 (用於標籤)
+    1fr:   佔據 1 個單位的剩餘空間 (用於輸入框)
+    這創建了一個 5 欄位的網格: [標籤][輸入框][標籤][輸入框][按鈕]
+  */
+  grid-template-columns: auto 1fr auto 1fr auto;
+  align-items: center; /* 垂直居中 */
+  gap: 0.75rem; /* 項目之間的間距 */
+  margin-bottom: 1rem;
 }
 
-/* 讓合計行的文字加粗並給予背景色 */
-:deep(.total-footer-table .p-datatable-tbody > tr) {
+/* 確保標籤文字不換行 */
+.filter-grid-layout > label {
+  white-space: nowrap;
   font-weight: bold;
-  background-color: var(--surface-200) !important;
 }
 
-/* 移除兩個表格之間的邊框，讓它們看起來像一體 */
-:deep(.total-footer-table .p-datatable-wrapper) {
-  border-top: none;
+/* --- 原有樣式 (保留) --- */
+:deep(.p-datatable-tfoot > tr > td) {
+  font-weight: bold;
+  background-color: var(--surface-200);
 }
 
-/* 確保表頭文字置中 */
 :deep(.p-datatable .p-column-header-content) {
   justify-content: center;
 }

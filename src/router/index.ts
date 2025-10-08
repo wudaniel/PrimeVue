@@ -95,6 +95,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: "/report/general/ServiceItem",
+      name: "ServiceItem",
+      component: () => import("../components/Report/ServiceItem.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
       path: "/report/general/ServiceSource",
       name: "ServiceSource",
       component: () => import("../components/Report/ServiceSource.vue"),
@@ -113,19 +119,19 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: "/report/arrival/ArrivalNationality",
+      path: "/report/arrival/Nationality",
       name: "ArrivalNationality",
       component: () => import("../components/Report/ArrivalNationality.vue"),
       meta: { requiresAuth: true },
     },
     {
-      path: "/report/arrival/ArrivalServiceMethod",
+      path: "/report/arrival/ServiceMethod",
       name: "ArrivalServiceMethod",
       component: () => import("../components/Report/ArrivalServiceMethod.vue"),
       meta: { requiresAuth: true },
     },
     {
-      path: "/report/arrival/ArrivalServiceItem",
+      path: "/report/arrival/ServiceItem",
       name: "ArrivalServiceItem",
       component: () => import("../components/Report/ArrivalServiceItem.vue"),
       meta: { requiresAuth: true },

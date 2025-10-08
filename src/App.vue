@@ -133,38 +133,25 @@ const menuItems = ref([
           sidebarVisible.value = false;
         },
       },
+
       {
-        label: "區間新入境訪視國籍別",
-        icon: "pi pi-calendar-plus",
-        command: () => {
-          router.push("/report/arrival/Nationality");
-          sidebarVisible.value = false;
-        },
-      },
-      {
-        label: "服務方式 (新入境)",
-        icon: "pi pi-briefcase",
-        command: () => {
-          router.push("/report/arrival/ServiceMethod");
-          sidebarVisible.value = false;
-        },
-      },
-      {
-        label: "服務內容 (新入境)",
-        icon: "pi pi-book",
-        command: () => {
-          router.push("/report/arrival/ServiceItem");
-          sidebarVisible.value = false;
-        },
-      },
-      {
-        label: "服務方式及內容",
+        label: "服務方式統計",
         icon: "pi pi-sitemap",
         command: () => {
           router.push("/report/general/ServiceMethod");
           sidebarVisible.value = false;
         },
       },
+
+      {
+        label: "服務項目統計",
+        icon: "pi pi-question-circle",
+        command: () => {
+          router.push("/report/general/ServiceItem");
+          sidebarVisible.value = false;
+        },
+      },
+
       {
         label: "個案年齡層",
         icon: "pi pi-chart-line",
@@ -186,6 +173,30 @@ const menuItems = ref([
         icon: "pi pi-question-circle",
         command: () => {
           router.push("/report/general/OpeningReason");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "服務項目統計 (新入境)",
+        icon: "pi pi-book",
+        command: () => {
+          router.push("/report/arrival/ServiceItem");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "服務方式統計 (新入境)",
+        icon: "pi pi-briefcase",
+        command: () => {
+          router.push("/report/arrival/ServiceMethod");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "區間訪視國籍(新入境)",
+        icon: "pi pi-calendar-plus",
+        command: () => {
+          router.push("/report/arrival/Nationality");
           sidebarVisible.value = false;
         },
       },

@@ -1,8 +1,8 @@
 <template>
   <div class="card p-4">
-    <h3 class="text-xl font-bold text-center mb-4">服務方式及內容</h3>
+    <h3 class="text-xl font-bold text-center mb-4">服務項目統計表</h3>
 
-    <!-- ★★★ 新增: 篩選器區域 ★★★ -->
+    <!-- 篩選器區域 (無變動) -->
     <div class="flex align-items-center gap-3 mb-3">
       <label for="date-range" class="font-bold white-space-nowrap"
         >日期區間:</label
@@ -45,7 +45,7 @@
       />
     </div>
 
-    <!-- 狀態處理 -->
+    <!-- 狀態處理 (無變動) -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
     </div>
@@ -53,7 +53,7 @@
       <Message severity="error">{{ error }}</Message>
     </div>
 
-    <!-- 主要內容區 (表格結構無變動) -->
+    <!-- 主要內容區 -->
     <div v-else>
       <DataTable
         :value="tableData"
@@ -64,19 +64,22 @@
         groupRowsBy="mainCategory"
       >
         <Column
-          header="服務方式"
+          header="統計項目"
           field="mainCategory"
           class="font-bold fixed-col"
         ></Column>
         <Column header="性別" field="gender" class="fixed-col"></Column>
+
+        <!-- 動態生成所有服務項目的欄位 -->
         <Column
-          v-for="method in headerServiceMethods"
-          :key="method.id"
-          :header="method.name"
-          :field="`method_${method.id}`"
+          v-for="item in headerServiceItems"
+          :key="item.id"
+          :header="item.name"
+          :field="`item_${item.id}`"
           bodyClass="text-center"
         ></Column>
 
+        <!-- Footer -->
         <ColumnGroup type="footer">
           <Row v-for="(row, index) in footerData" :key="`footer-row-${index}`">
             <Column
@@ -85,9 +88,9 @@
               footerClass="text-center font-bold"
             />
             <Column
-              v-for="method in headerServiceMethods"
-              :key="`footer-col-${method.id}`"
-              :footer="row[`method_${method.id}`]"
+              v-for="item in headerServiceItems"
+              :key="`footer-col-${item.id}`"
+              :footer="row[`item_${item.id}`]"
               footerClass="text-center font-bold"
             />
           </Row>
@@ -112,46 +115,46 @@ import ColumnGroup from "primevue/columngroup";
 import Row from "primevue/row";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
-// ★★★ 新增: 引入篩選器元件 ★★★
 import Calendar from "primevue/calendar";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 
 // --- 類型定義 ---
-interface ApiServiceMethodData {
+interface ApiServiceItemData {
   id: number;
   name: string;
   maleTargetNum: number;
   maleServiceNum: number;
   femaleTargetNum: number;
   femaleServiceNum: number;
+  percentage: number;
   percentageString: string;
 }
 interface TableRow {
   mainCategory: string;
   gender: string;
+  total: number;
   [key: string]: string | number;
-}
+} // 新增 total
 interface FooterRow {
   label: string;
+  total: number | string;
   [key: string]: string | number;
-}
-interface HeaderServiceMethod {
+} // 新增 total
+interface HeaderServiceItem {
   id: number;
   name: string;
 }
 interface Staff {
   name: string;
-} // 新增 Staff 類型
+}
 
-// --- 響應式狀態 ---
+// --- 響應式狀態 (無變動) ---
 const tableData = ref<TableRow[]>([]);
-const headerServiceMethods = ref<HeaderServiceMethod[]>([]);
+const headerServiceItems = ref<HeaderServiceItem[]>([]);
 const footerData = ref<FooterRow[]>([]);
-const isLoading = ref(false); // 初始設為 false
+const isLoading = ref(false);
 const error = ref<string | null>(null);
-
-// ★★★ 新增: 篩選器相關狀態 ★★★
 const dateRange = ref<Date[] | null>(null);
 const staffList = ref<Staff[]>([]);
 const selectedStaffIds = ref<string[] | null>(null);
@@ -178,17 +181,15 @@ const fetchStaffList = async () => {
   }
 };
 
-// ★★★ 修改: fetchData 函式以包含篩選參數 ★★★
+// ★★★ 修改點: 更新 fetchData 來計算合計值 ★★★
 const fetchData = async () => {
   if (isQueryDisabled.value) return;
   isLoading.value = true;
   error.value = null;
-  // 重置所有相關狀態
   tableData.value = [];
-  headerServiceMethods.value = [];
+  headerServiceItems.value = [];
   footerData.value = [];
 
-  // 準備 API 請求參數
   const params: { [key: string]: any } = {};
   if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
     params.dateStart = formatDate(dateRange.value[0]);
@@ -199,26 +200,25 @@ const fetchData = async () => {
   }
 
   try {
-    const response = await apiHandler.get("/report/arrival/serviceMethod", {
+    const response = await apiHandler.get("/report/general/serviceItem", {
       params,
     });
     const responseData = response.data;
 
-    // ★★★ 核心處理邏輯不變，只在成功響應後執行 ★★★
     if (
       responseData &&
       responseData.success &&
       responseData.data &&
       responseData.data.length > 0
     ) {
-      const originalData: ApiServiceMethodData[] = responseData.data;
+      const originalData: ApiServiceItemData[] = responseData.data;
 
-      headerServiceMethods.value = originalData.map((item) => ({
+      headerServiceItems.value = originalData.map((item) => ({
         id: item.id,
-        name: item.name,
+        name: item.name || "未分類",
       }));
 
-      const dataMap = new Map<number, ApiServiceMethodData>(
+      const dataMap = new Map<number, ApiServiceItemData>(
         originalData.map((item) => [item.id, item]),
       );
 
@@ -245,48 +245,78 @@ const fetchData = async () => {
         },
       ];
 
+      // 修改點 1: 在轉置資料時，計算每一行的總和
       tableData.value = metrics.map((metric) => {
-        const row: TableRow = {
+        const row: Partial<TableRow> = {
+          // 使用 Partial 方便累加
           mainCategory: metric.mainCategory,
           gender: metric.gender,
         };
-        headerServiceMethods.value.forEach((method) => {
-          const apiItem = dataMap.get(method.id);
+        let rowTotal = 0;
+        headerServiceItems.value.forEach((item) => {
+          const apiItem = dataMap.get(item.id);
           const value = apiItem ? apiItem[metric.apiKey] : 0;
-          row[`method_${method.id}`] = value;
+          row[`item_${item.id}`] = value;
+          rowTotal += value;
         });
-        return row;
+        row.total = rowTotal; // 將計算出的總和存入 row 物件
+        return row as TableRow;
       });
 
-      const percentageRow: FooterRow = { label: "總人次百分比" };
-      const caseCountRow: FooterRow = { label: "案數" };
-      headerServiceMethods.value.forEach((method, index) => {
-        const apiItem = dataMap.get(method.id);
-        percentageRow[`method_${method.id}`] = String(
-          apiItem ? apiItem.percentageString : "0 %",
+      // 修改點 2: 在計算 Footer 時，也加入總和
+      const grandTotalCases = originalData.reduce(
+        (sum, item) => sum + item.maleTargetNum + item.femaleTargetNum,
+        0,
+      );
+
+      const percentageRow: FooterRow = {
+        label: "總人次百分比",
+        total: "100.00 %",
+      };
+      const caseCountRow: FooterRow = { label: "案數", total: grandTotalCases };
+
+      headerServiceItems.value.forEach((item, index) => {
+        const apiItem = dataMap.get(item.id);
+        percentageRow[`item_${item.id}`] = String(
+          apiItem ? apiItem.percentageString || "N/A" : "0 %",
         );
+
+        // 案數 Footer 邏輯：第一個欄位放總案數，其餘為空
         if (index === 0) {
-          caseCountRow[`method_${method.id}`] = response.data.meta?.total ?? 0; // 使用 ?. 安全訪問
+          caseCountRow[`item_${item.id}`] = grandTotalCases;
         } else {
-          caseCountRow[`method_${method.id}`] = "";
+          caseCountRow[`item_${item.id}`] = "";
         }
       });
-
       footerData.value = [percentageRow, caseCountRow];
     } else if (responseData && !responseData.success) {
       error.value = responseData.message || "未能獲取統計資料。";
     }
-    // 如果 data 是空陣列，則保持表格為空，顯示 #empty 模板
   } catch (err: any) {
     error.value =
       err.response?.data?.message || err.message || "獲取資料時發生未知錯誤。";
-    console.error("Error fetching report data:", err);
   } finally {
     isLoading.value = false;
   }
 };
 
-// ★★★ 修改: onMounted 只獲取選項，不查詢資料 ★★★
+// 輔助函式 (無變動)
+const getFooterValue = (field: string): string => {
+  if (!footerData.value || footerData.value.length === 0) return "";
+  // 這是一個簡化，假設我們總是能從第一個 footer row 找到值
+  // 在這個元件中，兩個 footer row 的結構是一致的
+  const value =
+    (footerData.value[0] as any)[field] ?? (footerData.value[1] as any)[field];
+  if (field === "total") {
+    return (
+      String((footerData.value[0] as any).total ?? "") +
+      " / " +
+      String((footerData.value[1] as any).total ?? "")
+    );
+  }
+  return value !== null && value !== undefined ? String(value) : "";
+};
+
 onMounted(() => {
   fetchStaffList();
 });
@@ -294,14 +324,4 @@ onMounted(() => {
 
 <style scoped>
 /* 樣式無變動 */
-:deep(.p-datatable .p-column-header-content) {
-  justify-content: center;
-}
-:deep(.p-datatable-tfoot > tr > td) {
-  font-weight: bold;
-  background-color: var(--surface-100) !important;
-}
-.fixed-col {
-  background-color: var(--surface-50) !important;
-}
 </style>

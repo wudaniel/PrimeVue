@@ -2,7 +2,55 @@
   <div class="card p-4">
     <h3 class="text-xl font-bold text-center mb-4">個案居住鄉鎮分析表</h3>
 
-    <!-- 狀態處理 -->
+    <!-- ★★★ 新增: 篩選器區域 ★★★ -->
+    <div class="flex align-items-center gap-3 mb-3">
+      <!-- 日期區間 -->
+      <label for="date-range" class="font-bold white-space-nowrap"
+        >日期區間:</label
+      >
+      <div class="flex-grow-1">
+        <Calendar
+          id="date-range"
+          v-model="dateRange"
+          selectionMode="range"
+          :manualInput="false"
+          dateFormat="yy/mm/dd"
+          placeholder="請選擇開始至結束日期"
+          class="w-full"
+        />
+      </div>
+
+      <!-- 工作人員 -->
+      <label for="staff-select" class="font-bold white-space-nowrap"
+        >工作人員:</label
+      >
+      <div class="flex-grow-1">
+        <MultiSelect
+          id="staff-select"
+          v-model="selectedStaffIds"
+          :options="staffList"
+          :maxSelectedLabels="2"
+          selectedItemsLabel="已選擇 {0} 位"
+          optionLabel="name"
+          optionValue="name"
+          placeholder="可留空，預設查詢全部"
+          display="chip"
+          filter
+          class="w-full"
+        />
+      </div>
+
+      <!-- 查詢按鈕 -->
+      <Button
+        label="查詢"
+        icon="pi pi-search"
+        @click="fetchData"
+        :loading="isLoading"
+        :disabled="isQueryDisabled"
+      />
+    </div>
+
+    <!-- 狀態處理 (無變動) -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
     </div>
@@ -10,7 +58,7 @@
       <Message severity="error">{{ error }}</Message>
     </div>
 
-    <!-- 主要內容區 -->
+    <!-- 主要內容區 (表格結構無變動) -->
     <div v-else>
       <DataTable
         :value="pairedTableData"
@@ -72,9 +120,13 @@
             }}</span>
           </template>
         </Column>
+
+        <template #empty>
+          <div class="text-center p-4">請選擇篩選條件後點擊查詢。</div>
+        </template>
       </DataTable>
 
-      <!-- 獨立的合計行 -->
+      <!-- 獨立的合計行 (無變動) -->
       <div v-if="totalRowData" class="total-footer-row grid mt-0 p-0">
         <div
           class="col-6 p-2 text-left font-bold border-right-1 surface-border"
@@ -90,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 // @ts-ignore
 import { apiHandler } from "../../class/apiHandler";
 
@@ -100,6 +152,10 @@ import Column from "primevue/column";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import type { DataTableSortEvent } from "primevue/datatable";
+// ★★★ 新增: 引入篩選器元件 ★★★
+import Calendar from "primevue/calendar";
+import MultiSelect from "primevue/multiselect";
+import Button from "primevue/button";
 
 // --- 類型定義 ---
 interface ApiDataRow {
@@ -113,97 +169,130 @@ interface PairedDataRow {
   left: ApiDataRow;
   right: ApiDataRow | null;
 }
+interface Staff {
+  name: string;
+} // 新增 Staff 類型
 
 // --- 響應式狀態 ---
 const originalPureData = ref<ApiDataRow[]>([]);
 const pairedTableData = ref<PairedDataRow[]>([]);
 const totalRowData = ref<{ name: string; total: string } | null>(null);
-
-// ★ 變更點: sortState.field 的初始值必須對應一個實際的 Column `field` 屬性
 const sortState = ref<{ field: string | null; order: 1 | -1 | null }>({
-  field: "left.total", // 預設讓左邊的欄位顯示排序圖示
-  order: -1, // 預設降序
+  field: "left.total",
+  order: -1,
 });
-const isLoading = ref(true);
+const isLoading = ref(false); // 初始設為 false
 const error = ref<string | null>(null);
 
+// ★★★ 新增: 篩選器相關狀態 ★★★
+const dateRange = ref<Date[] | null>(null);
+const staffList = ref<Staff[]>([]);
+const selectedStaffIds = ref<string[] | null>(null);
+const isQueryDisabled = computed(() => {
+  return (
+    isLoading.value ||
+    !dateRange.value ||
+    dateRange.value.length < 2 ||
+    !dateRange.value[1]
+  );
+});
+
+// --- 資料處理與排序邏輯 (完全保留，無變動) ---
 const pairData = (data: ApiDataRow[]): PairedDataRow[] => {
   const midpoint = Math.ceil(data.length / 2);
   const leftColumn = data.slice(0, midpoint);
   const rightColumn = data.slice(midpoint);
-
   const paired: PairedDataRow[] = [];
   for (let i = 0; i < leftColumn.length; i++) {
-    paired.push({
-      left: leftColumn[i],
-      right: rightColumn[i] || null,
-    });
+    paired.push({ left: leftColumn[i], right: rightColumn[i] || null });
   }
   return paired;
 };
 
-// ★ 變更點: 讓函式接收參數，使其更具通用性
 const performGlobalSort = (field: keyof ApiDataRow, order: 1 | -1) => {
   const dataToSort = [...originalPureData.value];
-
   dataToSort.sort((a, b) => {
     const valueA = a[field];
     const valueB = b[field];
-
     let result = 0;
     if (valueA < valueB) result = -1;
     else if (valueA > valueB) result = 1;
-
     return result * order;
   });
-
   pairedTableData.value = pairData(dataToSort);
 };
 
-// ★★★ 核心修正點 ★★★
 const onSort = (event: DataTableSortEvent) => {
-  // 1. 更新 UI 狀態，讓 PrimeVue 知道要顯示哪個圖示
-  //    event.sortField 現在會是 'left.total' 或 'right.total'
   sortState.value.field = event.sortField;
   sortState.value.order = event.sortOrder as 1 | -1 | null;
-
-  // 2. 如果 sortOrder 是 null，表示使用者清除了排序，恢復原始順序
   if (sortState.value.order === null) {
     pairedTableData.value = pairData(originalPureData.value);
     return;
   }
-
-  // 3. 從 'left.total' 或 'right.total' 中提取出我們真正要排序的基礎欄位 'total'
-  //    這裡我們假設所有要全局排序的欄位都用相同的基礎名稱
   const baseField = event.sortField.split(".").pop() as keyof ApiDataRow;
-
-  // 4. 使用基礎欄位名和排序方向，呼叫我們的全域排序函式
   if (baseField) {
     performGlobalSort(baseField, sortState.value.order);
   }
 };
 
+// --- API 呼叫 ---
+// ★★★ 新增: 獲取工作人員列表的函式 ★★★
+const formatDate = (date: Date): string => date.toISOString().split("T")[0];
+
+const fetchStaffList = async () => {
+  try {
+    const response = await apiHandler.get("/option/workers");
+    if (response.data && response.data.success) {
+      staffList.value = response.data.data;
+    }
+  } catch (err) {
+    console.error("獲取工作人員列表失敗:", err);
+  }
+};
+
+// ★★★ 修改: fetchData 函式以包含篩選參數 ★★★
 const fetchData = async () => {
+  if (isQueryDisabled.value) return; // 防護
   isLoading.value = true;
   error.value = null;
+
+  // 準備 API 請求參數
+  const params: { [key: string]: any } = {};
+  if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
+    params.dateStart = formatDate(dateRange.value[0]);
+    params.dateEnd = formatDate(dateRange.value[1]);
+  }
+  if (selectedStaffIds.value && selectedStaffIds.value.length > 0) {
+    params["workers[]"] = selectedStaffIds.value;
+  }
+
   try {
-    const response = await apiHandler.get("/report/general/townPercentage");
+    const response = await apiHandler.get("/report/general/town", {
+      params,
+    });
     if (response.data && response.data.success) {
-      const originalData: ApiDataRow[] = response.data.data;
+      const originalData: ApiDataRow[] = response.data.data || [];
       originalPureData.value = [...originalData];
 
-      // ★ 變更點: 首次載入時，直接呼叫排序函式
+      // 應用預設排序
       if (sortState.value.order) {
         performGlobalSort("total", sortState.value.order);
       } else {
         pairedTableData.value = pairData(originalPureData.value);
       }
 
-      const grandTotal = originalData.reduce(
-        (sum, item) => sum + item.total,
-        0,
-      );
-      totalRowData.value = { name: "合計", total: `${grandTotal} 案` };
+      // 計算合計
+      if (originalData.length > 0) {
+        const grandTotal = originalData.reduce(
+          (sum, item) => sum + item.total,
+          0,
+        );
+        totalRowData.value = { name: "合計", total: `${grandTotal} 案` };
+      } else {
+        // 如果沒有資料，清空合計行
+        pairedTableData.value = [];
+        totalRowData.value = null;
+      }
     } else {
       throw new Error(response.data.message || "API 回應格式不正確或請求失敗");
     }
@@ -215,8 +304,9 @@ const fetchData = async () => {
   }
 };
 
+// ★★★ 修改: onMounted 只獲取選項，不查詢資料 ★★★
 onMounted(() => {
-  fetchData();
+  fetchStaffList();
 });
 </script>
 

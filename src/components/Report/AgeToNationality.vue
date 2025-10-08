@@ -2,37 +2,75 @@
   <div class="card p-4">
     <h3 class="text-xl font-bold text-center mb-4">年齡層與國籍交叉分析表</h3>
 
+    <!-- ★★★ 新增: 篩選器區域 ★★★ -->
+    <div class="flex align-items-center gap-3 mb-3">
+      <label for="date-range" class="font-bold white-space-nowrap"
+        >日期區間:</label
+      >
+      <div class="flex-grow-1">
+        <Calendar
+          id="date-range"
+          v-model="dateRange"
+          selectionMode="range"
+          :manualInput="false"
+          dateFormat="yy/mm/dd"
+          placeholder="請選擇開始至結束日期"
+          class="w-full"
+        />
+      </div>
+      <label for="staff-select" class="font-bold white-space-nowrap"
+        >工作人員:</label
+      >
+      <div class="flex-grow-1">
+        <MultiSelect
+          id="staff-select"
+          v-model="selectedStaffIds"
+          :options="staffList"
+          :maxSelectedLabels="2"
+          selectedItemsLabel="已選擇 {0} 位"
+          optionLabel="name"
+          optionValue="name"
+          placeholder="可留空，預設查詢全部"
+          display="chip"
+          filter
+          class="w-full"
+        />
+      </div>
+      <Button
+        label="查詢"
+        icon="pi pi-search"
+        @click="fetchData"
+        :loading="isLoading"
+        :disabled="isQueryDisabled"
+      />
+    </div>
+
     <!-- 狀態處理 -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
-      <p class="mt-2">正在載入統計資料...</p>
     </div>
     <div v-else-if="error" class="p-5">
       <Message severity="error">{{ error }}</Message>
     </div>
 
-    <!-- 
-      ★ 主要修改 1: 合併成單一 DataTable ★
-      我們不再需要第二個表格，而是使用 ColumnGroup 的 footer 功能來顯示合計行。
-      這可以確保欄位寬度完美對齊。
-    -->
+    <!-- ★★★ 可讀性優化: 為 DataTable 添加 class ★★★ -->
     <div v-else>
       <DataTable
         :value="tableData"
         responsiveLayout="scroll"
         showGridlines
-        class="p-datatable-sm"
+        class="p-datatable-sm readable-table"
       >
         <!-- 固定欄位: 年齡層 -->
         <Column
           field="ageGroupName"
           header="年齡層"
-          style="min-width: 120px"
+          style="min-width: 100px"
           frozen
           class="font-bold"
         ></Column>
 
-        <!-- ★ 主要修改 2: 動態欄位加上寬度限制與換行樣式 ★ -->
+        <!-- 動態欄位 -->
         <Column
           v-for="col in dynamicColumns"
           :key="col.field"
@@ -40,8 +78,6 @@
           :header="col.header"
           bodyClass="text-center"
           :sortable="true"
-          headerClass="wrappable-header"
-          style="max-width: 150px"
         ></Column>
 
         <!-- 固定欄位: 合計 & 百分比 -->
@@ -59,7 +95,7 @@
           class="font-bold"
         ></Column>
 
-        <!-- ★ 主要修改 1 (續): 使用 ColumnGroup 定義頁腳 (合計行) ★ -->
+        <!-- Footer -->
         <ColumnGroup type="footer">
           <Row>
             <Column footer="合計" :frozen="true" />
@@ -78,7 +114,7 @@
         </ColumnGroup>
 
         <template #empty>
-          <div class="text-center p-4">沒有可顯示的統計資料。</div>
+          <div class="text-center p-4">請選擇篩選條件後點擊查詢。</div>
         </template>
       </DataTable>
     </div>
@@ -86,18 +122,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { apiHandler } from "../../class/apiHandler";
 
-// ★ 新增 ColumnGroup 和 Row 的導入 ★
+// PrimeVue 元件
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import ColumnGroup from "primevue/columngroup";
 import Row from "primevue/row";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
+import Calendar from "primevue/calendar";
+import MultiSelect from "primevue/multiselect";
+import Button from "primevue/button";
 
-// --- 類型定義 (無變動) ---
+// --- 類型定義 ---
 interface ApiNationalityData {
   nationalityID: number;
   nationalityName: string;
@@ -114,51 +153,102 @@ interface DynamicColumn {
   field: string;
   header: string;
 }
+interface Staff {
+  name: string;
+}
 
-// --- 響應式狀態 (無變動) ---
+// --- 響應式狀態 ---
 const tableData = ref<TableRow[]>([]);
 const totalRowData = ref<TableRow | null>(null);
 const dynamicColumns = ref<DynamicColumn[]>([]);
-const isLoading = ref(true);
+const isLoading = ref(false);
 const error = ref<string | null>(null);
 
-// --- 核心資料處理與獲取 (邏輯無變動) ---
+// 篩選器狀態
+const dateRange = ref<Date[] | null>(null);
+const staffList = ref<Staff[]>([]);
+const selectedStaffIds = ref<string[] | null>(null);
+const isQueryDisabled = computed(() => {
+  return (
+    isLoading.value ||
+    !dateRange.value ||
+    dateRange.value.length < 2 ||
+    !dateRange.value[1]
+  );
+});
+
+// --- 輔助函式 ---
+const formatDate = (date: Date): string => date.toISOString().split("T")[0];
+
+const getFooterValue = (field: string): string => {
+  if (!totalRowData.value) return "";
+  const value = totalRowData.value[field];
+  return value !== null && value !== undefined ? String(value) : "";
+};
+
+// --- API 呼叫 ---
+const fetchStaffList = async () => {
+  try {
+    const response = await apiHandler.get("/option/workers");
+    if (response.data && response.data.success) {
+      staffList.value = response.data.data;
+    }
+  } catch (err) {
+    console.error("獲取工作人員列表失敗:", err);
+  }
+};
+
 const fetchData = async () => {
+  if (isQueryDisabled.value) return;
   isLoading.value = true;
   error.value = null;
+  tableData.value = [];
+  dynamicColumns.value = [];
+  totalRowData.value = null;
+
+  // 準備 API 請求參數
+  const params: { [key: string]: any } = {};
+  if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
+    params.dateStart = formatDate(dateRange.value[0]);
+    params.dateEnd = formatDate(dateRange.value[1]);
+  }
+  if (selectedStaffIds.value && selectedStaffIds.value.length > 0) {
+    params["workers[]"] = selectedStaffIds.value;
+  }
+
   try {
-    const response = await apiHandler.get("/report/general/ageToNationality");
+    const response = await apiHandler.get("/report/general/ageToNationality", {
+      params,
+    });
     const responseData = response.data;
 
     if (responseData && responseData.success) {
-      const originalData: ApiNationalityData[] = responseData.data;
+      const originalData: ApiNationalityData[] = responseData.data || [];
       const meta = responseData.meta;
 
+      // 如果沒有資料，直接返回
+      if (!originalData || originalData.length === 0) {
+        return;
+      }
+
+      // 資料處理邏輯 (與您原版一致)
       dynamicColumns.value = originalData.map((nat) => ({
         field: nat.nationalityName,
-        header: nat.nationalityName, // 標題不再加 "籍"，避免過長
+        header: nat.nationalityName,
       }));
 
       const pivotedData: TableRow[] = [];
-      const ageGroupsFromMeta = meta.columnMeta; // API 回傳的年齡層
-
-      // 檢查 meta.ageTotal 的長度是否與 ageGroupsFromMeta 匹配
-      if (meta.ageTotal.length < ageGroupsFromMeta.length) {
-        console.warn("meta.ageTotal 的資料長度不足，可能導致錯誤。");
-      }
+      const ageGroupsFromMeta = meta.columnMeta;
 
       ageGroupsFromMeta.forEach((ageName: string, ageIndex: number) => {
         const newRow: TableRow = {
           ageGroupName: ageName,
-          // 安全地訪問陣列
-          total: meta.ageTotal[ageIndex] ?? 0,
-          percentage: meta.percentageString[ageIndex] ?? "0.00 %",
+          total: meta.ageTotal?.[ageIndex] ?? 0,
+          percentage: meta.percentageString?.[ageIndex] ?? "0.00 %",
         };
-
         originalData.forEach((nat) => {
-          newRow[nat.nationalityName] = nat.ageGroup[ageIndex] ?? 0;
+          newRow[nat.nationalityName] = nat.ageGroup?.[ageIndex] ?? 0;
         });
-
         pivotedData.push(newRow);
       });
 
@@ -172,7 +262,6 @@ const fetchData = async () => {
       originalData.forEach((nat) => {
         totalRow[nat.nationalityName] = nat.total;
       });
-
       totalRowData.value = totalRow;
     } else {
       throw new Error(responseData.message || "API 回應格式不正確或請求失敗");
@@ -182,69 +271,45 @@ const fetchData = async () => {
       err.response?.data?.message ||
       err.message ||
       "無法載入統計資料，請稍後再試。";
-    console.error("載入統計資料失敗:", err);
   } finally {
     isLoading.value = false;
   }
 };
-const getFooterValue = (field: string): string => {
-  // 步驟 1: 確保 totalRowData 存在，如果不存在，直接返回空字串
-  if (!totalRowData.value) {
-    return "";
-  }
 
-  // 步驟 2: 從 totalRowData 中獲取對應的值
-  const value = totalRowData.value[field];
-
-  // 步驟 3: 檢查值是否為 null 或 undefined，如果是，返回空字串
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  // 步驟 4: ★★★ 核心 ★★★
-  // 如果值存在 (包括 0, 123, "100%", 等)，將其轉換為字串並返回。
-  return String(value);
-};
 onMounted(() => {
-  fetchData();
+  fetchStaffList();
 });
 </script>
 
 <style scoped>
-/* 讓合計行 (tfoot) 的文字加粗並給予背景色 */
+/* ★★★ 可讀性優化: 樣式調整 ★★★ */
+
+/* 方法 1: 調整字體大小和內邊距 (Padding) */
+.readable-table :deep(td),
+.readable-table :deep(th) {
+  /* 減小左右內邊距，爭取更多空間 */
+  padding: 0.5rem 0.5rem;
+  /* 稍微縮小字體 */
+  font-size: 0.875rem;
+}
+
+/* 方法 2: 表頭文字自動換行 (您之前的版本已有，這裡保留並優化) */
+.readable-table :deep(.p-column-title) {
+  white-space: normal !important;
+  word-break: break-all; /* 使用 break-all 在任何地方強制換行，更節省空間 */
+  text-align: center;
+}
+.readable-table :deep(.p-column-header-content) {
+  /* 配合換行，讓內容垂直排列 */
+  display: block;
+}
+
+/* --- 原有樣式 (保留) --- */
 :deep(.p-datatable-tfoot > tr > td) {
   font-weight: bold;
   background-color: var(--surface-200);
 }
-
-/* 凍結欄位的頁腳也要有背景色 */
 :deep(.p-datatable-tfoot > tr > td.p-frozen-column) {
   background-color: var(--surface-200);
-}
-
-/* 確保表頭容器內的元素置中 (無變動) */
-:deep(.p-datatable .p-column-header-content) {
-  justify-content: center;
-}
-
-/* 
-  ★★★ 核心修正: 強制標題文字換行 ★★★ 
-*/
-
-/* 
-  步驟 1: 我們需要直接鎖定標題文字所在的 span 元素 (.p-column-title)。
-*/
-:deep(.wrappable-header .p-column-title) {
-  /* 覆寫 PrimeVue 預設的 nowrap，允許文字換行。使用 !important 確保最高優先級。 */
-  white-space: normal !important;
-
-  /* 
-    使用 break-word 在長單字或 URL 內部進行換行，比 break-all 更自然，
-    它會盡量在單字間換行。
-  */
-  word-break: break-word;
-
-  /* 確保換行後的文字塊本身是置中的 */
-  text-align: center;
 }
 </style>
