@@ -223,6 +223,7 @@ const validateOtherNationality = (value: string | undefined | null) => {
   if (selectednationalities.value === -1 && !value?.trim()) {
     return "請輸入其他國籍";
   }
+
   return true;
 };
 
@@ -235,32 +236,32 @@ const validateOtherTown = (value: string | undefined | null) => {
 
 // --- 為每個欄位使用 useField ---
 const { value: filingDate, errorMessage: filingDateError } =
-  useField<Date | null>("filingDate", "required");
+  useField<Date | null>("填表日期", "required");
 const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
-  "caseNumber",
+  "案號",
   "required",
 );
 const { value: FullName, errorMessage: FullNameError } = useField<string>(
-  "FullName",
+  "全名",
   "required",
 );
 const { value: selectednationalities, errorMessage: nationalityError } =
-  useField<number | null>("nationality", "required");
+  useField<number | null>("原母國籍", "required");
 const { value: othernationalities, errorMessage: othernationalitiesError } =
   useField<string>("othernationalities", validateOtherNationality);
 const { value: selectedGender, errorMessage: genderError } = useField<
   number | null
->("gender", "required");
+>("性別", "required");
 const { value: selectedtown, errorMessage: townError } = useField<
   number | null
->("town", "required");
+>("鄉鎮市區", "required");
 const { value: othertown, errorMessage: othertownError } = useField<string>(
   "othertown",
   validateOtherTown,
 );
 const { value: selectedworkers, errorMessage: workerError } = useField<
-  number | null
->("worker", "required");
+  string | null
+>("主責社工", "required");
 
 // --- API 選項數據 ---
 const Nationality_List = ref<{ id: number; name: string }[]>([]);
@@ -297,10 +298,16 @@ onMounted(() => {
 // --- 提交處理 ---
 const onSubmit = handleSubmit(async (values) => {
   let formattedDate = null;
+
+  // 1. 先檢查 values.filingDate 是否為真值 (truthy value)
+  //    這會同時排除 null 和 undefined 的情況
   if (
+    values.filingDate &&
     values.filingDate instanceof Date &&
     !isNaN(values.filingDate.getTime())
   ) {
+    // 在這個 if 區塊內，TypeScript 就確定 values.filingDate 絕對是一個 Date 物件，
+    // 不再是 null，所以 instanceof 和 .getTime() 都是安全的。
     try {
       formattedDate = format(values.filingDate, "yyyy-MM-dd");
     } catch (e) {

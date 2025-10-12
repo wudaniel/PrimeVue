@@ -51,7 +51,7 @@
               footerStyle="text-align: left; padding-left: 1.5rem;"
             />
             <!-- 在第三個欄位的位置顯示計算好的總數 -->
-            <Column :footer="grandTotal" footerClass="text-center" />
+            <Column :footer="grandTotal.toString()" footerClass="text-center" />
           </Row>
         </ColumnGroup>
 

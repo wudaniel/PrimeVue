@@ -90,7 +90,7 @@
             <Column
               v-for="item in headerServiceItems"
               :key="`footer-col-${item.id}`"
-              :footer="row[`item_${item.id}`]"
+              :footer="row[`item_${item.id}`].toString()"
               footerClass="text-center font-bold"
             />
           </Row>
@@ -298,23 +298,6 @@ const fetchData = async () => {
   } finally {
     isLoading.value = false;
   }
-};
-
-// 輔助函式 (無變動)
-const getFooterValue = (field: string): string => {
-  if (!footerData.value || footerData.value.length === 0) return "";
-  // 這是一個簡化，假設我們總是能從第一個 footer row 找到值
-  // 在這個元件中，兩個 footer row 的結構是一致的
-  const value =
-    (footerData.value[0] as any)[field] ?? (footerData.value[1] as any)[field];
-  if (field === "total") {
-    return (
-      String((footerData.value[0] as any).total ?? "") +
-      " / " +
-      String((footerData.value[1] as any).total ?? "")
-    );
-  }
-  return value !== null && value !== undefined ? String(value) : "";
 };
 
 onMounted(() => {

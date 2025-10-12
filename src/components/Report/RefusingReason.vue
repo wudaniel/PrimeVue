@@ -84,7 +84,7 @@
               footer="合計"
               footerStyle="text-align: left; padding-left: 1.5rem;"
             />
-            <Column :footer="grandTotal" footerClass="text-center" />
+            <Column :footer="grandTotal.toString()" footerClass="text-center" />
           </Row>
         </ColumnGroup>
 

@@ -177,10 +177,12 @@ interface Staff {
 const originalPureData = ref<ApiDataRow[]>([]);
 const pairedTableData = ref<PairedDataRow[]>([]);
 const totalRowData = ref<{ name: string; total: string } | null>(null);
-const sortState = ref<{ field: string | null; order: 1 | -1 | null }>({
-  field: "left.total",
-  order: -1,
-});
+const sortState = ref<{ field: string | undefined; order: 1 | -1 | undefined }>(
+  {
+    field: "left.total",
+    order: -1,
+  },
+);
 const isLoading = ref(false); // 初始設為 false
 const error = ref<string | null>(null);
 
@@ -223,15 +225,21 @@ const performGlobalSort = (field: keyof ApiDataRow, order: 1 | -1) => {
 };
 
 const onSort = (event: DataTableSortEvent) => {
-  sortState.value.field = event.sortField;
-  sortState.value.order = event.sortOrder as 1 | -1 | null;
-  if (sortState.value.order === null) {
+  sortState.value.field = event.sortField as string;
+  sortState.value.order = event.sortOrder as 1 | -1 | undefined;
+
+  // 如果取消排序
+  if (!sortState.value.order || !sortState.value.field) {
     pairedTableData.value = pairData(originalPureData.value);
     return;
   }
-  const baseField = event.sortField.split(".").pop() as keyof ApiDataRow;
+
+  // 從 "left.total" 中提取出 "total"
+  const baseField = sortState.value.field.split(".").pop();
+
   if (baseField) {
-    performGlobalSort(baseField, sortState.value.order);
+    // 傳入處理過的 baseField ("total")，並用 as 進行型別斷言
+    performGlobalSort(baseField as keyof ApiDataRow, sortState.value.order);
   }
 };
 

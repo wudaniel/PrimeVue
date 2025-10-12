@@ -1,5 +1,5 @@
 import axios from "axios";
-import { SaveSession } from "../stores/auth"; // 保持導入 Store Hook
+import { useSessionStore } from "../stores/auth"; // 保持導入 Store Hook
 import router from "../router";
 
 // 1. 創建 Axios 實例時，先不設定 Authorization header
@@ -11,7 +11,7 @@ const apiHandler = axios.create({
 apiHandler.interceptors.request.use(
   (config) => {
     // 在攔截器內部，當請求要發送時，才去獲取 Store 實例
-    const userStore = SaveSession();
+    const userStore = useSessionStore();
     const token = userStore.token;
 
     // 如果 token 存在，則添加到請求標頭
@@ -45,7 +45,7 @@ apiHandler.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // 例如：處理未授權情況，嘗試刷新 token 或導向登入頁面
       console.error("Unauthorized request (401):", error.response);
-      const userStore = SaveSession();
+      const userStore = useSessionStore();
       userStore.logout(); // 假設你有登出 action
       // 可能需要導向到登入頁
       router.push("/login");

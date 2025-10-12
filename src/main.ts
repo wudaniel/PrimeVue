@@ -8,8 +8,6 @@ import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate"; // <-- 導入插件
 import router from "./router";
 import "primeicons/primeicons.css";
-import Calendar from "primevue/calendar";
-
 // --- PrimeVue v4+ 設定 (再次修改) ---
 import "primeflex/primeflex.css"; // <--- 導入 PrimeFlex
 // 1. 導入你選擇的預設集 (Preset)，例如 Lara
@@ -21,7 +19,7 @@ import "primeicons/primeicons.css";
 import { defineRule, configure } from "vee-validate"; // 核心函數
 import { required, min, confirmed } from "@vee-validate/rules";
 
-import * as AllRules from "@vee-validate/rules"; // 導入所有內建規則 (方便)
+//import * as AllRules from "@vee-validate/rules"; // 導入所有內建規則 (方便)
 // 或者，如果你只想用幾個特定規則，可以這樣導入：
 import ToastService from "primevue/toastservice";
 import { localize, setLocale } from "@vee-validate/i18n"; // 多國語言相關
@@ -41,20 +39,40 @@ configure({
       names: {
         oldPassword: "舊密碼",
         newPassword: "新密碼",
-        newPasswordConfirmation: "確認新密碼", // '{field}' 將會是這個
+        newPasswordConfirmation: "確認新密碼",
+      },
+    },
+  }),
+  validateOnInput: true, // 根據你的需要保留或移除
+});
+
+/*
+configure({
+  generateMessage: localize({
+    zh_TW: {
+      messages: {
+        ...zh_TW.messages,
+        // (可選) 自訂 confirmed 的訊息
+        confirmed: "{field} 的內容必須與新密碼一致",
+      },
+      names: {
+        oldPassword: "舊密碼",
+        newPassword: "新密碼",
+        newPasswordConfirmation: "確認新密碼", 
       },
     },
   }),
   validateOnInput: true,
 });
-// 1. 定義 (註冊) 驗證規則
-// 方法一：註冊所有導入的規則 (最簡單)
+
 Object.keys(AllRules).forEach((rule) => {
-  // 確保導入的是函數類型的規則
+  
   if (typeof AllRules[rule] === "function") {
     defineRule(rule, AllRules[rule]);
   }
 });
+
+*/
 setLocale("zh_TW");
 
 const app = createApp(App);
@@ -74,7 +92,6 @@ app.use(PrimeVue, {
 });
 app.use(PrimeVue);
 app.use(ToastService);
-router.toast = app.config.globalProperties.$toast;
 app.use(router); // 如果你有使用 Vue Router+
 
 // 3. 配置 PrimeVue 使用主題預設集

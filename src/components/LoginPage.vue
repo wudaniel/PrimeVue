@@ -43,8 +43,7 @@
 <script lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router"; // 如果你有使用 Vue Router
-import { SaveSession } from "../stores/auth"; // 假設你 路徑是這樣
-import { apiHandler } from "../class/apiHandler";
+import { useSessionStore } from "../stores/auth"; // 假設你 路徑是這樣
 
 import InputText from "primevue/inputtext";
 import Password from "primevue/password";
@@ -58,7 +57,7 @@ export default {
     const password = ref("password");
     const loginError = ref(false);
     const router = useRouter(); // 如果你有使用 Vue Router
-    const userStore = SaveSession();
+    const userStore = useSessionStore();
 
     const handleLogin = async () => {
       loginError.value = false;

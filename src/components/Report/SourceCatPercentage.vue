@@ -99,7 +99,7 @@
           <Row>
             <Column :footer="totalRowData.name" footerStyle="width: 50%" />
             <Column
-              :footer="totalRowData.total"
+              :footer="totalRowData.total.toString()"
               footerClass="text-center"
               footerStyle="width: 25%"
             />

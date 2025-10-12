@@ -352,7 +352,7 @@ const props = defineProps<{
 }>();
 
 // --- Form State ---
-const { handleSubmit, errors, meta } = useForm({});
+const { handleSubmit, meta } = useForm({});
 const isSubmitting = ref(false);
 
 // --- VeeValidate Field Definitions ---

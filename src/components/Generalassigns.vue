@@ -303,12 +303,11 @@ import Textarea from "primevue/textarea"; // 導入 Textarea
 // --- VeeValidate 導入 ---
 import { useForm, useField } from "vee-validate"; // ErrorMessage 這次沒直接用
 import { useToast } from "primevue/usetoast"; // 用於顯示成功/失敗提示
-import { value } from "@primeuix/themes/aura/knob";
 const toast = useToast(); // 初始化 Toast 服務
 const router = useRouter();
 // --- VeeValidate 表單設定 ---
 // 添加了對應 Snippet 1 的所有欄位
-const { handleSubmit, errors, meta, setFieldValue, values } = useForm({
+const { handleSubmit, meta, setFieldValue } = useForm({
   // 可以在這裡設定初始值，會覆蓋 useField 的 initialValue
   initialValues: {
     filingDate: null,
@@ -521,7 +520,7 @@ const onSubmit = handleSubmit(async (values) => {
 
   // 發送 API 請求到
   try {
-    const response = await apiHandler.post("/form/assign/general", payload);
+    await apiHandler.post("/form/assign/general", payload);
     toast.add({
       severity: "success", // 狀態：成功 (綠色)
       summary: "提交成功", // 標題
@@ -533,14 +532,7 @@ const onSubmit = handleSubmit(async (values) => {
     setTimeout(() => {
       router.push("/"); // 轉跳到主頁
     }, 1500);
-  } catch (error) {
-    // 7. 顯示失敗的 Toast 通知
-    toast.add({
-      severity: "error", // 狀態：失敗 (紅色)
-      summary: "提交失敗", // 標題
-      detail: error.response.data.error.message, // 詳細內容 (從 API 回應中取得更佳)
-      life: 3000, // 錯誤訊息顯示久一點
-    });
+  } finally {
   }
 });
 </script>

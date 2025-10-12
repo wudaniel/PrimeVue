@@ -53,8 +53,7 @@ import { apiHandler } from "../../class/apiHandler";
 // PrimeVue 元件
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
-import ColumnGroup from "primevue/columngroup";
-import Row from "primevue/row";
+
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 
@@ -85,16 +84,9 @@ interface HeaderNationality {
 // --- 響應式狀態 ---
 const tableData = ref<TableRow[]>([]);
 const headerNationalities = ref<HeaderNationality[]>([]);
-const footerData = ref<{ [key: string]: string | number } | null>(null);
+//const footerData = ref<{ [key: string]: string | number } | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-
-// --- 輔助函式 ---
-const getFooterValue = (field: string): string => {
-  if (!footerData.value) return "0";
-  const value = footerData.value[field];
-  return String(value || 0);
-};
 
 // --- 資料處理與獲取 ---
 const fetchData = async () => {

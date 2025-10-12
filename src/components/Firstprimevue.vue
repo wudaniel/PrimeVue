@@ -232,7 +232,7 @@
 
 <script setup lang="ts">
 // class import
-import { SaveSession } from "../stores/auth"; // 確認路徑正確
+import { useSessionStore } from "../stores/auth"; // 確認路徑正確
 import { useRouter } from "vue-router";
 import { apiHandler } from "../class/apiHandler";
 // --- PrimeVue 元件導入 ---
@@ -247,8 +247,7 @@ import Chip from "primevue/chip";
 import Button from "primevue/button";
 //import FilterMatchMode from "primevue/datatable";
 import InputText from "primevue/inputtext"; // <-- **新增導入**
-import Dropdown from "primevue/dropdown"; // <-- **新增導入**
-import { Transition } from "vue"; // <-- **新增導入 (可選)**
+//import { Transition } from "vue"; // <-- **新增導入 (可選)**
 import Calendar from "primevue/calendar"; // ⭐ 1. 導入 Calendar 元件
 import MultiSelect from "primevue/multiselect"; // ⭐ 1. 新增導入 MultiSelect 元件
 //import { list } from "@primeuix/themes/aura/autocomplete";
@@ -257,7 +256,7 @@ import MultiSelect from "primevue/multiselect"; // ⭐ 1. 新增導入 MultiSele
 
 // --- 狀態變數 ---
 const form_data = ref([]);
-const userStore = SaveSession();
+const userStore = useSessionStore();
 const router = useRouter();
 const loading = ref(false); // 新增：控制載入動畫
 const totalRecords = ref(0); // 新增：存放總記錄數

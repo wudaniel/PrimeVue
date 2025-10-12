@@ -87,7 +87,7 @@
             <Column
               v-for="method in headerServiceMethods"
               :key="`footer-col-${method.id}`"
-              :footer="row[`method_${method.id}`]"
+              :footer="row[`method_${method.id}`].toString()"
               footerClass="text-center font-bold"
             />
           </Row>

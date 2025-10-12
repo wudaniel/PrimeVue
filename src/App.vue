@@ -1,3 +1,63 @@
+<template>
+  <div class="app-layout">
+    <!-- 觸發按鈕 (固定在左上角) -->
+    <!-- v-if="userStore.isLoggedIn" -->
+    <Button
+      icon="pi pi-bars"
+      @click="sidebarVisible = true"
+      class="p-button-secondary p-button-rounded p-button-text fixed-sidebar-button"
+      aria-label="Toggle Menu"
+    ></Button>
+    <!-- **新增：右上角用戶選單** -->
+    <div v-if="userStore.isLoggedIn" class="user-menu-corner">
+      <Button
+        type="button"
+        class="p-button-text p-button-rounded user-menu-button"
+        @click="toggleUserMenu"
+        aria-haspopup="true"
+        aria-controls="user_menu"
+      >
+        <Avatar
+          :label="userStore.getUserfullname?.charAt(0) || 'U'"
+          class="mr-2"
+          shape="circle"
+        />
+        <span class="font-bold">{{ userStore.getUserfullname }}</span>
+        <i class="pi pi-angle-down ml-2"></i>
+      </Button>
+      <Menu
+        ref="userMenu"
+        id="user_menu"
+        :model="userMenuItems"
+        :popup="true"
+      />
+    </div>
+    <!-- **新增結束** -->
+    <!-- Sidebar 元件 -->
+
+    <Sidebar v-model:visible="sidebarVisible" position="left">
+      <template #header>
+        <h3>導覽選單</h3>
+      </template>
+      <!-- 使用 Menu 元件顯示導航 -->
+      <panelMenu :model="menuItems" class="w-full" />
+      <!-- 你也可以在這裡放其他 Sidebar 內容 -->
+    </Sidebar>
+
+    <!-- 主要內容區域 -->
+    <div class="main-content p-4">
+      <!-- 你原本的內容 START -->
+
+      <RouterView />
+      <!-- 你原本的內容 END -->
+
+      <!-- 如果你有使用 vue-router，路由出口會放在這裡 -->
+      <!-- <router-view /> -->
+    </div>
+  </div>
+  <Toast />
+</template>
+
 <script setup lang="ts">
 import { ref } from "vue";
 import Sidebar from "primevue/sidebar";
@@ -5,12 +65,13 @@ import Button from "primevue/button";
 import Menu from "primevue/menu"; // 使用 Menu 作為導航
 import Toast from "primevue/toast";
 import Avatar from "primevue/avatar"; // 新增導入 Avatar
-import { SaveSession } from "./stores/auth"; // 確認路徑正確
+import { useSessionStore } from "./stores/auth"; // 確認路徑正確
+// @ts-ignore
 import PanelMenu from "primevue/panelmenu";
 
 import { useRouter, RouterView } from "vue-router";
 const router = useRouter();
-const userStore = SaveSession(); // <-- 新增獲取 userStore
+const userStore = useSessionStore(); // <-- 新增獲取 userStore
 const sidebarVisible = ref(false); // 控制 Sidebar 的顯示/隱藏
 
 // 會員下拉選單
@@ -44,7 +105,7 @@ const toggleUserMenu = (event: Event) => {
 
 // --- **新增：登出處理函數** ---
 const handleLogout = () => {
-  userStore.logout(); // 假設你的 store 有 logout 方法
+  userStore.logout();
   router.push("/login");
 };
 
@@ -204,65 +265,6 @@ const menuItems = ref([
   },
 ]);
 </script>
-<template>
-  <div class="app-layout">
-    <!-- 觸發按鈕 (固定在左上角) -->
-    <!-- v-if="userStore.isLoggedIn" -->
-    <Button
-      icon="pi pi-bars"
-      @click="sidebarVisible = true"
-      class="p-button-secondary p-button-rounded p-button-text fixed-sidebar-button"
-      aria-label="Toggle Menu"
-    ></Button>
-    <!-- **新增：右上角用戶選單** -->
-    <div v-if="userStore.isLoggedIn" class="user-menu-corner">
-      <Button
-        type="button"
-        class="p-button-text p-button-rounded user-menu-button"
-        @click="toggleUserMenu"
-        aria-haspopup="true"
-        aria-controls="user_menu"
-      >
-        <Avatar
-          :label="userStore.getUserfullname?.charAt(0) || 'U'"
-          class="mr-2"
-          shape="circle"
-        />
-        <span class="font-bold">{{ userStore.getUserfullname }}</span>
-        <i class="pi pi-angle-down ml-2"></i>
-      </Button>
-      <Menu
-        ref="userMenu"
-        id="user_menu"
-        :model="userMenuItems"
-        :popup="true"
-      />
-    </div>
-    <!-- **新增結束** -->
-    <!-- Sidebar 元件 -->
-
-    <Sidebar v-model:visible="sidebarVisible" position="left">
-      <template #header>
-        <h3>導覽選單</h3>
-      </template>
-      <!-- 使用 Menu 元件顯示導航 -->
-      <panelMenu :model="menuItems" class="w-full" />
-      <!-- 你也可以在這裡放其他 Sidebar 內容 -->
-    </Sidebar>
-
-    <!-- 主要內容區域 -->
-    <div class="main-content p-4">
-      <!-- 你原本的內容 START -->
-
-      <RouterView />
-      <!-- 你原本的內容 END -->
-
-      <!-- 如果你有使用 vue-router，路由出口會放在這裡 -->
-      <!-- <router-view /> -->
-    </div>
-  </div>
-  <Toast />
-</template>
 
 <style scoped>
 .app-layout {

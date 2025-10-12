@@ -82,11 +82,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 import { useForm, useField } from "vee-validate";
 import { useToast } from "primevue/usetoast"; // 用於顯示成功/失敗提示
 import { apiHandler } from "../class/apiHandler"; // 你的 apiHandler
-import { SaveSession } from "../stores/auth"; // 用於獲取當前用戶名和 token
+import { useSessionStore } from "../stores/auth"; // 用於獲取當前用戶名和 token
 
 // PrimeVue Components
 import Card from "primevue/card";
@@ -95,12 +94,12 @@ import Button from "primevue/button";
 
 // --- 初始化 ---
 const toast = useToast(); // 初始化 Toast 服務
-const userStore = SaveSession();
+const userStore = useSessionStore();
 const username = userStore.userData?.userfullname; // 從 store 獲取當前用戶名
 
 // --- VeeValidate 表單設定 ---
 // 使用 useForm 來管理整個表單的狀態
-const { handleSubmit, errors, meta, isSubmitting } = useForm({
+const { handleSubmit, meta, isSubmitting } = useForm({
   // validationSchema 可以更清晰地定義規則
   validationSchema: {
     oldPassword: "required",
@@ -148,22 +147,18 @@ const onSubmit = handleSubmit(async (values) => {
 
   // 3. 發送 PUT 請求
   try {
-    const response = await apiHandler.put(apiUrl, payload, {
+    await apiHandler.put(apiUrl, payload, {
       headers: {
         Authorization: token,
       },
     });
 
-    console.log("密碼變更成功:", response);
     toast.add({
       severity: "success",
       summary: "成功",
       detail: "密碼已成功變更！",
       life: 3000,
     });
-    // (可選) 可以在這裡執行登出或跳轉等操作
-    // userStore.logout();
-    // router.push('/login');
   } catch (error: any) {
     console.error("密碼變更失敗:", error);
     // 根據後端返回的錯誤訊息顯示提示
