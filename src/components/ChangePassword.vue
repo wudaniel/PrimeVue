@@ -5,7 +5,7 @@
         <div class="text-center">
           <i class="pi pi-key text-5xl text-primary mb-2"></i>
           <h3>變更密碼</h3>
-          <p class="text-color-secondary text-base">用戶名: {{ username }}</p>
+          <p class="text-color-secondary text-base">帳號: {{ username }}</p>
         </div>
       </template>
 
@@ -91,20 +91,41 @@ import { useSessionStore } from "../stores/auth"; // 用於獲取當前用戶名
 import Card from "primevue/card";
 import Password from "primevue/password";
 import Button from "primevue/button";
+import { defineRule } from "vee-validate";
+
+defineRule("required", (value: any) => {
+  if (!value && value !== 0) {
+    return "此欄位為必填";
+  }
+  return true;
+});
+
+defineRule("min", (value: string, [limit]: [number]) => {
+  if (!value || value.length < limit) {
+    return `此欄位至少需要 ${limit} 個字元`;
+  }
+  return true;
+});
+
+defineRule("confirmed", (value: string, [target]: [string]) => {
+  if (value === target) {
+    return true;
+  }
+  return "兩次輸入的密碼不一致";
+});
 
 // --- 初始化 ---
 const toast = useToast(); // 初始化 Toast 服務
 const userStore = useSessionStore();
-const username = userStore.userData?.userfullname; // 從 store 獲取當前用戶名
+const username = userStore.userData?.username; // 從 store 獲取當前用戶名
 
 // --- VeeValidate 表單設定 ---
-// 使用 useForm 來管理整個表單的狀態
 const { handleSubmit, meta, isSubmitting } = useForm({
-  // validationSchema 可以更清晰地定義規則
   validationSchema: {
     oldPassword: "required",
-    newPassword: "required|min:8", // 必填且最小長度為 8
-    // 使用 @fieldName 語法來進行欄位比對
+    newPassword: "required|min:8",
+    // ★★★ 修改點 4: 更新 `confirmed` 規則的目標欄位格式 ★★★
+    // 在 validationSchema 中，目標欄位前需要加上 @ 符號
     newPasswordConfirmation: "required|confirmed:@newPassword",
   },
 });
@@ -119,9 +140,6 @@ const {
   errorMessage: newPasswordConfirmationError,
 } = useField<string>("newPasswordConfirmation");
 
-// --- 提交處理 ---
-// 使用 useForm 返回的 handleSubmit 包裹你的提交邏輯
-// 只有在驗證通過後，內部函數才會被執行
 const onSubmit = handleSubmit(async (values) => {
   //console.log("表單驗證通過，準備發送 API。表單值:", values);
 
@@ -162,12 +180,10 @@ const onSubmit = handleSubmit(async (values) => {
   } catch (error: any) {
     console.error("密碼變更失敗:", error);
     // 根據後端返回的錯誤訊息顯示提示
-    const errorMessage =
-      error.response?.data?.message || "密碼變更失敗，請稍後再試。";
     toast.add({
       severity: "error",
       summary: "錯誤",
-      detail: errorMessage,
+      detail: error.response.data.error.message,
       life: 5000,
     });
   }
@@ -182,5 +198,10 @@ const onSubmit = handleSubmit(async (values) => {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
+}
+
+/* ★★★ 新增這段 CSS ★★★ */
+.p-error {
+  color: #ef4444; /* 這是一個標準的紅色 (Tailwind Red-500) */
 }
 </style>

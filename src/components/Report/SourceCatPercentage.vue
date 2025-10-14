@@ -137,6 +137,7 @@ interface ApiDataRow {
 }
 interface Staff {
   name: string;
+  fullName: string;
 }
 const tableData = ref<ApiDataRow[]>([]);
 const totalRowData = ref<ApiDataRow | null>(null);

@@ -31,7 +31,7 @@
           :options="staffList"
           :maxSelectedLabels="2"
           selectedItemsLabel="已選擇 {0} 位"
-          optionLabel="name"
+          optionLabel="fullName"
           optionValue="name"
           placeholder="可留空，預設查詢全部"
           display="chip"
@@ -182,6 +182,7 @@ interface ApiDataRow {
 }
 interface Staff {
   name: string;
+  fullName: string;
 }
 interface GenderOption {
   name: string;

@@ -202,24 +202,26 @@
                   '為 caseNumber ' + slotProps.data.caseNumber + ' 開案'
                 "
               />
-              <Button
-                label="不開案"
-                class="p-button-sm p-button-warning"
-                @click="handleDoNotOpenCase(slotProps.data)"
-                :disabled="slotProps.data.status !== 0"
-                :aria-label="
-                  '將案號 ' + slotProps.data.caseNumber + ' 設為不開案'
-                "
-              />
-              <Button
-                label="結案"
-                class="p-button-sm p-button-warning"
-                @click="handleFinishCase(slotProps.data)"
-                :disabled="slotProps.data.status !== 1"
-                :aria-label="
-                  '將案號 ' + slotProps.data.caseNumber + ' 設為結案'
-                "
-              />
+              <div v-if="shouldShowOpen">
+                <Button
+                  label="不開案"
+                  class="p-button-sm p-button-warning"
+                  @click="handleDoNotOpenCase(slotProps.data)"
+                  :disabled="slotProps.data.status !== 0"
+                  :aria-label="
+                    '將案號 ' + slotProps.data.caseNumber + ' 設為不開案'
+                  "
+                />
+                <Button
+                  label="結案"
+                  class="p-button-sm p-button-warning"
+                  @click="handleFinishCase(slotProps.data)"
+                  :disabled="slotProps.data.status !== 1"
+                  :aria-label="
+                    '將案號 ' + slotProps.data.caseNumber + ' 設為結案'
+                  "
+                />
+              </div>
             </div>
           </template>
         </Column>
@@ -293,7 +295,11 @@ const statusMap: { [key: number]: string } = {
 const typeMap: { [key: number]: string } = { 1: "一般", 2: "新入境" };
 const shouldShowWorkerColumn = computed(() => {
   const permission = userStore?.getPermission;
-  return typeof permission === "number" && permission >= 10;
+  return typeof permission === "number" && permission < 20;
+});
+const shouldShowOpen = computed(() => {
+  const permission = userStore?.getPermission;
+  return typeof permission === "number" && permission < 20;
 });
 // --- 新增：為 Dropdown 準備選項陣列 ---
 const statusFilterOptions = computed(() =>
@@ -420,12 +426,6 @@ const loadLazyData = async () => {
       ([_, v]) => v !== null && v !== undefined && v !== "",
     ),
   );
-  //test api report
-  try {
-    await apiHandler.get("/report/AgeToNationality");
-  } catch (error) {
-  } finally {
-  }
 
   // 2. 呼叫 API
   try {

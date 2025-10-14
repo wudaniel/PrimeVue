@@ -28,7 +28,7 @@
           :options="staffList"
           :maxSelectedLabels="2"
           selectedItemsLabel="已選擇 {0} 位"
-          optionLabel="name"
+          optionLabel="fullName"
           optionValue="name"
           placeholder="可留空，預設查詢全部"
           display="chip"
@@ -136,6 +136,7 @@ interface SourceCategory {
 }
 interface Staff {
   name: string;
+  fullName: string;
 }
 
 // 扁平化後的資料列結構
@@ -305,14 +306,6 @@ onMounted(() => {
 /* 基礎設定：讓所有儲存格的內容頂部對齊 */
 :deep(.p-datatable-tbody td) {
   vertical-align: top;
-}
-
-/*
-  為每一行數據添加一個 class，方便我們定位。
-  我們通過 :rowClass prop 來實現。
-*/
-:deep(.data-row) {
-  /* 這裡不需要特別的樣式，只是作為一個錨點 */
 }
 
 /* 

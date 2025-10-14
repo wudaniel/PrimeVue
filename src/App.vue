@@ -3,6 +3,7 @@
     <!-- 觸發按鈕 (固定在左上角) -->
     <!-- v-if="userStore.isLoggedIn" -->
     <Button
+      v-if="userStore.isLoggedIn"
       icon="pi pi-bars"
       @click="sidebarVisible = true"
       class="p-button-secondary p-button-rounded p-button-text fixed-sidebar-button"
@@ -35,7 +36,11 @@
     <!-- **新增結束** -->
     <!-- Sidebar 元件 -->
 
-    <Sidebar v-model:visible="sidebarVisible" position="left">
+    <Sidebar
+      v-if="userStore.isLoggedIn"
+      v-model:visible="sidebarVisible"
+      position="left"
+    >
       <template #header>
         <h3>導覽選單</h3>
       </template>
@@ -45,7 +50,11 @@
     </Sidebar>
 
     <!-- 主要內容區域 -->
-    <div class="main-content p-4">
+
+    <div
+      class="main-content"
+      :class="{ 'logged-in-padding': userStore.isLoggedIn }"
+    >
       <!-- 你原本的內容 START -->
 
       <RouterView />
@@ -59,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import Sidebar from "primevue/sidebar";
 import Button from "primevue/button";
 import Menu from "primevue/menu"; // 使用 Menu 作為導航
@@ -73,7 +82,20 @@ import { useRouter, RouterView } from "vue-router";
 const router = useRouter();
 const userStore = useSessionStore(); // <-- 新增獲取 userStore
 const sidebarVisible = ref(false); // 控制 Sidebar 的顯示/隱藏
+const canViewAssignForms = computed(() => {
+  // 從 store 中獲取權限值
+  const permissionLevel = userStore.getPermission;
 
+  // 1. 確保權限值存在且不是 null/undefined
+  if (permissionLevel === null || permissionLevel === undefined) {
+    return false; // 如果沒有權限值，預設為不可見
+  }
+
+  // 2. 將權限值轉換為數字進行比較
+  //    - 使用 Number() 進行轉換，可以處理數字或字串形式的數字
+  //    - 權限值必須小於 20
+  return Number(permissionLevel) < 20;
+});
 // 會員下拉選單
 const userMenu = ref(); // 用於獲取 Menu 元件的實例
 const userMenuItems = ref([
@@ -121,35 +143,42 @@ const menuItems = ref([
     },
   },
   {
-    label: "新入境派案表",
-    icon: "pi pi-check",
-    command: () => {
-      router.push("/arrivalAssigns");
-      sidebarVisible.value = false;
-    },
-  },
-  {
     label: "一般派案表",
-    icon: "pi pi-check",
+    icon: "pi pi-file",
+    visible: canViewAssignForms.value, // 這裡也會自動使用新的判斷結果
     command: () => {
       router.push("/generalAssigns");
       sidebarVisible.value = false;
     },
   },
   {
-    label: "新入境紀錄表",
-    command: () => {
-      router.push("/arrivalRecords");
-      sidebarVisible.value = false;
-    },
-  },
-  {
     label: "一般紀錄表",
+    icon: "pi pi-file",
+
     command: () => {
       router.push("/generalRecords");
       sidebarVisible.value = false;
     },
   },
+  {
+    label: "新入境派案表",
+    icon: "pi pi-send",
+    visible: canViewAssignForms.value, // 這裡也會自動使用新的判斷結果
+    command: () => {
+      router.push("/arrivalAssigns");
+      sidebarVisible.value = false;
+    },
+  },
+
+  {
+    label: "新入境紀錄表",
+    icon: "pi pi-send",
+    command: () => {
+      router.push("/arrivalRecords");
+      sidebarVisible.value = false;
+    },
+  },
+
   {
     label: "報表",
     icon: "pi pi-chart-bar",
@@ -222,7 +251,7 @@ const menuItems = ref([
         },
       },
       {
-        label: "統計服務期程",
+        label: "服務來源與需求分析",
         icon: "pi pi-clock",
         command: () => {
           router.push("/report/general/ServiceSource");
@@ -254,7 +283,7 @@ const menuItems = ref([
         },
       },
       {
-        label: "區間訪視國籍(新入境)",
+        label: "訪視國籍統計(新入境)",
         icon: "pi pi-calendar-plus",
         command: () => {
           router.push("/report/arrival/Nationality");
@@ -296,17 +325,16 @@ const menuItems = ref([
 
 /* 主要內容區域的 padding */
 .main-content {
-  /*
-    你需要根據按鈕的實際大小和位置來設定 padding。
-    假設按鈕大概是 3rem x 3rem 大小，並且位於 top: 1rem, left: 1rem 的位置。
-    那麼內容區域的 padding-top 和 padding-left 需要大於 (1rem + 3rem)。
-    我們設定為 5rem 比較保險。
-  */
+  padding: 2rem; /* 為未登入的頁面提供一個基礎的邊距 */
+  width: 100%;
+  box-sizing: border-box;
+}
+.main-content.logged-in-padding {
   padding-top: 5rem;
   padding-left: 5rem;
-  width: 100%; /* 確保它佔滿寬度 */
+  padding-right: 2rem; /* 也可以微調右側 padding */
+  padding-bottom: 2rem;
 }
-
 .logo-container {
   text-align: center; /* 讓 logo 居中 */
   margin-bottom: 2rem;

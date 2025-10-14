@@ -37,27 +37,19 @@
           }}</small>
         </div>
 
-        <!-- ★★★ 修改點 1: 移除舊的 target, gender, nationality 欄位，改成動態的 "對象列表" ★★★ -->
         <div class="col-12">
           <div class="flex justify-content-between align-items-center mb-2">
             <label class="font-bold"
               >對象: <span class="text-red-500">*</span></label
             >
             <div>
+              <!-- ★★★ 修改點 1: 移除全域的 "-" 按鈕 ★★★ -->
               <Button
                 icon="pi pi-plus"
-                class="p-button-success mr-2"
+                class="p-button-success"
                 @click="addTarget"
                 type="button"
                 v-tooltip.top="'新增對象'"
-              />
-              <Button
-                icon="pi pi-minus"
-                class="p-button-danger"
-                @click="removeLastTarget"
-                type="button"
-                :disabled="targetFields.length === 0"
-                v-tooltip.top="'移除最後一個對象'"
               />
             </div>
           </div>
@@ -65,13 +57,23 @@
             targetArrayError
           }}</small>
 
-          <!-- 使用 v-for 渲染每個對象的表單 -->
           <div
             v-for="(field, idx) in targetFields"
             :key="field.key"
             class="p-3 border-1 surface-border border-round mb-3"
           >
-            <h4 class="mt-0 mb-3">對象 {{ idx + 1 }}</h4>
+            <!-- ★★★ 修改點 2: 在每個對象區塊的標題旁新增獨立的刪除按鈕 ★★★ -->
+            <div class="flex justify-content-between align-items-center mb-3">
+              <h4 class="mt-0 mb-0">對象 {{ idx + 1 }}</h4>
+              <Button
+                icon="pi pi-trash"
+                class="p-button-danger p-button-sm"
+                type="button"
+                @click="removeTarget(idx)"
+                v-tooltip.top="'移除此對象'"
+              />
+            </div>
+
             <div class="grid formgrid">
               <!-- 對象姓名 -->
               <div class="field col-12 md:col-4">
@@ -165,7 +167,6 @@
             </div>
           </div>
         </div>
-        <!-- ★★★ 修改結束 ★★★ -->
 
         <!-- 服務方式及之後的欄位保持不變 -->
         <div class="field col-12 md:col-6">
@@ -331,12 +332,7 @@
           }}</small>
         </div>
         <div class="field col-12 flex justify-content-end">
-          <Button
-            type="submit"
-            label="提交"
-            icon="pi pi-check"
-            :disabled="!isFormPotentiallyValid && meta.touched"
-          />
+          <Button type="submit" label="提交" icon="pi pi-check" />
         </div>
       </div>
     </form>
@@ -360,10 +356,8 @@ import Textarea from "primevue/textarea";
 import Checkbox from "primevue/checkbox";
 
 // --- VeeValidate ---
-// ★★★ 修改點 2: 引入 useFieldArray 和 defineRule ★★★
 import { useForm, useField, useFieldArray, defineRule } from "vee-validate";
 
-// ★★★ 修改點 3: 定義 'required' 規則並提供中文錯誤訊息 ★★★
 defineRule("required", (value: any) => {
   if (!value && value !== 0) {
     return "此欄位為必填";
@@ -383,7 +377,6 @@ interface ExtraInput {
   unit: string;
   content: string;
 }
-// ★★★ 修改點 4: 新增 Target 物件的型別定義 ★★★
 interface Target {
   name: string;
   gender: number | null;
@@ -412,15 +405,12 @@ const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
   "required",
   { initialValue: props.caseNumberQuery || "" },
 );
-
-// ★★★ 修改點 5: 移除舊的 useField，改用 useFieldArray 和 useField(targets) ★★★
 const { fields: targetFields, push, remove } = useFieldArray<Target>("targets");
 const { errorMessage: targetArrayError } = useField<Target[]>(
   "targets",
   (value) => (value && value.length > 0 ? true : "請至少新增一個對象"),
   { initialValue: [] },
 );
-
 const { value: selectedServicemethods, errorMessage: servicemethodsError } =
   useField<number | null>("serviceMethod", "required");
 const { value: taskObject, errorMessage: taskObjectError } =
@@ -435,7 +425,6 @@ const { value: selectedserviceItem, errorMessage: serviceItemError } = useField<
 );
 
 // --- Manually Handled Fields ---
-// ★★★ 修改點 6: 移除 othernationalities，新增 targetErrors ★★★
 const otherServicemethods = ref("");
 const otherserviceItem = ref("");
 const extraInputValues = reactive<Record<number, ExtraInput>>({});
@@ -457,17 +446,7 @@ const selectedExtraItems = computed(() => {
 const isserviceItemOtherSelected = computed(
   () => selectedserviceItem.value?.includes(-1) ?? false,
 );
-const isFormPotentiallyValid = computed(() => {
-  const hasDynamicErrors = Object.values(dynamicErrors).some(
-    (error) => error !== null,
-  );
-  const hasTargetItemErrors = targetErrors.some(
-    (err) => Object.keys(err).length > 0,
-  );
-  return meta.value.valid && !hasDynamicErrors && !hasTargetItemErrors;
-});
 
-// ★★★ 修改點 7: 新增新增/刪除對象的方法 ★★★
 const addTarget = () => {
   push({
     name: "",
@@ -478,11 +457,12 @@ const addTarget = () => {
   targetErrors.push({});
 };
 
-const removeLastTarget = () => {
-  if (targetFields.value.length > 0) {
-    remove(targetFields.value.length - 1);
-    targetErrors.pop();
-  }
+// ★★★ 修改點 3: 將 removeLastTarget 修改為 removeTarget(index) ★★★
+const removeTarget = (index: number) => {
+  // 使用 VeeValidate 的 remove 函式移除指定索引的表單欄位狀態
+  remove(index);
+  // 同步從我們的自訂錯誤陣列中移除對應的錯誤物件
+  targetErrors.splice(index, 1);
 };
 
 // --- Watcher for Dynamic Fields ---
@@ -528,9 +508,8 @@ onMounted(async () => {
   }
 });
 
-// --- Submit Handler ---
-// ★★★ 修改點 8: 大幅修改 onSubmit 邏輯以包含動態對象的驗證和 payload 組合 ★★★
 const onSubmit = handleSubmit(async (values) => {
+  // ... 表單驗證部分保持不變 ...
   Object.keys(dynamicErrors).forEach(
     (key: string) => (dynamicErrors[key] = null),
   );
@@ -557,7 +536,6 @@ const onSubmit = handleSubmit(async (values) => {
     }
   });
 
-  // 驗證動態新增的 "對象" 列表中的每個項目
   values.targets?.forEach((target: Target, index: number) => {
     const currentErrors: Partial<Record<keyof Target, string>> = {};
     if (!target.name || !target.name.trim()) {
@@ -591,18 +569,35 @@ const onSubmit = handleSubmit(async (values) => {
     });
     return;
   }
+  // --- 以上驗證邏輯不變 ---
 
   isSubmitting.value = true;
 
   const formattedDate = values.filingDate
     ? format(values.filingDate, "yyyy-MM-dd")
     : null;
-  const extraInfo = selectedExtraItems.value.map(
-    (item: ServiceObjectOption) => ({
-      id: item.id,
-      unit: extraInputValues[item.id].unit.trim(),
-      detail: extraInputValues[item.id].content.trim(),
-    }),
+
+  // ★★★ 修改點 1: 建立符合新格式的 serviceItemID 陣列 ★★★
+  const formattedServiceItems = (values.serviceItemID || []).map(
+    (id: number) => {
+      // 檢查這個 ID 對應的服務項目是否需要額外資訊 (extra: true)
+      const serviceItemDefinition = serviceObjectList.value.find(
+        (item) => item.id === id,
+      );
+
+      if (serviceItemDefinition && serviceItemDefinition.extra) {
+        // 如果需要額外資訊，從 extraInputValues 中取出 unit 和 detail (content)
+        const extraData = extraInputValues[id];
+        return {
+          id: id,
+          unit: extraData ? extraData.unit.trim() : "",
+          detail: extraData ? extraData.content.trim() : "",
+        };
+      } else {
+        // 如果是簡單項目 (包括 id 為 -1 的 "其他")，只回傳 id
+        return { id: id };
+      }
+    },
   );
 
   const formattedTargets = (values.targets || []).map((t: Target) => ({
@@ -615,20 +610,23 @@ const onSubmit = handleSubmit(async (values) => {
         : null,
   }));
 
+  // ★★★ 修改點 2: 在 payload 中使用新的 formattedServiceItems 並移除 extraInfo ★★★
   const payload = {
     filingDate: formattedDate,
     caseNumber: values.caseNumber?.trim(),
-    targets: formattedTargets, // 使用新的 targets 陣列
+    targets: formattedTargets,
     serviceMethod: values.serviceMethod,
     serviceMethodOther:
       values.serviceMethod === -1 ? otherServicemethods.value.trim() : null,
     taskObject: values.taskObject?.trim() || null,
     detail: values.detail?.trim() || null,
-    serviceItemID: values.serviceItemID,
+
+    serviceItemID: formattedServiceItems, // 使用新的格式
+
     serviceItemOther: values.serviceItemID?.includes(-1)
       ? otherserviceItem.value.trim()
       : null,
-    extraInfo: extraInfo,
+    // extraInfo: extraInfo, // 舊的 extraInfo 欄位不再需要，已整合進 serviceItemID
   };
 
   try {
@@ -644,12 +642,10 @@ const onSubmit = handleSubmit(async (values) => {
     });
     setTimeout(() => router.push("/"), 1500);
   } catch (error: any) {
-    const errorMessage =
-      error.response?.data?.message || "提交失敗，請檢查網路或聯繫管理員。";
     toast.add({
       severity: "error",
       summary: "提交失敗",
-      detail: errorMessage,
+      detail: error.response?.data?.error?.message || "發生未知錯誤",
       life: 5000,
     });
   } finally {

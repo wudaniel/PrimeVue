@@ -43,20 +43,13 @@
               >對象: <span class="text-red-500">*</span></label
             >
             <div>
+              <!-- ★★★ 修改點 1: 移除全域的 "-" 按鈕 ★★★ -->
               <Button
                 icon="pi pi-plus"
-                class="p-button-success mr-2"
+                class="p-button-success"
                 @click="addTarget"
                 type="button"
                 v-tooltip.top="'新增對象'"
-              />
-              <Button
-                icon="pi pi-minus"
-                class="p-button-danger"
-                @click="removeLastTarget"
-                type="button"
-                :disabled="targetFields.length === 0"
-                v-tooltip.top="'移除最後一個對象'"
               />
             </div>
           </div>
@@ -64,13 +57,23 @@
             targetArrayError
           }}</small>
 
-          <!-- 使用 v-for 渲染每個對象的表單 -->
           <div
             v-for="(field, idx) in targetFields"
             :key="field.key"
             class="p-3 border-1 surface-border border-round mb-3"
           >
-            <h4 class="mt-0 mb-3">對象 {{ idx + 1 }}</h4>
+            <!-- ★★★ 修改點 2: 在每個對象區塊的標題旁新增獨立的刪除按鈕 ★★★ -->
+            <div class="flex justify-content-between align-items-center mb-3">
+              <h4 class="mt-0 mb-0">對象 {{ idx + 1 }}</h4>
+              <Button
+                icon="pi pi-trash"
+                class="p-button-danger p-button-sm"
+                type="button"
+                @click="removeTarget(idx)"
+                v-tooltip.top="'移除此對象'"
+              />
+            </div>
+
             <div class="grid formgrid">
               <!-- 對象姓名 -->
               <div class="field col-12 md:col-4">
@@ -331,12 +334,7 @@
         </div>
 
         <div class="field col-12 flex justify-content-end">
-          <Button
-            type="submit"
-            label="提交"
-            icon="pi pi-check"
-            :disabled="!isFormPotentiallyValid && meta.touched"
-          />
+          <Button type="submit" label="提交" icon="pi pi-check" />
         </div>
       </div>
     </form>
@@ -360,19 +358,16 @@ import Textarea from "primevue/textarea";
 import Checkbox from "primevue/checkbox";
 
 // --- VeeValidate ---
-import { useForm, useField, useFieldArray } from "vee-validate";
-
-import { defineRule } from "vee-validate";
+import { useForm, useField, useFieldArray, defineRule } from "vee-validate";
 
 defineRule("required", (value: any) => {
-  // 檢查 value 是否有效 (不為空值、undefined、null，且允許數字 0)
   if (!value && value !== 0) {
     return "此欄位為必填";
   }
-  return true; // 驗證通過
+  return true;
 });
 
-// --- Type Definitions (無變動) ---
+// --- Type Definitions ---
 interface SelectOption {
   id: number;
   name: string;
@@ -391,11 +386,11 @@ interface Target {
   nationalityOther: string;
 }
 
-// --- Hooks (無變動) ---
+// --- Hooks ---
 const toast = useToast();
 const router = useRouter();
 
-// --- Props (無變動) ---
+// --- Props ---
 const props = defineProps<{
   caseNumberQuery?: string;
 }>();
@@ -404,24 +399,19 @@ const props = defineProps<{
 const { handleSubmit, meta } = useForm({});
 const isSubmitting = ref(false);
 
-// ★★★ 修改點 3: 移除 useField 中的 `label` 屬性，因為不再需要了 ★★★
 const { value: filingDate, errorMessage: filingDateError } =
   useField<Date | null>("filingDate", "required");
 const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
   "caseNumber",
   "required",
-  { initialValue: props.caseNumberQuery || "" }, // 保留 initialValue
+  { initialValue: props.caseNumberQuery || "" },
 );
-
 const { fields: targetFields, push, remove } = useFieldArray<Target>("targets");
-
-// 自訂驗證函式的錯誤訊息不受影響，維持原樣
 const { errorMessage: targetArrayError } = useField<Target[]>(
   "targets",
   (value) => (value && value.length > 0 ? true : "請至少新增一個對象"),
   { initialValue: [] },
 );
-
 const { value: selectedServicemethods, errorMessage: servicemethodsError } =
   useField<number | null>("serviceMethod", "required");
 const { value: taskObject, errorMessage: taskObjectError } =
@@ -435,19 +425,19 @@ const { value: selectedserviceItem, errorMessage: serviceItemError } = useField<
   { initialValue: [] },
 );
 
-// --- Manually Handled Fields (無變動) ---
+// --- Manually Handled Fields ---
 const otherServicemethods = ref("");
 const otherserviceItem = ref("");
 const extraInputValues = reactive<Record<number, ExtraInput>>({});
 const dynamicErrors = reactive<Record<string, string | null>>({});
 const targetErrors = reactive<Array<Partial<Record<keyof Target, string>>>>([]);
 
-// --- API Data (無變動) ---
+// --- API Data ---
 const nationalityList = ref<SelectOption[]>([]);
 const serviceMethodsList = ref<SelectOption[]>([]);
 const serviceObjectList = ref<ServiceObjectOption[]>([]);
 
-// --- Computed Properties & Methods (無變動) ---
+// --- Computed Properties ---
 const selectedExtraItems = computed(() => {
   const selectedIds = selectedserviceItem.value ?? [];
   return serviceObjectList.value.filter(
@@ -457,34 +447,26 @@ const selectedExtraItems = computed(() => {
 const isserviceItemOtherSelected = computed(
   () => selectedserviceItem.value?.includes(-1) ?? false,
 );
-const isFormPotentiallyValid = computed(() => {
-  const hasDynamicErrors = Object.values(dynamicErrors).some(
-    (error) => error !== null,
-  );
-  const hasTargetItemErrors = targetErrors.some(
-    (err) => Object.keys(err).length > 0,
-  );
-  return meta.value.valid && !hasDynamicErrors && !hasTargetItemErrors;
-});
 
 const addTarget = () => {
   push({
-    name: "新住民女性",
-    gender: 1,
-    nationalityID: -1,
-    nationalityOther: "烏托邦",
+    name: "",
+    gender: null,
+    nationalityID: null,
+    nationalityOther: "",
   });
   targetErrors.push({});
 };
 
-const removeLastTarget = () => {
-  if (targetFields.value.length > 0) {
-    remove(targetFields.value.length - 1);
-    targetErrors.pop();
-  }
+// ★★★ 修改點 3: 將 removeLastTarget 修改為 removeTarget(index) ★★★
+const removeTarget = (index: number) => {
+  // 使用 VeeValidate 的 remove 函式移除指定索引的表單欄位狀態
+  remove(index);
+  // 同步從我們的自訂錯誤陣列中移除對應的錯誤物件
+  targetErrors.splice(index, 1);
 };
 
-// --- Watcher (無變動) ---
+// --- Watcher ---
 watch(
   selectedExtraItems,
   (newItems, oldItems = []) => {
@@ -505,7 +487,7 @@ watch(
   { deep: true },
 );
 
-// --- onMounted Hook (無變動) ---
+// --- onMounted Hook ---
 onMounted(async () => {
   try {
     const [natRes, metRes, sobjRes] = await Promise.all([
@@ -527,7 +509,7 @@ onMounted(async () => {
   }
 });
 
-// --- onSubmit (無變動) ---
+// --- onSubmit ---
 const onSubmit = handleSubmit(async (values) => {
   Object.keys(dynamicErrors).forEach((key) => (dynamicErrors[key] = null));
   targetErrors.splice(0, targetErrors.length);
@@ -631,7 +613,7 @@ const onSubmit = handleSubmit(async (values) => {
     serviceMethodOther:
       values.serviceMethod === -1 ? otherServicemethods.value.trim() : null,
     taskObject: values.taskObject?.trim() || null,
-    detail: detail.value?.trim() || null,
+    detail: values.detail?.trim() || null,
     serviceItemID: formattedServiceItems,
     serviceItemOther: values.serviceItemID?.includes(-1)
       ? otherserviceItem.value.trim()
@@ -666,7 +648,6 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <style scoped>
-/* 統一樣式 */
 .p-field {
   margin-bottom: 1.5rem;
 }

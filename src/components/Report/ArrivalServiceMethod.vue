@@ -1,6 +1,6 @@
 <template>
   <div class="card p-4">
-    <h3 class="text-xl font-bold text-center mb-4">服務方式及內容</h3>
+    <h3 class="text-xl font-bold text-center mb-4">新入境服務方式統計表</h3>
 
     <!-- ★★★ 新增: 篩選器區域 ★★★ -->
     <div class="flex align-items-center gap-3 mb-3">
@@ -28,7 +28,7 @@
           :options="staffList"
           :maxSelectedLabels="2"
           selectedItemsLabel="已選擇 {0} 位"
-          optionLabel="name"
+          optionLabel="fullName"
           optionValue="name"
           placeholder="可留空，預設查詢全部"
           display="chip"
@@ -142,6 +142,7 @@ interface HeaderServiceMethod {
 }
 interface Staff {
   name: string;
+  fullName: string;
 } // 新增 Staff 類型
 
 // --- 響應式狀態 ---

@@ -7,6 +7,7 @@ import { apiHandler } from "../class/apiHandler";
 interface UserData {
   userfullname: string;
   permission: string;
+  username: string;
 }
 
 // 遵循 Pinia 慣例，將 Store 命名為 use...Store
@@ -23,6 +24,7 @@ export const useSessionStore = defineStore(
         return new userInfo(
           userData.value.userfullname,
           userData.value.permission,
+          userData.value.username,
         );
       }
       return null;
@@ -50,17 +52,19 @@ export const useSessionStore = defineStore(
       try {
         const response = await apiHandler.post<{
           data: {
+            username: string;
             token: string;
             fullname: string;
             permission: string;
           };
         }>("/login", { username, password });
-
+        console.log(response.data);
         if (response.data && response.data.data.token) {
           token.value = `Bearer ${response.data.data.token}`;
           userData.value = {
             userfullname: response.data.data.fullname,
             permission: response.data.data.permission,
+            username: response.data.data.username,
           };
           return true;
         } else {
