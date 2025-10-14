@@ -41,7 +41,7 @@ export const useSessionStore = defineStore(
     //    - 呼叫其他 action 時直接呼叫函式名
 
     function logout() {
-      console.log("執行登出，清除狀態...");
+      //console.log("執行登出，清除狀態...");
       token.value = null;
       userData.value = null;
     }

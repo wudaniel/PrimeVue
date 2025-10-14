@@ -87,7 +87,12 @@ import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import Chip from "primevue/chip";
 import Tag from "primevue/tag";
-
+interface FieldConfig {
+  key: string;
+  title: string;
+  isFullWidth?: boolean; // '?' 表示這個屬性是可選的
+  dependsOn?: (recordData: any) => boolean; // '?' 表示這個函式也是可選的
+}
 // --- Props ---
 const props = defineProps<{
   type: string;
@@ -142,15 +147,20 @@ const processedData = computed(() => {
   const genderMap: { [key: number]: string } = { 0: "男", 1: "女", 2: "其他" };
 
   // 手動定義要顯示的欄位以及如何處理它們
-  const fieldsConfig = [
+  const fieldsConfig: FieldConfig[] = [
     { key: "filingDate", title: "填寫日期" },
     { key: "caseNumber", title: "案件編號" },
     { key: "author", title: "填寫社工" },
     { key: "targets", title: "詳細服務對象" },
     { key: "serviceMethodID", title: "服務方式" },
+    // 舉例：如果 serviceMethodID 為 -1 (其他)，才顯示 'serviceMethodOther' 欄位
+    {
+      key: "serviceMethodOther",
+      title: "其他服務方式說明",
+      dependsOn: (record) => record.serviceMethodID === -1,
+    },
     { key: "taskObject", title: "工作目標", isFullWidth: true },
     { key: "detail", title: "服務內容", isFullWidth: true },
-
     { key: "serviceItems", title: "服務項目明細", isFullWidth: true },
   ];
 
@@ -159,7 +169,7 @@ const processedData = computed(() => {
   for (const field of fieldsConfig) {
     const value = recordData[field.key];
 
-    // 條件判斷：如果 dependsOn 函式存在且回傳 false，則跳過此欄位
+    // 現在 TypeScript 知道 dependsOn 是合法的了，錯誤消失
     if (field.dependsOn && !field.dependsOn(recordData)) {
       continue;
     }
@@ -328,7 +338,7 @@ onMounted(() => {
 
 // 監聽 props 的變化，如果變化了就重新載入資料
 watch(
-  () => [props.type, props.casenumber, props.recordid],
+  () => [props.type, props.casenumber, props.recordid] as const,
   ([newType, newCasenumber, newRecordid]) => {
     if (newType && newCasenumber && newRecordid) {
       fetchData(newType, newCasenumber, newRecordid);

@@ -64,7 +64,7 @@
                 />
                 <Chip
                   v-else-if="isChip(item.title)"
-                  :label="item.displayValue"
+                  :label="String(item.displayValue ?? '')"
                 />
                 <span v-else class="pre-wrap">{{ item.displayValue }}</span>
               </div>

@@ -99,33 +99,28 @@
 
         <div class="field col-12 md:col-6">
           <label class="mb-2 block">性別:</label>
-          <RadioButton
-            inputId="male"
-            name="gender"
-            :value="0"
-            v-model="selectedGender"
-            :class="{ 'p-invalid': !!genderError }"
-          />
-          <label for="male" class="ml-2">男</label>
-
-          <RadioButton
-            inputId="female"
-            name="gender"
-            :value="1"
-            v-model="selectedGender"
-            :class="{ 'p-invalid': !!genderError }"
-          />
-          <label for="female" class="ml-2">女</label>
-
-          <RadioButton
-            inputId="otherGenderRadio"
-            name="gender"
-            :value="2"
-            v-model="selectedGender"
-            :class="{ 'p-invalid': !!genderError }"
-          />
-          <label for="otherGenderRadio" class="ml-2">其他</label>
-
+          <div class="flex flex-wrap gap-3">
+            <div class="flex align-items-center">
+              <RadioButton
+                inputId="gender0"
+                name="gender"
+                :value="0"
+                v-model="selectedGender"
+                :class="{ 'p-invalid': !!genderError }"
+              />
+              <label for="gender0" class="ml-2">男</label>
+            </div>
+            <div class="flex align-items-center">
+              <RadioButton
+                inputId="gender1"
+                name="gender"
+                :value="1"
+                v-model="selectedGender"
+                :class="{ 'p-invalid': !!genderError }"
+              />
+              <label for="gender1" class="ml-2">女</label>
+            </div>
+          </div>
           <small class="p-error mt-1" v-if="genderError">{{
             genderError
           }}</small>
@@ -133,33 +128,37 @@
 
         <div class="field col-12 md:col-6">
           <label class="mb-2 block">是否歸化:</label>
-
-          <RadioButton
-            inputId="naturalized_YES"
-            name="naturalized"
-            :value="1"
-            v-model="selectednaturalized"
-            :class="{ 'p-invalid': !!naturalizedError }"
-          />
-          <label for="naturalized_YES" class="ml-2">是</label>
-
-          <RadioButton
-            inputId="naturalized_NO"
-            name="naturalized"
-            :value="0"
-            v-model="selectednaturalized"
-            :class="{ 'p-invalid': !!naturalizedError }"
-          />
-          <label for="naturalized_NO" class="ml-2">否</label>
-
-          <Button
-            type="button"
-            icon="pi pi-times"
-            class="p-button-secondary p-button-outlined p-button-sm ml-2"
-            @click="clearNaturalized"
-            aria-label="清除選擇"
-          />
-
+          <div class="flex flex-wrap gap-3">
+            <div class="flex align-items-center">
+              <RadioButton
+                inputId="naturalized_YES"
+                name="naturalized"
+                :value="1"
+                v-model="selectednaturalized"
+                :class="{ 'p-invalid': !!naturalizedError }"
+              />
+              <label for="naturalized_YES" class="ml-2">是</label>
+            </div>
+            <div class="flex align-items-center">
+              <RadioButton
+                inputId="naturalized_NO"
+                name="naturalized"
+                :value="0"
+                v-model="selectednaturalized"
+                :class="{ 'p-invalid': !!naturalizedError }"
+              />
+              <label for="naturalized_NO" class="ml-2">否</label>
+            </div>
+            <div class="flex align-items-center">
+              <Button
+                type="button"
+                icon="pi pi-times"
+                class="p-button-secondary p-button-outlined p-button-sm ml-2"
+                @click="clearNaturalized"
+                aria-label="清除選擇"
+              />
+            </div>
+          </div>
           <small class="p-error mt-1" v-if="naturalizedError">{{
             naturalizedError
           }}</small>
@@ -288,27 +287,53 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"; // 保留 watch
+import { ref, onMounted, watch } from "vue";
 import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
 import { useRouter } from "vue-router";
 // --- PrimeVue 元件導入 ---
 import Calendar from "primevue/calendar";
 import InputText from "primevue/inputtext";
-import InputNumber from "primevue/inputnumber"; // 導入 InputNumber
+import InputNumber from "primevue/inputnumber";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
-import Textarea from "primevue/textarea"; // 導入 Textarea
+import Textarea from "primevue/textarea";
+import { useToast } from "primevue/usetoast";
 // --- VeeValidate 導入 ---
-import { useForm, useField } from "vee-validate"; // ErrorMessage 這次沒直接用
-import { useToast } from "primevue/usetoast"; // 用於顯示成功/失敗提示
-const toast = useToast(); // 初始化 Toast 服務
+import { useForm, useField, defineRule } from "vee-validate";
+interface GeneralFormValues {
+  filingDate: Date | null;
+  caseNumber: string;
+  FullName: string;
+  nationality: number | null;
+  othernationalities: string;
+  selectedYear: number | null;
+  gender: number | null;
+  naturalized: number | null;
+  sourceID: number | null;
+  sourceOther: string;
+  sourceCatID: number | null; // <-- 在這裡明確定義類型
+  town: number | null;
+  othertown: string;
+  caseDetail: string;
+  worker: string | null; // 注意 worker 是 string | null
+}
+const toast = useToast();
 const router = useRouter();
+
+// --- 定義 VeeValidate 規則 ---
+// 為了讓 'required' 字符串能穩定運作
+defineRule("required", (value: any) => {
+  if (value === null || value === undefined || value === "") {
+    return "此欄位為必填項";
+  }
+  return true;
+});
+
 // --- VeeValidate 表單設定 ---
-// 添加了對應 Snippet 1 的所有欄位
-const { handleSubmit, meta, setFieldValue } = useForm({
-  // 可以在這裡設定初始值，會覆蓋 useField 的 initialValue
+const { handleSubmit, meta, setFieldValue } = useForm<GeneralFormValues>({
+  // <-- 在此應用介面
   initialValues: {
     filingDate: null,
     caseNumber: "",
@@ -318,15 +343,13 @@ const { handleSubmit, meta, setFieldValue } = useForm({
     selectedYear: null,
     gender: null,
     naturalized: null,
-    sourceID: null, //轉借單位
+    sourceID: null,
     sourceOther: "",
-    sourceCatID: null, // 個案來源類別
+    sourceCatID: null, // 現在 TS 知道這個 null 屬於 number | null 類型
     town: null,
     othertown: "",
     caseDetail: "",
     worker: null,
-    // needs: [], // 如果要處理 Needs MultiSelect
-    // otherNeeds: ''
   },
 });
 
@@ -349,6 +372,7 @@ const validateOtherSources = (value: string | undefined | null) => {
   }
   return true;
 };
+
 // --- 為每個欄位使用 useField ---
 const { value: filingDate, errorMessage: filingDateError } =
   useField<Date | null>("filingDate", "required");
@@ -366,13 +390,13 @@ const { value: othernationalities, errorMessage: othernationalitiesError } =
   useField<string>("othernationalities", validateOtherNationality);
 const { value: selectedYear, errorMessage: selectedYearError } = useField<
   number | null
->("selectedYear" /*, 'required'*/); // 年份可能非必填
+>("selectedYear"); // 年份設為非必填
 const { value: selectedGender, errorMessage: genderError } = useField<
   number | null
 >("gender", "required");
 const { value: selectednaturalized, errorMessage: naturalizedError } = useField<
   number | null
->("naturalized" /*, 'required'*/); // 歸化可能非必填
+>("naturalized"); // 歸化設為非必填
 const { value: selectedsources, errorMessage: sourcesError } = useField<
   number | null
 >("sourceID", "required");
@@ -380,7 +404,7 @@ const { value: othersources, errorMessage: othersourcesError } =
   useField<string>("sourceOther", validateOtherSources);
 const { value: selectedCaseSource, errorMessage: caseSourceError } = useField<
   number | null
->("sourceCatID", "required"); // 個案來源類別
+>("sourceCatID", "required");
 const { value: selectedtown, errorMessage: townError } = useField<
   number | null
 >("town", "required");
@@ -392,21 +416,23 @@ const { value: caseDetail, errorMessage: caseDetailError } = useField<string>(
   "caseDetail",
   "required",
 );
+
+// FIX: 將 `worker` 的類型從 `number` 改為 `string` 以匹配 Dropdown 的 `optionValue="name"`
 const { value: selectedworkers, errorMessage: workerError } = useField<
-  number | null
+  string | null
 >("worker", "required");
+
 // --- API 選項數據 ref ---
 const Nationality_List = ref<{ id: number; name: string }[]>([]);
 const sourceCats_List = ref<{ id: number; name: string }[]>([]);
 const sources_List = ref<{ id: number; name: string; sourceCatID?: number }[]>(
   [],
-); // 假設 sources 有 sourceCatID
+);
 const town_List = ref<{ id: number; name: string }[]>([]);
 const workers_List = ref<{ id: number; name: string }[]>([]);
-// const Needs_List = ref<{ id: number; name: string }[]>([]);
 
 // --- 其他狀態 ---
-const CategoryLock = ref(true); // 控制個案來源類別是否禁用
+const CategoryLock = ref(true);
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
@@ -414,7 +440,6 @@ onMounted(() => {
     apiHandler
       .get(endpoint)
       .then((response) => {
-        // 假設後端回應結構為 { success: boolean, data: [...] }
         if (response.data && Array.isArray(response.data.data)) {
           listRef.value = response.data.data;
         }
@@ -438,107 +463,94 @@ onMounted(() => {
 
 // --- 清除歸化選項 ---
 const clearNaturalized = () => {
-  setFieldValue("naturalized", null); // 使用 VeeValidate 的 setFieldValue 更新值
+  setFieldValue("naturalized", null);
 };
 
 // --- 監聽轉介單位變化，自動更新個案來源類別 ---
 watch(selectedsources, (newSourceId) => {
   if (newSourceId === null || newSourceId === undefined) {
-    setFieldValue("sourceCatID", null); // 清空個案來源
-    CategoryLock.value = true; // 可能需要重新鎖定
+    setFieldValue("sourceCatID", null);
+    CategoryLock.value = true;
     return;
   }
 
-  // 從 sources_List 找到對應的 source 物件
   const selectedSourceObject = sources_List.value.find(
     (item) => item.id === newSourceId,
   );
 
-  if (selectedSourceObject) {
-    const sourceCatID = selectedSourceObject.sourceCatID;
-    // 從 source 物件找到對應的 sourceCatID
-    if (sourceCatID !== undefined) {
-      // 從 sourceCats_List 找到對應的類別物件
-      const result = sourceCats_List.value.find(
-        (cat) => cat.id === sourceCatID,
-      );
-      if (result) {
-        setFieldValue("sourceCatID", result.id); // 更新 VeeValidate 的值
-        // 控制鎖定狀態
-        CategoryLock.value = result.id !== -1; // 假設 -1 代表可編輯
-      } else {
-        setFieldValue("sourceCatID", null); // 沒找到對應類別
-        CategoryLock.value = false; // 沒找到就解鎖？或者保持鎖定？根據需求調整
-      }
-    } else {
-      // 如果選擇的 source 沒有 sourceCatID
-      setFieldValue("sourceCatID", null);
-      CategoryLock.value = false; // 或者保持鎖定
-    }
+  if (selectedSourceObject && selectedSourceObject.sourceCatID !== undefined) {
+    setFieldValue("sourceCatID", selectedSourceObject.sourceCatID);
+    // 假設只有 sourceCatID 為 -1 時才可編輯
+    CategoryLock.value = selectedSourceObject.sourceCatID !== -1;
   } else {
-    setFieldValue("sourceCatID", null); // 選擇項無效
-    CategoryLock.value = true; // 或者 false？
+    // 如果選擇的 source 沒有 sourceCatID 或找不到，則解鎖讓用戶手動選擇
+    setFieldValue("sourceCatID", null);
+    CategoryLock.value = false;
   }
 });
 
-// --- 提交處理 (由 handleSubmit 包裹) ---
+// --- 提交處理 ---
 const onSubmit = handleSubmit(async (values) => {
   let formattedDate = null;
-  if (
-    values.filingDate instanceof Date &&
-    !isNaN(values.filingDate.getTime())
-  ) {
+  // 確保 `values.filingDate` 是一個有效的 Date 物件
+  if (values.filingDate && typeof values.filingDate.getMonth === "function") {
     try {
       formattedDate = format(values.filingDate, "yyyy-MM-dd");
     } catch (e) {
-      console.error(e);
+      console.error("日期格式化失敗:", e);
+      toast.add({
+        severity: "error",
+        summary: "錯誤",
+        detail: "日期格式不正確",
+        life: 3000,
+      });
+      return;
     }
   }
 
-  // 從 values 構建 payload
   const payload = {
-    filingDate: formattedDate, // 使用格式化後的日期，key 同 Snippet 1
+    filingDate: formattedDate,
     caseNumber: values.caseNumber?.trim(),
-    fullName: values.FullName?.trim(), // key 同 Snippet 1
+    fullName: values.FullName?.trim(),
     nationalityID: values.nationality,
     nationalityOther:
       values.nationality === -1 ? values.othernationalities?.trim() : null,
-    yearOfBirth: values.selectedYear ? values.selectedYear : null, // key 同 Snippet 1
-    gender: Number(values.gender), // key 同 Snippet 1
-    naturalized:
-      values.naturalized !== null ? Boolean(Number(values.naturalized)) : null,
-
-    sourceID: values.sourceID, //轉借單位
-    sourceOther: othersources.value,
-    sourceCatID: values.sourceCatID, //個案來源
-
-    town: values.town, // key 同 Snippet 1
+    yearOfBirth: values.selectedYear,
+    gender: values.gender, // gender 已經是 number 或 null
+    naturalized: values.naturalized === null ? null : values.naturalized === 1, // 轉換 0/1 為 false/true
+    sourceID: values.sourceID,
+    sourceOther: values.sourceID === -1 ? values.sourceOther?.trim() : null, // BEST PRACTICE: 從 values 取值
+    sourceCatID: values.sourceCatID,
+    town: values.town,
     townOther: values.town === -1 ? values.othertown?.trim() : null,
-    detail: values.caseDetail?.trim(), // key 同 Snippet 1
-    worker: values.worker, // key 同 Snippet 1
+    detail: values.caseDetail?.trim(),
+    worker: values.worker,
   };
 
-  // 發送 API 請求到
   try {
     await apiHandler.post("/form/assign/general", payload);
     toast.add({
-      severity: "success", // 狀態：成功 (綠色)
-      summary: "提交成功", // 標題
-      detail: "您的表單已成功送出！", // 詳細內容
-      life: 1500, // 顯示 1.5 秒後自動消失
+      severity: "success",
+      summary: "提交成功",
+      detail: "您的表單已成功送出！",
+      life: 1500,
     });
-
-    // 6. 在 Toast 消失後轉跳到主頁
     setTimeout(() => {
-      router.push("/"); // 轉跳到主頁
+      router.push("/");
     }, 1500);
-  } finally {
+  } catch (error: any) {
+    toast.add({
+      severity: "error",
+      summary: "提交失敗",
+      detail:
+        error.response?.data?.error?.message || "發生未知錯誤，請稍後再試。",
+      life: 3000,
+    });
   }
 });
 </script>
 
 <style scoped>
-/* 保持你原有的或其他需要的樣式 */
 .p-field {
   margin-bottom: 1.5rem;
 }

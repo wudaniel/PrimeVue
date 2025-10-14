@@ -3,6 +3,7 @@
     <h3 class="text-center mb-4">一般紀錄表</h3>
     <form @submit="onSubmit">
       <div class="grid formgrid">
+        <!-- 建檔日 和 案號 保持不變 -->
         <div class="field col-12 md:col-6">
           <label for="filingDate"
             >建檔日: <span class="text-red-500">*</span></label
@@ -35,89 +36,138 @@
             caseNumberError
           }}</small>
         </div>
-        <!-- ... 其他表單欄位 ... -->
-        <div class="field col-12 md:col-6">
-          <label for="nationalityDropdown"
-            >原母國籍: <span class="text-red-500">*</span></label
-          >
-          <Dropdown
-            inputId="nationalityDropdown"
-            v-model="selectednationalities"
-            :options="nationalityList"
-            optionLabel="name"
-            optionValue="id"
-            placeholder="請選擇國籍"
-            class="w-full"
-            filter
-            :class="{ 'p-invalid': !!nationalityError }"
-          />
-          <small class="p-error" v-if="nationalityError">{{
-            nationalityError
-          }}</small>
-        </div>
-        <div class="field col-12 md:col-6" v-if="selectednationalities === -1">
-          <label for="othernationalities"
-            >請輸入其他國籍: <span class="text-red-500">*</span></label
-          >
-          <Textarea
-            id="othernationalities"
-            v-model="othernationalities"
-            class="w-full"
-            :class="{ 'p-invalid': !!dynamicErrors.othernationalities }"
-            rows="1"
-            autoResize
-          />
-          <small class="p-error" v-if="dynamicErrors.othernationalities">{{
-            dynamicErrors.othernationalities
-          }}</small>
-        </div>
-        <div class="field col-12 md:col-6">
-          <label for="target"
-            >對象名稱: <span class="text-red-500">*</span></label
-          >
-          <InputText
-            id="target"
-            v-model="target"
-            placeholder="對象名稱"
-            class="w-full"
-            :class="{ 'p-invalid': !!targetError }"
-          />
-          <small class="p-error" v-if="targetError">{{ targetError }}</small>
-        </div>
-        <div class="field col-12 md:col-6">
-          <label class="mb-2 block"
-            >性別: <span class="text-red-500">*</span></label
-          >
-          <div class="flex flex-wrap gap-3">
-            <div class="flex align-items-center">
-              <RadioButton
-                inputId="male"
-                name="gender"
-                :value="0"
-                v-model="selectedGender"
-              /><label for="male" class="ml-2">男</label>
-            </div>
-            <div class="flex align-items-center">
-              <RadioButton
-                inputId="female"
-                name="gender"
-                :value="1"
-                v-model="selectedGender"
-              /><label for="female" class="ml-2">女</label>
-            </div>
-            <div class="flex align-items-center">
-              <RadioButton
-                inputId="otherGenderRadio"
-                name="gender"
-                :value="2"
-                v-model="selectedGender"
-              /><label for="otherGenderRadio" class="ml-2">其他</label>
+
+        <!-- ★★★ 修改點 1: 移除舊的 target, gender, nationality 欄位，改成動態的 "對象列表" ★★★ -->
+        <div class="col-12">
+          <div class="flex justify-content-between align-items-center mb-2">
+            <label class="font-bold"
+              >對象: <span class="text-red-500">*</span></label
+            >
+            <div>
+              <Button
+                icon="pi pi-plus"
+                class="p-button-success mr-2"
+                @click="addTarget"
+                type="button"
+                v-tooltip.top="'新增對象'"
+              />
+              <Button
+                icon="pi pi-minus"
+                class="p-button-danger"
+                @click="removeLastTarget"
+                type="button"
+                :disabled="targetFields.length === 0"
+                v-tooltip.top="'移除最後一個對象'"
+              />
             </div>
           </div>
-          <small class="p-error mt-1" v-if="genderError">{{
-            genderError
+          <small class="p-error mb-2" v-if="targetArrayError">{{
+            targetArrayError
           }}</small>
+
+          <!-- 使用 v-for 渲染每個對象的表單 -->
+          <div
+            v-for="(field, idx) in targetFields"
+            :key="field.key"
+            class="p-3 border-1 surface-border border-round mb-3"
+          >
+            <h4 class="mt-0 mb-3">對象 {{ idx + 1 }}</h4>
+            <div class="grid formgrid">
+              <!-- 對象姓名 -->
+              <div class="field col-12 md:col-4">
+                <label :for="`target-name-${idx}`"
+                  >名稱: <span class="text-red-500">*</span></label
+                >
+                <InputText
+                  :id="`target-name-${idx}`"
+                  v-model="field.value.name"
+                  placeholder="對象名稱"
+                  class="w-full"
+                  :class="{ 'p-invalid': !!targetErrors[idx]?.name }"
+                />
+                <small class="p-error" v-if="targetErrors[idx]?.name">{{
+                  targetErrors[idx]?.name
+                }}</small>
+              </div>
+
+              <!-- 對象性別 -->
+              <div class="field col-12 md:col-4">
+                <label class="mb-2 block"
+                  >性別: <span class="text-red-500">*</span></label
+                >
+                <div class="flex flex-wrap gap-3">
+                  <div class="flex align-items-center">
+                    <RadioButton
+                      :inputId="`male-${idx}`"
+                      :name="`gender-${field.key}`"
+                      :value="0"
+                      v-model="field.value.gender"
+                    /><label :for="`male-${idx}`" class="ml-2">男</label>
+                  </div>
+                  <div class="flex align-items-center">
+                    <RadioButton
+                      :inputId="`female-${idx}`"
+                      :name="`gender-${field.key}`"
+                      :value="1"
+                      v-model="field.value.gender"
+                    /><label :for="`female-${idx}`" class="ml-2">女</label>
+                  </div>
+                </div>
+                <small class="p-error mt-1" v-if="targetErrors[idx]?.gender">{{
+                  targetErrors[idx]?.gender
+                }}</small>
+              </div>
+
+              <!-- 對象國籍 -->
+              <div class="field col-12 md:col-4">
+                <label :for="`target-nationality-${idx}`"
+                  >國籍: <span class="text-red-500">*</span></label
+                >
+                <Dropdown
+                  :inputId="`target-nationality-${idx}`"
+                  v-model="field.value.nationalityID"
+                  :options="nationalityList"
+                  optionLabel="name"
+                  optionValue="id"
+                  placeholder="請選擇國籍"
+                  class="w-full"
+                  filter
+                  :class="{ 'p-invalid': !!targetErrors[idx]?.nationalityID }"
+                />
+                <small
+                  class="p-error"
+                  v-if="targetErrors[idx]?.nationalityID"
+                  >{{ targetErrors[idx]?.nationalityID }}</small
+                >
+              </div>
+
+              <!-- 對象其他國籍 -->
+              <div class="field col-12" v-if="field.value.nationalityID === -1">
+                <label :for="`target-other-nationality-${idx}`"
+                  >請輸入其他國籍: <span class="text-red-500">*</span></label
+                >
+                <Textarea
+                  :id="`target-other-nationality-${idx}`"
+                  v-model="field.value.nationalityOther"
+                  class="w-full"
+                  :class="{
+                    'p-invalid': !!targetErrors[idx]?.nationalityOther,
+                  }"
+                  rows="1"
+                  autoResize
+                />
+                <small
+                  class="p-error"
+                  v-if="targetErrors[idx]?.nationalityOther"
+                  >{{ targetErrors[idx]?.nationalityOther }}</small
+                >
+              </div>
+            </div>
+          </div>
         </div>
+        <!-- ★★★ 修改結束 ★★★ -->
+
+        <!-- 服務方式及之後的欄位保持不變 -->
         <div class="field col-12 md:col-6">
           <label for="serviceMethodsDropdown"
             >服務方式: <span class="text-red-500">*</span></label
@@ -181,10 +231,8 @@
           />
           <small class="p-error" v-if="detailError">{{ detailError }}</small>
         </div>
-
         <div class="field col-12">
           <label>服務項目: <span class="text-red-500">*</span></label>
-
           <div
             class="grid mt-2"
             :class="{
@@ -209,31 +257,23 @@
               </div>
             </div>
           </div>
-
-          <!-- 錯誤訊息顯示保持不變 -->
           <small class="p-error" v-if="serviceItemError">{{
             serviceItemError
           }}</small>
         </div>
-
         <div class="col-12">
-          <!-- 1. 建立一個外層的 Grid 容器 -->
           <div class="grid formgrid">
-            <!-- 2. v-for 迴圈現在生成 Grid 的列 (column) -->
             <div
               v-for="extra in selectedExtraItems"
               :key="extra.id"
               class="col-12 md:col-6 lg:col-4"
             >
-              <!-- 3. 為每個項目建立一個卡片樣式，使其在視覺上分組 -->
               <div class="p-3 border-1 surface-border border-round h-full">
                 <h4 class="mt-0 mb-3">{{ extra.name }}</h4>
-
-                <!-- 4. "單位" 欄位 -->
                 <div class="field">
-                  <label :for="'unit-' + extra.id">
-                    單位: <span class="text-red-500">*</span>
-                  </label>
+                  <label :for="'unit-' + extra.id"
+                    >單位: <span class="text-red-500">*</span></label
+                  >
                   <InputText
                     :id="'unit-' + extra.id"
                     v-model="extraInputValues[extra.id].unit"
@@ -246,16 +286,13 @@
                   <small
                     class="p-error"
                     v-if="dynamicErrors[`extraUnit_${extra.id}`]"
+                    >{{ dynamicErrors[`extraUnit_${extra.id}`] }}</small
                   >
-                    {{ dynamicErrors[`extraUnit_${extra.id}`] }}
-                  </small>
                 </div>
-
-                <!-- 5. "內容" 欄位 (單位和內容會自然地上下排列) -->
                 <div class="field">
-                  <label :for="'content-' + extra.id">
-                    內容: <span class="text-red-500">*</span>
-                  </label>
+                  <label :for="'content-' + extra.id"
+                    >內容: <span class="text-red-500">*</span></label
+                  >
                   <Textarea
                     :id="'content-' + extra.id"
                     v-model="extraInputValues[extra.id].content"
@@ -270,16 +307,13 @@
                   <small
                     class="p-error"
                     v-if="dynamicErrors[`extraContent_${extra.id}`]"
+                    >{{ dynamicErrors[`extraContent_${extra.id}`] }}</small
                   >
-                    {{ dynamicErrors[`extraContent_${extra.id}`] }}
-                  </small>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <!-- ★★★ 修改結束 ★★★ -->
-
         <div class="field col-12" v-if="isserviceItemOtherSelected">
           <label for="otherserviceItem"
             >請輸入其他需求：<span class="text-red-500">*</span></label
@@ -296,7 +330,6 @@
             dynamicErrors.otherserviceItem
           }}</small>
         </div>
-
         <div class="field col-12 flex justify-content-end">
           <Button
             type="submit"
@@ -324,10 +357,19 @@ import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
 import Textarea from "primevue/textarea";
-import Checkbox from "primevue/checkbox"; // ★★★ 修改: 引入 Checkbox ★★★
+import Checkbox from "primevue/checkbox";
 
 // --- VeeValidate ---
-import { useForm, useField } from "vee-validate";
+// ★★★ 修改點 2: 引入 useFieldArray 和 defineRule ★★★
+import { useForm, useField, useFieldArray, defineRule } from "vee-validate";
+
+// ★★★ 修改點 3: 定義 'required' 規則並提供中文錯誤訊息 ★★★
+defineRule("required", (value: any) => {
+  if (!value && value !== 0) {
+    return "此欄位為必填";
+  }
+  return true;
+});
 
 // --- Type Definitions ---
 interface SelectOption {
@@ -340,6 +382,13 @@ interface ServiceObjectOption extends SelectOption {
 interface ExtraInput {
   unit: string;
   content: string;
+}
+// ★★★ 修改點 4: 新增 Target 物件的型別定義 ★★★
+interface Target {
+  name: string;
+  gender: number | null;
+  nationalityID: number | null;
+  nationalityOther: string;
 }
 
 // --- Hooks ---
@@ -356,7 +405,6 @@ const { handleSubmit, meta } = useForm({});
 const isSubmitting = ref(false);
 
 // --- VeeValidate Field Definitions ---
-// (這整個區塊無需修改)
 const { value: filingDate, errorMessage: filingDateError } =
   useField<Date | null>("filingDate", "required");
 const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
@@ -364,15 +412,15 @@ const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
   "required",
   { initialValue: props.caseNumberQuery || "" },
 );
-const { value: selectednationalities, errorMessage: nationalityError } =
-  useField<number | null>("nationalityID", "required");
-const { value: target, errorMessage: targetError } = useField<string>(
-  "target",
-  "required",
+
+// ★★★ 修改點 5: 移除舊的 useField，改用 useFieldArray 和 useField(targets) ★★★
+const { fields: targetFields, push, remove } = useFieldArray<Target>("targets");
+const { errorMessage: targetArrayError } = useField<Target[]>(
+  "targets",
+  (value) => (value && value.length > 0 ? true : "請至少新增一個對象"),
+  { initialValue: [] },
 );
-const { value: selectedGender, errorMessage: genderError } = useField<
-  number | null
->("gender", "required");
+
 const { value: selectedServicemethods, errorMessage: servicemethodsError } =
   useField<number | null>("serviceMethod", "required");
 const { value: taskObject, errorMessage: taskObjectError } =
@@ -387,21 +435,19 @@ const { value: selectedserviceItem, errorMessage: serviceItemError } = useField<
 );
 
 // --- Manually Handled Fields ---
-// (這整個區塊無需修改)
-const othernationalities = ref("");
+// ★★★ 修改點 6: 移除 othernationalities，新增 targetErrors ★★★
 const otherServicemethods = ref("");
 const otherserviceItem = ref("");
 const extraInputValues = reactive<Record<number, ExtraInput>>({});
 const dynamicErrors = reactive<Record<string, string | null>>({});
+const targetErrors = reactive<Array<Partial<Record<keyof Target, string>>>>([]);
 
 // --- API Option Lists ---
-// (這整個區塊無需修改)
 const nationalityList = ref<SelectOption[]>([]);
 const serviceMethodsList = ref<SelectOption[]>([]);
 const serviceObjectList = ref<ServiceObjectOption[]>([]);
 
 // --- Computed Properties ---
-// (這整個區塊無需修改)
 const selectedExtraItems = computed(() => {
   const selectedIds = selectedserviceItem.value ?? [];
   return serviceObjectList.value.filter(
@@ -415,11 +461,31 @@ const isFormPotentiallyValid = computed(() => {
   const hasDynamicErrors = Object.values(dynamicErrors).some(
     (error) => error !== null,
   );
-  return meta.value.valid && !hasDynamicErrors;
+  const hasTargetItemErrors = targetErrors.some(
+    (err) => Object.keys(err).length > 0,
+  );
+  return meta.value.valid && !hasDynamicErrors && !hasTargetItemErrors;
 });
 
+// ★★★ 修改點 7: 新增新增/刪除對象的方法 ★★★
+const addTarget = () => {
+  push({
+    name: "",
+    gender: null,
+    nationalityID: null,
+    nationalityOther: "",
+  });
+  targetErrors.push({});
+};
+
+const removeLastTarget = () => {
+  if (targetFields.value.length > 0) {
+    remove(targetFields.value.length - 1);
+    targetErrors.pop();
+  }
+};
+
 // --- Watcher for Dynamic Fields ---
-// (這整個區塊無需修改)
 watch(
   selectedExtraItems,
   (newItems, oldItems = []) => {
@@ -441,7 +507,6 @@ watch(
 );
 
 // --- onMounted Hook ---
-// (這整個區塊無需修改)
 onMounted(async () => {
   try {
     const [natRes, metRes, sobjRes] = await Promise.all([
@@ -464,16 +529,14 @@ onMounted(async () => {
 });
 
 // --- Submit Handler ---
-// (這整個區塊無需修改)
+// ★★★ 修改點 8: 大幅修改 onSubmit 邏輯以包含動態對象的驗證和 payload 組合 ★★★
 const onSubmit = handleSubmit(async (values) => {
-  // 1. Reset and run manual validation for dynamic fields
-  Object.keys(dynamicErrors).forEach((key) => (dynamicErrors[key] = null));
+  Object.keys(dynamicErrors).forEach(
+    (key: string) => (dynamicErrors[key] = null),
+  );
+  targetErrors.splice(0, targetErrors.length);
   let isDynamicPartValid = true;
 
-  if (values.nationalityID === -1 && !othernationalities.value.trim()) {
-    dynamicErrors.othernationalities = "請輸入其他國籍";
-    isDynamicPartValid = false;
-  }
   if (values.serviceMethod === -1 && !otherServicemethods.value.trim()) {
     dynamicErrors.otherServicemethods = "請輸入其他服務方式";
     isDynamicPartValid = false;
@@ -482,7 +545,7 @@ const onSubmit = handleSubmit(async (values) => {
     dynamicErrors.otherserviceItem = "請輸入其他需求";
     isDynamicPartValid = false;
   }
-  selectedExtraItems.value.forEach((item) => {
+  selectedExtraItems.value.forEach((item: ServiceObjectOption) => {
     const input = extraInputValues[item.id];
     if (!input?.unit?.trim()) {
       dynamicErrors[`extraUnit_${item.id}`] = `${item.name} 單位為必填`;
@@ -494,7 +557,31 @@ const onSubmit = handleSubmit(async (values) => {
     }
   });
 
-  // 2. Check overall validity
+  // 驗證動態新增的 "對象" 列表中的每個項目
+  values.targets?.forEach((target: Target, index: number) => {
+    const currentErrors: Partial<Record<keyof Target, string>> = {};
+    if (!target.name || !target.name.trim()) {
+      currentErrors.name = "名稱為必填";
+      isDynamicPartValid = false;
+    }
+    if (target.gender === null || target.gender === undefined) {
+      currentErrors.gender = "性別為必填";
+      isDynamicPartValid = false;
+    }
+    if (target.nationalityID === null || target.nationalityID === undefined) {
+      currentErrors.nationalityID = "國籍為必填";
+      isDynamicPartValid = false;
+    }
+    if (
+      target.nationalityID === -1 &&
+      (!target.nationalityOther || !target.nationalityOther.trim())
+    ) {
+      currentErrors.nationalityOther = "請輸入其他國籍";
+      isDynamicPartValid = false;
+    }
+    targetErrors[index] = currentErrors;
+  });
+
   if (!isDynamicPartValid || !meta.value.valid) {
     toast.add({
       severity: "warn",
@@ -507,24 +594,31 @@ const onSubmit = handleSubmit(async (values) => {
 
   isSubmitting.value = true;
 
-  // 3. Build Payload
   const formattedDate = values.filingDate
     ? format(values.filingDate, "yyyy-MM-dd")
     : null;
-  const extraInfo = selectedExtraItems.value.map((item) => ({
-    id: item.id,
-    unit: extraInputValues[item.id].unit.trim(),
-    detail: extraInputValues[item.id].content.trim(),
+  const extraInfo = selectedExtraItems.value.map(
+    (item: ServiceObjectOption) => ({
+      id: item.id,
+      unit: extraInputValues[item.id].unit.trim(),
+      detail: extraInputValues[item.id].content.trim(),
+    }),
+  );
+
+  const formattedTargets = (values.targets || []).map((t: Target) => ({
+    name: t.name.trim(),
+    gender: t.gender,
+    nationalityID: t.nationalityID,
+    nationalityOther:
+      t.nationalityID === -1 && t.nationalityOther
+        ? t.nationalityOther.trim()
+        : null,
   }));
 
   const payload = {
     filingDate: formattedDate,
     caseNumber: values.caseNumber?.trim(),
-    nationalityID: values.nationalityID,
-    nationalityOther:
-      values.nationalityID === -1 ? othernationalities.value.trim() : null,
-    target: values.target?.trim(),
-    gender: values.gender,
+    targets: formattedTargets, // 使用新的 targets 陣列
     serviceMethod: values.serviceMethod,
     serviceMethodOther:
       values.serviceMethod === -1 ? otherServicemethods.value.trim() : null,
@@ -537,7 +631,6 @@ const onSubmit = handleSubmit(async (values) => {
     extraInfo: extraInfo,
   };
 
-  // 4. API Call
   try {
     await apiHandler.post(
       `/form/assign/general/${values.caseNumber}/record`,
@@ -566,7 +659,6 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <style scoped>
-/* 樣式無需修改，PrimeFlex 的 Grid 和 utility class 可以處理佈局 */
 .p-field {
   margin-bottom: 1.5rem;
 }

@@ -151,27 +151,25 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
   const userStore = useSessionStore();
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-  // 檢查用戶是否已通過驗證 (使用會呼叫 API 的 checkstatus)
-  // 即使本地有 token，也要確保它在伺服器端是有效的
   const isAuthenticated = await userStore.checkstatus();
 
   if (requiresAuth && !isAuthenticated) {
-    // 如果頁面需要權限，但用戶未通過驗證
-    // 則重定向到登入頁面
-    next({ name: "login" });
-  } else if (to.name === "login" && isAuthenticated) {
-    // 如果用戶已通過驗證，但又想去登入頁
-    // 則直接將他導向首頁，避免重複登入
-    next({ name: "Main" }); // 假設 'Main' 是你的首頁路由名稱
-  } else {
-    // 其他所有情況 (不需要權限的頁面，或需要權限且已通過驗證的頁面)
-    // 直接放行
-    next();
+    // 如果頁面需要權限，但用戶未通過驗證，重定向到登入頁
+    return { name: "login" };
   }
+
+  if (to.name === "login" && isAuthenticated) {
+    // 如果用戶已通過驗證，但又想去登入頁，導向首頁
+    return { name: "Main" };
+  }
+
+  // 其他所有情況，允許導航
+  // 可以明確地 return true，或者不寫 return (async 函式隱含返回 undefined)
+  return true;
 });
 
 export default router;

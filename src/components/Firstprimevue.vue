@@ -319,6 +319,7 @@ type ChipSeverity =
   | "danger"
   | "secondary"
   | "contrast"
+  | "primary"
   | null;
 
 const getStatusSeverity = (status: number): ChipSeverity => {
@@ -421,8 +422,7 @@ const loadLazyData = async () => {
   );
   //test api report
   try {
-    const testresponse = await apiHandler.get("/report/AgeToNationality");
-    console.log(testresponse.data);
+    await apiHandler.get("/report/AgeToNationality");
   } catch (error) {
   } finally {
   }
@@ -479,13 +479,6 @@ const handleClearFilters = () => {
 };
 // --- 修改後的 handleIdClick 方法 (只負責路由跳轉) ---
 const handlecaseNumberClick = (item: { caseNumber: string; type: number }) => {
-  console.log(
-    "列表元件：點擊 caseNumber:",
-    item.caseNumber,
-    "類型:",
-    item.type,
-  );
-
   let typeName = "unknown";
   if (item.type === 1) {
     typeName = "general";

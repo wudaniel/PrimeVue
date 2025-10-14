@@ -105,16 +105,6 @@
               />
               <label for="gender1" class="ml-2">女</label>
             </div>
-            <div class="flex align-items-center">
-              <RadioButton
-                inputId="gender2"
-                name="gender"
-                :value="2"
-                v-model="selectedGender"
-                :class="{ 'p-invalid': !!genderError }"
-              />
-              <label for="gender2" class="ml-2">其他</label>
-            </div>
           </div>
           <small class="p-error mt-1" v-if="genderError">{{
             genderError
@@ -198,10 +188,21 @@ import Dropdown from "primevue/dropdown";
 import { useToast } from "primevue/usetoast";
 
 // --- VeeValidate 導入 ---
-import { useForm, useField } from "vee-validate";
+import { useForm, useField, defineRule } from "vee-validate";
 
 const toast = useToast();
 const router = useRouter();
+
+// --- 定義 VeeValidate 規則 ---
+// 為了讓 vee-validate 識別 'required' 字符串，我們需要定義它
+// 雖然通常是全局配置，但在組件內定義也是安全的
+defineRule("required", (value: any) => {
+  if (!value && value !== 0) {
+    // 允許數字 0
+    return "此欄位為必填項";
+  }
+  return true;
+});
 
 // --- VeeValidate 表單設定 ---
 const { handleSubmit, meta } = useForm({
@@ -218,14 +219,38 @@ const { handleSubmit, meta } = useForm({
   },
 });
 
-// --- 自訂驗證規則 ---
+// --- 為每個欄位使用 useField，並使用與 initialValues 匹配的英文鍵名 ---
+// 這是最關鍵的修正！
+const { value: filingDate, errorMessage: filingDateError } =
+  useField<Date | null>("filingDate", "required");
+const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
+  "caseNumber",
+  "required",
+);
+const { value: FullName, errorMessage: FullNameError } = useField<string>(
+  "FullName",
+  "required",
+);
+const { value: selectednationalities, errorMessage: nationalityError } =
+  useField<number | null>("nationality", "required");
+
+// --- 自訂驗證規則函式 ---
+// 這些函式用於條件式驗證
 const validateOtherNationality = (value: string | undefined | null) => {
   if (selectednationalities.value === -1 && !value?.trim()) {
     return "請輸入其他國籍";
   }
-
   return true;
 };
+const { value: othernationalities, errorMessage: othernationalitiesError } =
+  useField<string>("othernationalities", validateOtherNationality);
+
+const { value: selectedGender, errorMessage: genderError } = useField<
+  number | null
+>("gender", "required");
+const { value: selectedtown, errorMessage: townError } = useField<
+  number | null
+>("town", "required");
 
 const validateOtherTown = (value: string | undefined | null) => {
   if (selectedtown.value === -1 && !value?.trim()) {
@@ -233,35 +258,13 @@ const validateOtherTown = (value: string | undefined | null) => {
   }
   return true;
 };
-
-// --- 為每個欄位使用 useField ---
-const { value: filingDate, errorMessage: filingDateError } =
-  useField<Date | null>("填表日期", "required");
-const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
-  "案號",
-  "required",
-);
-const { value: FullName, errorMessage: FullNameError } = useField<string>(
-  "全名",
-  "required",
-);
-const { value: selectednationalities, errorMessage: nationalityError } =
-  useField<number | null>("原母國籍", "required");
-const { value: othernationalities, errorMessage: othernationalitiesError } =
-  useField<string>("othernationalities", validateOtherNationality);
-const { value: selectedGender, errorMessage: genderError } = useField<
-  number | null
->("性別", "required");
-const { value: selectedtown, errorMessage: townError } = useField<
-  number | null
->("鄉鎮市區", "required");
 const { value: othertown, errorMessage: othertownError } = useField<string>(
   "othertown",
   validateOtherTown,
 );
 const { value: selectedworkers, errorMessage: workerError } = useField<
   string | null
->("主責社工", "required");
+>("worker", "required");
 
 // --- API 選項數據 ---
 const Nationality_List = ref<{ id: number; name: string }[]>([]);
@@ -274,7 +277,6 @@ onMounted(() => {
     apiHandler
       .get(endpoint)
       .then((response) => {
-        // 假設後端回應結構為 { success: boolean, data: [...] }
         if (response.data && Array.isArray(response.data.data)) {
           listRef.value = response.data.data;
         }
@@ -297,25 +299,17 @@ onMounted(() => {
 
 // --- 提交處理 ---
 const onSubmit = handleSubmit(async (values) => {
+  // 此處的 values 物件現在會包含所有表單欄位的正確值
   let formattedDate = null;
-
-  // 1. 先檢查 values.filingDate 是否為真值 (truthy value)
-  //    這會同時排除 null 和 undefined 的情況
-  if (
-    values.filingDate &&
-    values.filingDate instanceof Date &&
-    !isNaN(values.filingDate.getTime())
-  ) {
-    // 在這個 if 區塊內，TypeScript 就確定 values.filingDate 絕對是一個 Date 物件，
-    // 不再是 null，所以 instanceof 和 .getTime() 都是安全的。
+  if (values.filingDate) {
     try {
-      formattedDate = format(values.filingDate, "yyyy-MM-dd");
+      formattedDate = format(new Date(values.filingDate), "yyyy-MM-dd");
     } catch (e) {
       console.error("日期格式化失敗:", e);
+      return;
     }
   }
 
-  // 從 values 構建 payload
   const payload = {
     filingDate: formattedDate,
     caseNumber: values.caseNumber?.trim(),
@@ -323,23 +317,20 @@ const onSubmit = handleSubmit(async (values) => {
     nationalityID: values.nationality,
     nationalityOther:
       values.nationality === -1 ? values.othernationalities?.trim() : null,
-    gender: Number(values.gender),
+    gender: values.gender, // 驗證確保了 gender 不會是 null
     town: values.town,
     townOther: values.town === -1 ? values.othertown?.trim() : null,
     worker: values.worker,
   };
 
   try {
-    // 注意: API 端點是 /form/assign/arrival
     await apiHandler.post("/form/assign/arrival", payload);
-
     toast.add({
       severity: "success",
       summary: "提交成功",
       detail: "您的表單已成功送出！",
       life: 1500,
     });
-
     setTimeout(() => {
       router.push("/");
     }, 1500);

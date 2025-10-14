@@ -6,7 +6,7 @@
       <form @submit.prevent="handleLogin">
         <InputText
           v-model="username"
-          placeholder="用戶名"
+          placeholder="帳號"
           class="w-full"
           style="margin-bottom: 20px"
         />
@@ -44,7 +44,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router"; // 如果你有使用 Vue Router
 import { useSessionStore } from "../stores/auth"; // 假設你 路徑是這樣
-
+import { useToast } from "primevue/usetoast";
 import InputText from "primevue/inputtext";
 import Password from "primevue/password";
 
@@ -53,29 +53,31 @@ import Button from "primevue/button";
 export default {
   components: { Password, InputText, Button },
   setup() {
-    const username = ref("testuser");
-    const password = ref("password");
-    const loginError = ref(false);
+    const username = ref("");
+    const password = ref("");
+
     const router = useRouter(); // 如果你有使用 Vue Router
     const userStore = useSessionStore();
-
+    const toast = useToast();
     const handleLogin = async () => {
-      loginError.value = false;
-
       const success = await userStore.login(username.value, password.value);
 
       if (success) {
         // 登入成功，導向到其他頁面 (例如：首頁)
         router.push("/"); // 假設你的首頁路徑是 '/'
       } else {
-        loginError.value = true;
+        toast.add({
+          severity: "error", // 'success', 'info', 'warn', 'error'
+          summary: "登入失敗",
+          detail: "請檢查您的帳號或密碼是否正確",
+          life: 3000, // 訊息顯示時間 (毫秒)
+        });
       }
     };
 
     return {
       username,
       password,
-      loginError,
       handleLogin,
       userStore,
     };
