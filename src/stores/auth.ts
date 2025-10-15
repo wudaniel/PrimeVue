@@ -43,7 +43,6 @@ export const useSessionStore = defineStore(
     //    - 呼叫其他 action 時直接呼叫函式名
 
     function logout() {
-      //console.log("執行登出，清除狀態...");
       token.value = null;
       userData.value = null;
     }
@@ -58,7 +57,6 @@ export const useSessionStore = defineStore(
             permission: string;
           };
         }>("/login", { username, password });
-        console.log(response.data);
         if (response.data && response.data.data.token) {
           token.value = `Bearer ${response.data.data.token}`;
           userData.value = {

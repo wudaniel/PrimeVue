@@ -141,8 +141,6 @@ const {
 } = useField<string>("newPasswordConfirmation");
 
 const onSubmit = handleSubmit(async (values) => {
-  //console.log("表單驗證通過，準備發送 API。表單值:", values);
-
   // 1. 獲取 token
   const token = userStore.getToken;
   if (!token) {
@@ -161,7 +159,6 @@ const onSubmit = handleSubmit(async (values) => {
     oldPassword: values.oldPassword,
     newPassword: values.newPassword,
   };
-  //console.log("正在發送 PUT 請求到:", apiUrl, "內容:", payload);
 
   // 3. 發送 PUT 請求
   try {

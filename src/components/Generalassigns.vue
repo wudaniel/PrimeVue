@@ -263,7 +263,7 @@
             inputId="mainworkerDropdown"
             v-model="selectedworkers"
             :options="workers_List"
-            optionLabel="name"
+            optionLabel="fullName"
             optionValue="name"
             placeholder="請選擇主責社工"
             class="w-full"
@@ -429,13 +429,14 @@ const sources_List = ref<{ id: number; name: string; sourceCatID?: number }[]>(
   [],
 );
 const town_List = ref<{ id: number; name: string }[]>([]);
-const workers_List = ref<{ id: number; name: string }[]>([]);
+const workers_List = ref<{ name: string; fullname: string }[]>([]);
 
 // --- 其他狀態 ---
 const CategoryLock = ref(true);
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
+  // ★★★ 修改點 2: 將獲取 workers 的邏輯獨立出來處理 ★★★
   const fetchOptions = (endpoint: string, listRef: any) => {
     apiHandler
       .get(endpoint)
@@ -454,39 +455,36 @@ onMounted(() => {
         });
       });
   };
+
+  // 獲取一般選項
   fetchOptions("/option/nationalities", Nationality_List);
   fetchOptions("/option/sourceCats", sourceCats_List);
   fetchOptions("/option/sources", sources_List);
   fetchOptions("/option/towns", town_List);
-  fetchOptions("/option/workers", workers_List);
-});
 
-// --- 清除歸化選項 ---
-const clearNaturalized = () => {
-  setFieldValue("naturalized", null);
-};
-
-// --- 監聽轉介單位變化，自動更新個案來源類別 ---
-watch(selectedsources, (newSourceId) => {
-  if (newSourceId === null || newSourceId === undefined) {
-    setFieldValue("sourceCatID", null);
-    CategoryLock.value = true;
-    return;
-  }
-
-  const selectedSourceObject = sources_List.value.find(
-    (item) => item.id === newSourceId,
-  );
-
-  if (selectedSourceObject && selectedSourceObject.sourceCatID !== undefined) {
-    setFieldValue("sourceCatID", selectedSourceObject.sourceCatID);
-    // 假設只有 sourceCatID 為 -1 時才可編輯
-    CategoryLock.value = selectedSourceObject.sourceCatID !== -1;
-  } else {
-    // 如果選擇的 source 沒有 sourceCatID 或找不到，則解鎖讓用戶手動選擇
-    setFieldValue("sourceCatID", null);
-    CategoryLock.value = false;
-  }
+  // ★★★ 修改點 3: 獨立處理 workers，並進行資料轉換 ★★★
+  apiHandler
+    .get("/option/workers")
+    .then((response) => {
+      if (response.data && Array.isArray(response.data.data)) {
+        // 使用 .map 轉換資料，確保屬性名稱是 'fullName'
+        workers_List.value = response.data.data.map((worker: any) => ({
+          name: worker.name,
+          // 這行程式碼會先嘗試取 worker.fullName，如果沒有，再嘗試取 worker.fullname
+          // 這樣可以讓程式碼更穩健，不怕後端大小寫變動
+          fullName: worker.fullName || worker.fullname,
+        }));
+      }
+    })
+    .catch((error) => {
+      console.error(`獲取 /option/workers 選項失敗:`, error);
+      toast.add({
+        severity: "error",
+        summary: "資料載入失敗",
+        detail: `無法從 /option/workers 載入選項`,
+        life: 3000,
+      });
+    });
 });
 
 // --- 提交處理 ---

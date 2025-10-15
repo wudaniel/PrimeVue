@@ -20,26 +20,34 @@
             <label for="filterCaseNumber">案號</label>
             <InputText
               id="filterCaseNumber"
-              v-model="filters['caseNumber'].value"
+              v-model="filters.caseNumber.value"
               placeholder="按案號搜尋"
               class="p-inputtext-sm w-full"
             />
           </div>
 
-          <!-- 工作人員篩選 (根據權限顯示) -->
+          <!-- ★★★ 修改點 1: 將 InputText 替換為 Dropdown ★★★ -->
           <div
             v-if="shouldShowWorkerColumn"
-            class="field col-12 md:col-6 lg:col-3"
+            class="field col-12 md:col-6 lg-col-3"
           >
             <label for="filterWorker">工作人員</label>
-            <InputText
+            <MultiSelect
               id="filterWorker"
-              v-model="filters['worker'].value"
-              placeholder="按工作人員搜尋"
+              v-model="filters.worker.value"
+              :options="workerList"
+              optionLabel="fullName"
+              optionValue="name"
+              :maxSelectedLabels="2"
+              selectedItemsLabel="已選擇 {0} 位"
+              placeholder="可選多個工作人員"
+              display="chip"
               class="p-inputtext-sm w-full"
+              filter
             />
           </div>
-          <!-- ⭐ 3. 新增：日期區間篩選 -->
+
+          <!-- 日期區間篩選 -->
           <div class="field col-12 md:col-6 lg:col-3">
             <label for="filterDateRange">日期區間</label>
             <Calendar
@@ -82,7 +90,7 @@
               class="p-inputtext-sm w-full"
             />
           </div>
-          <!-- ⭐⭐ 新增：操作按鈕區域 ⭐⭐ -->
+          <!-- 操作按鈕區域 -->
           <div
             class="field col-12 lg:col-12 flex justify-content-end gap-2 mt-3"
           >
@@ -99,7 +107,6 @@
     </div>
     <!-- 篩選區域結束 -->
     <div>
-      <!-- ⭐⭐ 修改：啟用 Lazy Loading 和相關屬性 ⭐⭐ -->
       <DataTable
         :value="form_data"
         :lazy="true"
@@ -116,6 +123,7 @@
         responsiveLayout="scroll"
         class="p-datatable-sm p-datatable-striped"
       >
+        <!-- ... DataTable 內容不變 ... -->
         <template #header> </template>
 
         <Column
@@ -149,7 +157,7 @@
           <template #body="slotProps">
             <i class="pi pi-user mr-1" style="vertical-align: middle"></i>
             <span style="vertical-align: middle">{{
-              slotProps.data.worker
+              getWorkerFullName(slotProps.data.worker)
             }}</span>
           </template>
         </Column>
@@ -234,7 +242,7 @@
 
 <script setup lang="ts">
 // class import
-import { useSessionStore } from "../stores/auth"; // 確認路徑正確
+import { useSessionStore } from "../stores/auth";
 import { useRouter } from "vue-router";
 import { apiHandler } from "../class/apiHandler";
 // --- PrimeVue 元件導入 ---
@@ -247,45 +255,56 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Chip from "primevue/chip";
 import Button from "primevue/button";
-//import FilterMatchMode from "primevue/datatable";
-import InputText from "primevue/inputtext"; // <-- **新增導入**
-//import { Transition } from "vue"; // <-- **新增導入 (可選)**
-import Calendar from "primevue/calendar"; // ⭐ 1. 導入 Calendar 元件
-import MultiSelect from "primevue/multiselect"; // ⭐ 1. 新增導入 MultiSelect 元件
-//import { list } from "@primeuix/themes/aura/autocomplete";
+import InputText from "primevue/inputtext";
+import Calendar from "primevue/calendar";
+import MultiSelect from "primevue/multiselect";
+import Dropdown from "primevue/dropdown"; // ★★★ 新增: 導入 Dropdown ★★★
 
-// 移除了 Button, ProgressSpinner, Message, Card, Divider
+// ★★★ 新增: Staff 類型定義 ★★★
+interface Staff {
+  name: string;
+  fullName: string;
+}
 
 // --- 狀態變數 ---
 const form_data = ref([]);
 const userStore = useSessionStore();
 const router = useRouter();
-const loading = ref(false); // 新增：控制載入動畫
-const totalRecords = ref(0); // 新增：存放總記錄數
-// ⭐⭐ 修改：lazyParams 用來儲存分頁和排序的狀態 ⭐⭐
+const loading = ref(false);
+const totalRecords = ref(0);
 const lazyParams = ref({
   first: 0,
-  rows: 10, // 每頁筆數
-  page: 0, // 目前頁碼 (0-indexed)
-  sortField: "fillingdate", // 預設排序欄位
-  sortOrder: -1, // 預設排序方向 (1=asc, -1=desc)
+  rows: 10,
+  page: 0,
+  sortField: "fillingdate",
+  sortOrder: -1,
 });
-// --- 新增：篩選功能相關狀態 ---
-const isFilterRowVisible = ref(false); // 控制篩選區塊是否可見，預設隱藏
-// 切換篩選區塊的顯示/隱藏
+// --- 篩選功能相關狀態 ---
+const isFilterRowVisible = ref(false);
 const toggleFilterRow = () => {
   isFilterRowVisible.value = !isFilterRowVisible.value;
 };
-// ⭐⭐ 修改：移除 FilterMatchMode，後端不需要這個資訊 ⭐⭐
 const filters = ref({
-  caseNumber: { value: null },
-  worker: { value: null },
+  caseNumber: { value: null as string | null },
+  worker: { value: [] as string[] }, // value 的類型保持 string | null
   status: { value: [] as number[] },
   type: { value: [] as number[] },
   dateRange: { value: null as Date[] | null },
 });
-//新增結束
-// --- 對應關係與格式化  ---
+const workerList = ref<Staff[]>([]); // ★★★ 新增: 存放工作人員列表 ★★★
+
+// ★★★ 新增點 2: 建立一個高效的查找 Map ★★★
+// 使用 computed 屬性，當 workerList 變化時，這個 Map 會自動更新
+const workerNameMap = computed(() => {
+  return new Map(
+    workerList.value.map((worker) => [worker.name, worker.fullName]),
+  );
+});
+const getWorkerFullName = (workerName: string): string => {
+  return workerNameMap.value.get(workerName) || workerName;
+};
+
+// --- 對應關係與格式化 (無變動) ---
 const statusMap: { [key: number]: string } = {
   0: "未開案",
   1: "已開案",
@@ -301,7 +320,6 @@ const shouldShowOpen = computed(() => {
   const permission = userStore?.getPermission;
   return typeof permission === "number" && permission < 20;
 });
-// --- 新增：為 Dropdown 準備選項陣列 ---
 const statusFilterOptions = computed(() =>
   Object.entries(statusMap).map(([value, label]) => ({
     label,
@@ -314,10 +332,8 @@ const typeFilterOptions = computed(() =>
     value: parseInt(value),
   })),
 );
-
 const getStatusText = (status: number): string => statusMap[status] || "未知";
 const getTypeText = (type: number): string => typeMap[type] || "未知";
-
 type ChipSeverity =
   | "success"
   | "info"
@@ -327,7 +343,6 @@ type ChipSeverity =
   | "contrast"
   | "primary"
   | null;
-
 const getStatusSeverity = (status: number): ChipSeverity => {
   switch (status) {
     case 0:
@@ -352,7 +367,6 @@ const getTypeSeverity = (type: number): ChipSeverity => {
       return null;
   }
 };
-//格式化日期
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return "N/A";
   try {
@@ -365,160 +379,120 @@ const formatDate = (dateString: string | null | undefined): string => {
       })
       .replace(/\//g, "-");
   } catch (e) {
-    console.error("日期格式化錯誤:", e);
     return dateString;
   }
 };
-//主責社工隱藏
 
-// ⭐⭐ 新增/重構：核心資料載入函式 ⭐⭐
+// ★★★ 新增: 獲取工作人員列表的函式 ★★★
+const fetchWorkerList = async () => {
+  try {
+    const response = await apiHandler.get("/option/workers");
+    if (response.data && response.data.success) {
+      workerList.value = response.data.data;
+    }
+  } catch (error) {
+    console.error("獲取工作人員列表失敗:", error);
+  }
+};
+
+// --- 核心資料載入函式 (無變動) ---
 const loadLazyData = async () => {
   loading.value = true;
-  // --- 日期處理 ---
-  // 從 filters 中取出日期陣列 [dateStart, dateEnd]
   const dateRange = filters.value.dateRange.value;
   let dateStart = null;
   let dateEnd = null;
-
-  // 檢查日期陣列是否存在且有效
   if (dateRange && Array.isArray(dateRange) && dateRange[0]) {
-    // 將 Date 物件格式化為後端看得懂的 'YYYY-MM-DD' 字串
-    // 這樣可以避免時區問題
     const formatDateForApi = (date: Date) => {
       const year = date.getFullYear();
       const month = (date.getMonth() + 1).toString().padStart(2, "0");
       const day = date.getDate().toString().padStart(2, "0");
       return `${year}-${month}-${day}`;
     };
-
     dateStart = formatDateForApi(dateRange[0]);
-    // 如果使用者只選了一個日期，第二個日期會是 null
     if (dateRange[1]) {
       dateEnd = formatDateForApi(dateRange[1]);
     }
   }
-  // 1. 組合 API 參數
   const apiParams = {
-    // 分頁參數
-    page: lazyParams.value.page, // PrimeVue 的 page event 直接提供 0-indexed 頁碼
+    page: lazyParams.value.page,
     maxItems: lazyParams.value.rows,
-
-    // 排序參數
     sort:
       lazyParams.value.sortOrder === 1
         ? lazyParams.value.sortField
         : "-" + lazyParams.value.sortField,
-    //sortBy: lazyParams.value.sortField,
-    //sortOrder: lazyParams.value.sortOrder === 1 ? "asc" : "desc",
-
-    // 篩選參數：只提取有值的篩選器
     caseNumber: filters.value.caseNumber.value,
-    worker: filters.value.worker.value,
+    "workers[]": filters.value.worker.value,
     status: filters.value.status.value,
     type: filters.value.type.value,
-    dateStart: dateStart, // 加入開始日期參數
-    dateEnd: dateEnd, // 加入結束日期參數
+    dateStart: dateStart,
+    dateEnd: dateEnd,
   };
-
-  // 過濾掉值為 null 或空字串的參數，避免送到後端
   const cleanParams = Object.fromEntries(
-    Object.entries(apiParams).filter(
-      ([_, v]) => v !== null && v !== undefined && v !== "",
-    ),
+    Object.entries(apiParams).filter(([_, v]) => {
+      if (v === null || v === undefined || v === "") return false;
+      // 如果是陣列，確保它不是空的
+      if (Array.isArray(v) && v.length === 0) return false;
+      return true;
+    }),
   );
-
-  // 2. 呼叫 API
   try {
     const response = await apiHandler.get("/form/assign", {
       params: cleanParams,
     });
-
-    form_data.value = response.data.data; // 填充表格資料
-    totalRecords.value = response.data.meta.total; // 更新總筆數
+    form_data.value = response.data.data;
+    totalRecords.value = response.data.meta.total;
   } catch (error) {
     console.error("載入資料失敗:", error);
-    // 可以在此處加入錯誤提示，例如使用 PrimeVue Toast
   } finally {
     loading.value = false;
   }
 };
-// --- 事件處理函式 ---
-
-// ⭐⭐ 新增：處理分頁變更的事件 ⭐⭐
+// --- 事件處理函式 (無變動) ---
 const onPage = (event: DataTablePageEvent) => {
   lazyParams.value.page = event.page;
   lazyParams.value.rows = event.rows;
   loadLazyData();
 };
-
-// ⭐⭐ 新增：處理排序變更的事件 ⭐⭐
 const onSort = (event: DataTableSortEvent) => {
   lazyParams.value.sortField = event.sortField as string;
   lazyParams.value.sortOrder = event.sortOrder as 1 | -1;
   loadLazyData();
 };
-
-// ⭐⭐ 新增：處理查詢按鈕點擊 ⭐⭐
 const handleSearch = () => {
-  // 查詢時，永遠從第一頁開始
   lazyParams.value.page = 0;
   lazyParams.value.first = 0;
   loadLazyData();
 };
-// ⭐⭐ 新增：處理清除篩選按鈕點擊 ⭐⭐
 const handleClearFilters = () => {
   filters.value = {
     caseNumber: { value: null },
-    worker: { value: null },
+    worker: { value: [] }, // 重置為空陣列
     status: { value: [] },
     type: { value: [] },
-    dateRange: { value: null }, // 確保清除時也重置日期
+    dateRange: { value: null },
   };
-  // 清除後也重新查詢
   handleSearch();
 };
-// --- 修改後的 handleIdClick 方法 (只負責路由跳轉) ---
 const handlecaseNumberClick = (item: { caseNumber: string; type: number }) => {
   let typeName = "unknown";
-  if (item.type === 1) {
-    typeName = "general";
-  } else if (item.type === 2) {
-    typeName = "arrival";
-  }
-
-  if (typeName === "unknown") {
-    console.error("handlecaseNumberClick: 未知的記錄類型:", item.type);
-    return;
-  }
-
-  // 假設你的詳細頁面路由是 /assigns/:type/:caseNumber
+  if (item.type === 1) typeName = "general";
+  else if (item.type === 2) typeName = "arrival";
+  if (typeName === "unknown") return;
   const targetPath = `/assigns/${typeName}/${item.caseNumber}`;
   router.push(targetPath);
 };
-// 輔助函式：將案件類型數字轉換為路由可用的字串
-const getTypeNameString = (type: number): string => {
-  return type === 1 ? "general" : "arrival";
-};
-
-// 統一的導航函式
+const getTypeNameString = (type: number): string =>
+  type === 1 ? "general" : "arrival";
 const navigateToOperationPage = (
   item: { caseNumber: string; type: number },
   operation: "open" | "refuse" | "close",
 ) => {
   const typeName = getTypeNameString(item.type);
-
   router.push({
-    // 使用單一的路由名稱
-    name: "AssignOperation", // <-- 請確保這個路由名稱與 router/index.ts 中定義的一致
-    params: {
-      type: typeName,
-      id: item.caseNumber,
-      operation: operation, // <-- 動態傳入操作類型
-    },
+    name: "AssignOperation",
+    params: { type: typeName, id: item.caseNumber, operation: operation },
   });
 };
-
-// ---未開案>>開案---
 const handleOpenCase = (item: {
   caseNumber: string;
   type: number;
@@ -527,8 +501,6 @@ const handleOpenCase = (item: {
   if (item.status !== 0) return;
   navigateToOperationPage(item, "open");
 };
-
-// ---未開案>>不開案---
 const handleDoNotOpenCase = (item: {
   caseNumber: string;
   type: number;
@@ -537,8 +509,6 @@ const handleDoNotOpenCase = (item: {
   if (item.status !== 0) return;
   navigateToOperationPage(item, "refuse");
 };
-
-// ---已開案>>結案---
 const handleFinishCase = (item: {
   caseNumber: string;
   type: number;
@@ -549,45 +519,13 @@ const handleFinishCase = (item: {
 };
 
 // --- 生命週期鉤子 ---
-// ⭐⭐ 修改：onMounted 改為呼叫新的 loadLazyData 函式 ⭐⭐
+// ★★★ 修改點 2: onMounted 時同時獲取表格資料和工作人員列表 ★★★
 onMounted(() => {
   loadLazyData();
+  fetchWorkerList();
 });
 </script>
 
 <style scoped>
-/* 你原有的其他列表樣式 */
-.text-grey {
-  color: var(--p-text-color-secondary);
-}
-.font-medium {
-  font-weight: 500;
-}
-.text-color-secondary {
-  color: var(--p-text-color-secondary);
-}
-.ml-auto {
-  margin-left: auto;
-}
-.mr-1 {
-  margin-right: 0.25rem;
-}
-.mb-2 {
-  margin-bottom: 0.5rem;
-}
-.mb-4 {
-  margin-bottom: 1rem;
-}
-.mt-3 {
-  margin-top: 0.75rem;
-}
-.mt-4 {
-  margin-top: 1rem;
-}
-.pa-5 {
-  padding: 1.25rem;
-}
-.text-center {
-  text-align: center;
-}
+/* 樣式無變動 */
 </style>

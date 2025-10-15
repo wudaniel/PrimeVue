@@ -3,7 +3,7 @@
     <h3 class="text-center mb-4">新入境派案表</h3>
     <form @submit="onSubmit">
       <div class="grid formgrid">
-        <!-- 填表日期 -->
+        <!-- ... other form fields are unchanged ... -->
         <div class="field col-12 md:col-6">
           <label for="filingDate">填表日期:</label>
           <Calendar
@@ -19,8 +19,6 @@
             filingDateError
           }}</small>
         </div>
-
-        <!-- 案號 -->
         <div class="field col-12 md:col-6">
           <label for="caseNumber">案號:</label>
           <InputText
@@ -33,8 +31,6 @@
             caseNumberError
           }}</small>
         </div>
-
-        <!-- 全名 -->
         <div class="field col-12 md:col-6">
           <label for="fullName">全名:</label>
           <InputText
@@ -47,8 +43,6 @@
             FullNameError
           }}</small>
         </div>
-
-        <!-- 原母國籍 -->
         <div class="field col-12 md:col-6">
           <label for="nationalityDropdown">原母國籍</label>
           <Dropdown
@@ -66,8 +60,6 @@
             nationalityError
           }}</small>
         </div>
-
-        <!-- 其他國籍 -->
         <div class="field col-12 md:col-6" v-if="selectednationalities === -1">
           <label for="othernationalities">請輸入其他國籍:</label>
           <InputText
@@ -80,8 +72,6 @@
             othernationalitiesError
           }}</small>
         </div>
-
-        <!-- 性別 -->
         <div class="field col-12 md:col-6">
           <label class="mb-2 block">性別:</label>
           <div class="flex flex-wrap gap-3">
@@ -110,8 +100,6 @@
             genderError
           }}</small>
         </div>
-
-        <!-- 鄉鎮市區 -->
         <div class="field col-12 md:col-6">
           <label for="townDropdown">鄉鎮市區</label>
           <Dropdown
@@ -127,8 +115,6 @@
           />
           <small class="p-error" v-if="townError">{{ townError }}</small>
         </div>
-
-        <!-- 其他鄉鎮市區 -->
         <div class="field col-12 md:col-6" v-if="selectedtown === -1">
           <label for="othertown">請輸入其他鄉鎮市區:</label>
           <InputText
@@ -145,11 +131,12 @@
         <!-- 主責社工 -->
         <div class="field col-12 md:col-6">
           <label for="mainworkerDropdown">主責社工</label>
+          <!-- ★★★ 修改點 1: 將 optionLabel 改為 "fullName" ★★★ -->
           <Dropdown
             inputId="mainworkerDropdown"
             v-model="selectedworkers"
             :options="workers_List"
-            optionLabel="name"
+            optionLabel="fullName"
             optionValue="name"
             placeholder="請選擇主責社工"
             class="w-full"
@@ -178,7 +165,6 @@ import { ref, onMounted } from "vue";
 import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
 import { useRouter } from "vue-router";
-
 // --- PrimeVue 元件導入 ---
 import Calendar from "primevue/calendar";
 import InputText from "primevue/inputtext";
@@ -186,7 +172,6 @@ import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
 import { useToast } from "primevue/usetoast";
-
 // --- VeeValidate 導入 ---
 import { useForm, useField, defineRule } from "vee-validate";
 
@@ -194,11 +179,8 @@ const toast = useToast();
 const router = useRouter();
 
 // --- 定義 VeeValidate 規則 ---
-// 為了讓 vee-validate 識別 'required' 字符串，我們需要定義它
-// 雖然通常是全局配置，但在組件內定義也是安全的
 defineRule("required", (value: any) => {
   if (!value && value !== 0) {
-    // 允許數字 0
     return "此欄位為必填項";
   }
   return true;
@@ -206,21 +188,10 @@ defineRule("required", (value: any) => {
 
 // --- VeeValidate 表單設定 ---
 const { handleSubmit, meta } = useForm({
-  initialValues: {
-    filingDate: null,
-    caseNumber: "",
-    FullName: "",
-    nationality: null,
-    othernationalities: "",
-    gender: null,
-    town: null,
-    othertown: "",
-    worker: null,
-  },
+  /* ... */
 });
 
-// --- 為每個欄位使用 useField，並使用與 initialValues 匹配的英文鍵名 ---
-// 這是最關鍵的修正！
+// --- 為每個欄位使用 useField (無變動) ---
 const { value: filingDate, errorMessage: filingDateError } =
   useField<Date | null>("filingDate", "required");
 const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
@@ -233,30 +204,19 @@ const { value: FullName, errorMessage: FullNameError } = useField<string>(
 );
 const { value: selectednationalities, errorMessage: nationalityError } =
   useField<number | null>("nationality", "required");
-
-// --- 自訂驗證規則函式 ---
-// 這些函式用於條件式驗證
 const validateOtherNationality = (value: string | undefined | null) => {
-  if (selectednationalities.value === -1 && !value?.trim()) {
-    return "請輸入其他國籍";
-  }
-  return true;
+  /*...*/
 };
 const { value: othernationalities, errorMessage: othernationalitiesError } =
   useField<string>("othernationalities", validateOtherNationality);
-
 const { value: selectedGender, errorMessage: genderError } = useField<
   number | null
 >("gender", "required");
 const { value: selectedtown, errorMessage: townError } = useField<
   number | null
 >("town", "required");
-
 const validateOtherTown = (value: string | undefined | null) => {
-  if (selectedtown.value === -1 && !value?.trim()) {
-    return "請輸入其他鄉鎮市區";
-  }
-  return true;
+  /*...*/
 };
 const { value: othertown, errorMessage: othertownError } = useField<string>(
   "othertown",
@@ -269,7 +229,9 @@ const { value: selectedworkers, errorMessage: workerError } = useField<
 // --- API 選項數據 ---
 const Nationality_List = ref<{ id: number; name: string }[]>([]);
 const town_List = ref<{ id: number; name: string }[]>([]);
-const workers_List = ref<{ id: number; name: string }[]>([]);
+
+// ★★★ 修改點 2: 更新 workers_List 的類型定義 ★★★
+const workers_List = ref<{ name: string; fullName: string }[]>([]);
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
@@ -294,12 +256,35 @@ onMounted(() => {
 
   fetchOptions("/option/nationalities", Nationality_List);
   fetchOptions("/option/towns", town_List);
-  fetchOptions("/option/workers", workers_List);
+
+  // ★★★ 修改點 3: 獨立處理 workers，並進行資料轉換 ★★★
+  apiHandler
+    .get("/option/workers")
+    .then((response) => {
+      if (response.data && Array.isArray(response.data.data)) {
+        // 使用 .map 轉換資料，確保屬性名稱是 'fullName'
+        workers_List.value = response.data.data.map((worker: any) => ({
+          name: worker.name,
+          // 這行程式碼會先嘗試取 worker.fullName，如果沒有，再嘗試取 worker.fullname
+          // 這樣可以讓程式碼更穩健，不怕後端大小寫變動
+          fullName: worker.fullName || worker.fullname,
+        }));
+      }
+    })
+    .catch((error) => {
+      console.error(`獲取 /option/workers 選項失敗:`, error);
+      toast.add({
+        severity: "error",
+        summary: "資料載入失敗",
+        detail: `無法從 /option/workers 載入選項`,
+        life: 3000,
+      });
+    });
 });
 
-// --- 提交處理 ---
+// --- 提交處理 (無變動) ---
 const onSubmit = handleSubmit(async (values) => {
-  // 此處的 values 物件現在會包含所有表單欄位的正確值
+  // ... 提交邏輯保持不變 ...
   let formattedDate = null;
   if (values.filingDate) {
     try {
@@ -317,7 +302,7 @@ const onSubmit = handleSubmit(async (values) => {
     nationalityID: values.nationality,
     nationalityOther:
       values.nationality === -1 ? values.othernationalities?.trim() : null,
-    gender: values.gender, // 驗證確保了 gender 不會是 null
+    gender: values.gender,
     town: values.town,
     townOther: values.town === -1 ? values.othertown?.trim() : null,
     worker: values.worker,

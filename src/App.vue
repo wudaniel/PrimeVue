@@ -83,17 +83,11 @@ const router = useRouter();
 const userStore = useSessionStore(); // <-- 新增獲取 userStore
 const sidebarVisible = ref(false); // 控制 Sidebar 的顯示/隱藏
 const canViewAssignForms = computed(() => {
-  // 從 store 中獲取權限值
   const permissionLevel = userStore.getPermission;
-
-  // 1. 確保權限值存在且不是 null/undefined
   if (permissionLevel === null || permissionLevel === undefined) {
-    return false; // 如果沒有權限值，預設為不可見
+    return false;
   }
-
-  // 2. 將權限值轉換為數字進行比較
-  //    - 使用 Number() 進行轉換，可以處理數字或字串形式的數字
-  //    - 權限值必須小於 20
+  // 當權限小於 20 時，回傳 true (可見)
   return Number(permissionLevel) < 20;
 });
 // 會員下拉選單
@@ -145,7 +139,7 @@ const menuItems = ref([
   {
     label: "一般派案表",
     icon: "pi pi-file",
-    visible: canViewAssignForms.value, // 這裡也會自動使用新的判斷結果
+    visible: canViewAssignForms, // 這裡會使用修正後的邏輯
     command: () => {
       router.push("/generalAssigns");
       sidebarVisible.value = false;
@@ -163,7 +157,7 @@ const menuItems = ref([
   {
     label: "新入境派案表",
     icon: "pi pi-send",
-    visible: canViewAssignForms.value, // 這裡也會自動使用新的判斷結果
+    visible: canViewAssignForms,
     command: () => {
       router.push("/arrivalAssigns");
       sidebarVisible.value = false;
