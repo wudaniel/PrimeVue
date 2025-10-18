@@ -45,7 +45,7 @@
         >性別:</label
       >
       <div style="min-width: 150px">
-        <Dropdown
+        <Select
           id="gender-select"
           v-model="selectedGender"
           :options="genderOptions"
@@ -165,7 +165,8 @@ import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import { DatePicker } from "primevue";
 import MultiSelect from "primevue/multiselect";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
+("primevue");
 import Button from "primevue/button";
 import ColumnGroup from "primevue/columngroup";
 import Row from "primevue/row";
@@ -226,9 +227,7 @@ const fetchStaffList = async () => {
     if (response.data && response.data.success) {
       staffList.value = response.data.data;
     }
-  } catch (err) {
-    console.error("獲取工作人員列表失敗:", err);
-  }
+  } catch (err) {}
 };
 
 const fetchData = async () => {
@@ -294,7 +293,6 @@ const fetchData = async () => {
       err.response?.data?.message ||
       err.message ||
       "無法載入統計資料，請稍後再試。";
-    console.error("載入統計資料失敗:", err);
   } finally {
     isLoading.value = false;
   }

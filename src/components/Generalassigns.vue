@@ -48,9 +48,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="nationalityDropdown">原母國籍</label>
-          <Dropdown
-            inputId="nationalityDropdown"
+          <label for="nationalitySelect">原母國籍</label>
+          <Select
+            inputId="nationalitySelect"
             v-model="selectednationalities"
             :options="Nationality_List"
             optionLabel="name"
@@ -165,9 +165,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="sourcesDropdown">轉介單位</label>
-          <Dropdown
-            inputId="sourcesDropdown"
+          <label for="sourcesSelect">轉介單位</label>
+          <Select
+            inputId="sourcesSelect"
             v-model="selectedsources"
             :options="sources_List"
             optionLabel="name"
@@ -194,9 +194,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="caseSourceDropdown">個案來源類別</label>
-          <Dropdown
-            inputId="caseSourceDropdown"
+          <label for="caseSourceSelect">個案來源類別</label>
+          <Select
+            inputId="caseSourceSelect"
             v-model="selectedCaseSource"
             :options="sourceCats_List"
             optionLabel="name"
@@ -213,9 +213,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="townDropdown">鄉鎮市區</label>
-          <Dropdown
-            inputId="townDropdown"
+          <label for="townSelect">鄉鎮市區</label>
+          <Select
+            inputId="townSelect"
             v-model="selectedtown"
             :options="town_List"
             optionLabel="name"
@@ -258,9 +258,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="mainworkerDropdown">主責社工</label>
-          <Dropdown
-            inputId="mainworkerDropdown"
+          <label for="mainworkerSelect">主責社工</label>
+          <Select
+            inputId="mainworkerSelect"
             v-model="selectedworkers"
             :options="workers_List"
             optionLabel="fullName"
@@ -297,7 +297,8 @@ import InputText from "primevue/inputtext";
 import InputNumber from "primevue/inputnumber";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
+("primevue");
 import Textarea from "primevue/textarea";
 import { useToast } from "primevue/usetoast";
 // --- VeeValidate 導入 ---
@@ -466,8 +467,7 @@ onMounted(() => {
           listRef.value = response.data.data;
         }
       })
-      .catch((error) => {
-        console.error(`獲取 ${endpoint} 選項失敗:`, error);
+      .catch(() => {
         toast.add({
           severity: "error",
           summary: "資料載入失敗",
@@ -492,8 +492,7 @@ onMounted(() => {
         }));
       }
     })
-    .catch((error) => {
-      console.error(`獲取 /option/workers 選項失敗:`, error);
+    .catch(() => {
       toast.add({
         severity: "error",
         summary: "資料載入失敗",
@@ -511,7 +510,6 @@ const onSubmit = handleSubmit(async (values) => {
     try {
       formattedDate = format(values.filingDate, "yyyy-MM-dd");
     } catch (e) {
-      console.error("日期格式化失敗:", e);
       toast.add({
         severity: "error",
         summary: "錯誤",

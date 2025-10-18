@@ -39,11 +39,11 @@
 
         <!-- ★★★ 全域服務方式和工作目標 ★★★ -->
         <div class="field col-12 md:col-6">
-          <label for="serviceMethodsDropdown"
+          <label for="serviceMethodsSelect"
             >服務方式: <span class="text-red-500">*</span></label
           >
-          <Dropdown
-            inputId="serviceMethodsDropdown"
+          <Select
+            inputId="serviceMethodsSelect"
             v-model="selectedServicemethods"
             :options="serviceMethodsList"
             optionLabel="name"
@@ -179,7 +179,7 @@
                 <label :for="`target-nationality-${idx}`"
                   >國籍: <span class="text-red-500">*</span></label
                 >
-                <Dropdown
+                <Select
                   :inputId="`target-nationality-${idx}`"
                   v-model="field.value.nationalityID"
                   :options="nationalityList"
@@ -377,7 +377,8 @@ import { DatePicker } from "primevue";
 import InputText from "primevue/inputtext";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
+("primevue/select");
 import Textarea from "primevue/textarea";
 import Checkbox from "primevue/checkbox";
 // --- VeeValidate ---
@@ -524,13 +525,12 @@ onMounted(async () => {
     const [natRes, metRes, sobjRes] = await Promise.all([
       apiHandler.get("/option/nationalities"),
       apiHandler.get("/option/serviceMethods"),
-      apiHandler.get("/option/serviceItems"),
+      apiHandler.get("/option/serviceItems?type=2"),
     ]);
     nationalityList.value = natRes.data.data ?? [];
     serviceMethodsList.value = metRes.data.data ?? [];
     serviceObjectList.value = sobjRes.data.data ?? [];
   } catch (error) {
-    console.error("Failed to fetch options:", error);
     toast.add({
       severity: "error",
       summary: "資料載入失敗",

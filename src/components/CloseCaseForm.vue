@@ -20,7 +20,7 @@
         <!-- 結案原因下拉選單 (單選) -->
         <div class="field col-12 md:col-6">
           <label for="closingReason">結案原因</label>
-          <Dropdown
+          <Select
             id="closingReason"
             v-model="selectedReasonId"
             :options="reasonOptions"
@@ -66,7 +66,7 @@ import { useRouter } from "vue-router";
 
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
 import Button from "primevue/button";
 import ProgressSpinner from "primevue/progressspinner";
 
@@ -106,7 +106,6 @@ const fetchClosingReasons = async () => {
       reasonOptions.value = response.data.data;
     }
   } catch (error) {
-    console.error("獲取結案原因選項失敗:", error);
     // ★★★ 使用 Toast 提示 ★★★
     toast.add({
       severity: "error",
@@ -186,7 +185,6 @@ const handleSubmit = async () => {
       detail: errorMessage,
       life: 5000,
     });
-    console.error("提交結案失敗:", error);
     isSubmitting.value = false; // 失敗時，重置按鈕狀態
   }
 };

@@ -177,9 +177,7 @@ const fetchStaffList = async () => {
     if (response.data && response.data.success) {
       staffList.value = response.data.data;
     }
-  } catch (err) {
-    console.error("獲取工作人員列表失敗:", err);
-  }
+  } catch (err) {}
 };
 
 // ★★★ 修改點: 更新 fetchData 來計算合計值 ★★★

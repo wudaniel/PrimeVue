@@ -87,7 +87,7 @@
           :rows="5"
           :rowsPerPageOptions="[5, 10, 20]"
           stripedRows
-          paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageSelect"
           currentPageReportTemplate="顯示 {first} 到 {last} 項，共 {totalRecords} 項紀錄"
         >
           <Column field="listID" header="編號" :sortable="true">
@@ -291,7 +291,6 @@ const fetchOptionMaps = async () => {
     areOptionsLoaded.value = true;
   } catch (err) {
     error.value = "讀取選項對照表失敗，部分資料可能顯示為 ID。";
-    console.error("Fetch option maps failed:", err);
     areOptionsLoaded.value = true;
   }
 };
@@ -310,7 +309,7 @@ const fetchData = async (currentType: string, currentId: string) => {
       apiHandler.get(detailUrl),
       apiHandler.get(recordsUrl),
     ]);
-    console.log(detailResponse);
+
     // 處理案件詳細資料
     if (detailResponse.data && detailResponse.data.success) {
       rawData.value = detailResponse.data;
@@ -321,12 +320,9 @@ const fetchData = async (currentType: string, currentId: string) => {
     // 處理服務紀錄列表
     if (recordsResponse.data && recordsResponse.data.success) {
       records.value = recordsResponse.data.data;
-    } else {
-      console.warn("讀取服務紀錄列表失敗:", recordsResponse.data.message);
     }
   } catch (err: any) {
     error.value = err.response?.data?.message || err.message || "請求失敗";
-    console.error("讀取資料失敗:", err);
   } finally {
     isLoading.value = false;
   }
@@ -359,7 +355,6 @@ const goToAddRecord = () => {
   if (props.type === "arrival") targetRouteName = "arrivalRecords";
   else if (props.type === "general") targetRouteName = "generalRecords";
   else {
-    console.error("未知的類型:", props.type);
     return;
   }
   router.push({ name: targetRouteName, query: { caseNumber: props.id } });

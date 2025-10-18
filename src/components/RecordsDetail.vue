@@ -294,7 +294,6 @@ const fetchOptionMaps = async () => {
     areOptionsLoaded.value = true;
   } catch (err) {
     error.value = "讀取選項對照表失敗，部分資料可能顯示為 ID。";
-    console.error("Fetch option maps failed:", err);
     areOptionsLoaded.value = true;
   }
 };
@@ -320,7 +319,6 @@ const fetchData = async (
     }
   } catch (err: any) {
     error.value = err.response?.data?.message || err.message || "請求失敗";
-    console.error("讀取資料失敗:", err);
   } finally {
     isLoading.value = false;
   }

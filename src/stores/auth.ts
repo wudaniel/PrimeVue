@@ -49,21 +49,9 @@ export const useSessionStore = defineStore(
         // 所以 Axios 攔截器可以正確地抓到並附加 token。
         await apiHandler.post("/logout");
       } catch (error) {
-        // 即使後端登出失敗 (例如網路斷線)，我們仍然希望在前端將使用者登出。
-        // 所以在這裡可以選擇性地記錄錯誤，但不要中斷流程。
-        console.error(
-          "Logout API call failed, but logging out on client-side anyway.",
-          error,
-        );
       } finally {
-        // ★ 無論成功或失敗，最後都一定要執行這裡的程式碼 ★
-        // 確保客戶端的狀態被完全清除。
         token.value = null;
         userData.value = null;
-
-        // 如果你的路由守衛依賴這個 store，
-        // 清除狀態後再跳轉可以確保頁面正確重定向。
-        // 例如：router.push('/login');
       }
     }
 
@@ -106,7 +94,6 @@ export const useSessionStore = defineStore(
         });
         return response_check.status >= 200 && response_check.status < 300;
       } catch (error) {
-        console.error("Token 驗證失敗:", error);
         logout(); // 直接呼叫函式
         return false;
       }
@@ -133,6 +120,7 @@ export const useSessionStore = defineStore(
         pick: ["token", "userData"],
         // 指定儲存方式，可以是 sessionStorage 或 localStorage
         storage: sessionStorage,
+        debug: false,
       },
     ],
   },

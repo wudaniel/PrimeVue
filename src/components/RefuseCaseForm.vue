@@ -20,7 +20,7 @@
         <!-- 不開案原因下拉選單 (單選) -->
         <div class="field col-12 md:col-6">
           <label for="refusingReason">不開案原因</label>
-          <Dropdown
+          <Select
             id="refusingReason"
             v-model="selectedReasonId"
             :options="reasonOptions"
@@ -66,7 +66,8 @@ import { useRouter } from "vue-router";
 
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
+("primevue");
 import Button from "primevue/button";
 import ProgressSpinner from "primevue/progressspinner";
 
@@ -106,8 +107,6 @@ const fetchRefusingReasons = async () => {
       reasonOptions.value = response.data.data;
     }
   } catch (error) {
-    console.error("獲取不開案原因選項失敗:", error);
-    // ★★★ 使用 Toast 提示 ★★★
     toast.add({
       severity: "error",
       summary: "載入失敗",
@@ -187,7 +186,6 @@ const handleSubmit = async () => {
       detail: errorMessage,
       life: 5000,
     });
-    console.error("提交不開案失敗:", error);
     isSubmitting.value = false; // 失敗時，重置按鈕狀態
   }
 };

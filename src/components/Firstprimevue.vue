@@ -384,9 +384,7 @@ const fetchWorkerList = async () => {
     if (response.data && response.data.success) {
       workerList.value = response.data.data;
     }
-  } catch (error) {
-    console.error("獲取工作人員列表失敗:", error);
-  }
+  } catch (error) {}
 };
 
 // --- 核心資料載入函式 ---
@@ -435,7 +433,6 @@ const loadLazyData = async () => {
     form_data.value = response.data.data;
     totalRecords.value = response.data.meta.total;
   } catch (error) {
-    console.error("載入資料失敗:", error);
   } finally {
     loading.value = false;
   }

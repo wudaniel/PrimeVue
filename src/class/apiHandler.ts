@@ -28,8 +28,6 @@ apiHandler.interceptors.request.use(
     return config;
   },
   (error) => {
-    // 對請求錯誤做些什麼
-    //console.error("Axios Request Interceptor Error:", error);
     return Promise.reject(error);
   },
 );
@@ -43,8 +41,6 @@ apiHandler.interceptors.response.use(
   (error) => {
     // 對回應錯誤做點什麼
     if (error.response && error.response.status === 401) {
-      // 例如：處理未授權情況，嘗試刷新 token 或導向登入頁面
-      //console.error("Unauthorized request (401):", error.response);
       const userStore = useSessionStore();
       userStore.logout(); // 假設你有登出 action
       // 可能需要導向到登入頁

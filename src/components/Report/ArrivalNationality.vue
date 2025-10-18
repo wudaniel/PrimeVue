@@ -158,9 +158,7 @@ const fetchStaffList = async () => {
     if (response.data && response.data.success) {
       staffList.value = response.data.data;
     }
-  } catch (err) {
-    console.error("獲取工作人員列表失敗:", err);
-  }
+  } catch (err) {}
 };
 
 // ★★★ 修改點: 更新 fetchData 來處理篩選參數 ★★★
@@ -248,7 +246,6 @@ const fetchData = async () => {
       }
     }
   } catch (err: any) {
-    console.error("Error fetching report data:", err);
     error.value = err.message || "獲取資料時發生未知錯誤。";
   } finally {
     isLoading.value = false;

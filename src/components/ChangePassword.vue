@@ -175,7 +175,6 @@ const onSubmit = handleSubmit(async (values) => {
       life: 3000,
     });
   } catch (error: any) {
-    console.error("密碼變更失敗:", error);
     // 根據後端返回的錯誤訊息顯示提示
     toast.add({
       severity: "error",

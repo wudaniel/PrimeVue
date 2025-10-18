@@ -46,33 +46,6 @@ configure({
   validateOnInput: true, // 根據你的需要保留或移除
 });
 
-/*
-configure({
-  generateMessage: localize({
-    zh_TW: {
-      messages: {
-        ...zh_TW.messages,
-        // (可選) 自訂 confirmed 的訊息
-        confirmed: "{field} 的內容必須與新密碼一致",
-      },
-      names: {
-        oldPassword: "舊密碼",
-        newPassword: "新密碼",
-        newPasswordConfirmation: "確認新密碼", 
-      },
-    },
-  }),
-  validateOnInput: true,
-});
-
-Object.keys(AllRules).forEach((rule) => {
-  
-  if (typeof AllRules[rule] === "function") {
-    defineRule(rule, AllRules[rule]);
-  }
-});
-
-*/
 setLocale("zh_TW");
 
 const app = createApp(App);
@@ -90,7 +63,6 @@ app.use(PrimeVue, {
     },
   },
 });
-app.use(PrimeVue);
 app.use(ToastService);
 app.use(router); // 如果你有使用 Vue Router+
 

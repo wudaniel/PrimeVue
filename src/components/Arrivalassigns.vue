@@ -44,9 +44,9 @@
           }}</small>
         </div>
         <div class="field col-12 md:col-6">
-          <label for="nationalityDropdown">原母國籍</label>
-          <Dropdown
-            inputId="nationalityDropdown"
+          <label for="nationalitySelect">原母國籍</label>
+          <Select
+            inputId="nationalitySelect"
             v-model="selectednationalities"
             :options="Nationality_List"
             optionLabel="name"
@@ -101,9 +101,9 @@
           }}</small>
         </div>
         <div class="field col-12 md:col-6">
-          <label for="townDropdown">鄉鎮市區</label>
-          <Dropdown
-            inputId="townDropdown"
+          <label for="townSelect">鄉鎮市區</label>
+          <Select
+            inputId="townSelect"
             v-model="selectedtown"
             :options="town_List"
             optionLabel="name"
@@ -130,10 +130,10 @@
 
         <!-- 主責社工 -->
         <div class="field col-12 md:col-6">
-          <label for="mainworkerDropdown">主責社工</label>
+          <label for="mainworkerSelect">主責社工</label>
           <!-- ★★★ 修改點 1: 將 optionLabel 改為 "fullName" ★★★ -->
-          <Dropdown
-            inputId="mainworkerDropdown"
+          <Select
+            inputId="mainworkerSelect"
             v-model="selectedworkers"
             :options="workers_List"
             optionLabel="fullName"
@@ -170,7 +170,8 @@ import { DatePicker } from "primevue";
 import InputText from "primevue/inputtext";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
+("primevue");
 import { useToast } from "primevue/usetoast";
 // --- VeeValidate 導入 ---
 import { useForm, useField, defineRule } from "vee-validate";
@@ -260,7 +261,6 @@ onMounted(() => {
         }
       })
       .catch(() => {
-        //console.error(`獲取 ${endpoint} 選項失敗:`, error);
         toast.add({
           severity: "error",
           summary: "資料載入失敗",
@@ -287,8 +287,7 @@ onMounted(() => {
         }));
       }
     })
-    .catch((error) => {
-      console.error(`獲取 /option/workers 選項失敗:`, error);
+    .catch(() => {
       toast.add({
         severity: "error",
         summary: "資料載入失敗",
@@ -306,7 +305,6 @@ const onSubmit = handleSubmit(async (values) => {
     try {
       formattedDate = format(new Date(values.filingDate), "yyyy-MM-dd");
     } catch (e) {
-      console.error("日期格式化失敗:", e);
       return;
     }
   }

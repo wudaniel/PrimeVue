@@ -17,7 +17,7 @@
           />
         </div>
 
-        <!-- ★★★ 修改點：從 Dropdown 改為 MultiSelect ★★★ -->
+        <!-- ★★★ 修改點：從 Select 改為 MultiSelect ★★★ -->
         <div class="field col-12 md:col-6">
           <label for="openingReason">開案原因 (可複選)</label>
           <MultiSelect
@@ -111,7 +111,6 @@ const fetchOpeningReasons = async () => {
       reasonOptions.value = response.data.data;
     }
   } catch (error) {
-    console.error("獲取開案原因選項失敗:", error);
     toast.add({
       severity: "error",
       summary: "載入失敗",
@@ -183,7 +182,6 @@ const handleSubmit = async () => {
       detail: errorMessage,
       life: 5000,
     });
-    console.error("提交開案失敗:", error);
     isSubmitting.value = false; // ★★★ 錯誤時也要重置按鈕狀態 ★★★
   }
   // ★★★ finally 區塊可以移除了，因為成功時會跳轉，失敗時在 catch 處理 ★★★

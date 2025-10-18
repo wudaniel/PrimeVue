@@ -160,12 +160,8 @@ const fetchStaffList = async () => {
     const response = await apiHandler.get("/option/workers");
     if (response.data && response.data.success) {
       staffList.value = response.data.data;
-    } else {
-      console.error("無法獲取工作人員列表");
     }
-  } catch (err) {
-    console.error("獲取工作人員列表失敗:", err);
-  }
+  } catch (err) {}
 };
 const fetchData = async () => {
   if (isQueryDisabled.value) return;
@@ -216,7 +212,6 @@ const fetchData = async () => {
       err.response?.data?.message ||
       err.message ||
       "無法載入統計資料，請稍後再試。";
-    console.error("載入統計資料失敗:", err);
   } finally {
     isLoading.value = false;
   }

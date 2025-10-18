@@ -159,9 +159,7 @@ const fetchStaffList = async () => {
     if (response.data && response.data.success) {
       staffList.value = response.data.data;
     }
-  } catch (err) {
-    console.error("獲取工作人員列表失敗:", err);
-  }
+  } catch (err) {}
 };
 
 // ★★★ 修改點: 更新 fetchData 來處理篩選參數 ★★★
@@ -202,7 +200,6 @@ const fetchData = async () => {
       err.response?.data?.message ||
       err.message ||
       "無法載入統計資料，請稍後再試。";
-    console.error("載入統計資料失敗:", err);
   } finally {
     isLoading.value = false;
   }

@@ -19,7 +19,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from "vue";
 
 // ★★★ 新增：導入 OpenCaseForm 元件 ★★★
