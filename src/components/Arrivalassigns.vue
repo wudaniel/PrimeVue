@@ -6,7 +6,7 @@
         <!-- ... other form fields are unchanged ... -->
         <div class="field col-12 md:col-6">
           <label for="filingDate">填表日期:</label>
-          <Calendar
+          <DatePicker
             id="filingDate"
             v-model="filingDate"
             dateFormat="yy-mm-dd"
@@ -166,7 +166,7 @@ import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
 import { useRouter } from "vue-router";
 // --- PrimeVue 元件導入 ---
-import Calendar from "primevue/calendar";
+import { DatePicker } from "primevue";
 import InputText from "primevue/inputtext";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
@@ -205,7 +205,15 @@ const { value: FullName, errorMessage: FullNameError } = useField<string>(
 const { value: selectednationalities, errorMessage: nationalityError } =
   useField<number | null>("nationality", "required");
 const validateOtherNationality = (value: string | undefined | null) => {
-  /*...*/
+  // 檢查 "原母國籍" 下拉選單是否選擇了 "其他" (-1)
+  if (selectednationalities.value === -1) {
+    // 如果是 "其他"，則此欄位為必填
+    if (!value || !value.trim()) {
+      return "請輸入其他國籍"; // 驗證失敗，返回錯誤訊息
+    }
+  }
+  // 如果下拉選單不是 "其他"，或此欄位已填寫，則驗證通過
+  return true;
 };
 const { value: othernationalities, errorMessage: othernationalitiesError } =
   useField<string>("othernationalities", validateOtherNationality);
@@ -216,7 +224,15 @@ const { value: selectedtown, errorMessage: townError } = useField<
   number | null
 >("town", "required");
 const validateOtherTown = (value: string | undefined | null) => {
-  /*...*/
+  // 檢查 "鄉鎮市區" 下拉選單是否選擇了 "其他" (-1)
+  if (selectedtown.value === -1) {
+    // 如果是 "其他"，則此欄位為必填
+    if (!value || !value.trim()) {
+      return "請輸入其他鄉鎮市區"; // 驗證失敗，返回錯誤訊息
+    }
+  }
+  // 如果下拉選單不是 "其他"，或此欄位已填寫，則驗證通過
+  return true;
 };
 const { value: othertown, errorMessage: othertownError } = useField<string>(
   "othertown",
@@ -243,8 +259,8 @@ onMounted(() => {
           listRef.value = response.data.data;
         }
       })
-      .catch((error) => {
-        console.error(`獲取 ${endpoint} 選項失敗:`, error);
+      .catch(() => {
+        //console.error(`獲取 ${endpoint} 選項失敗:`, error);
         toast.add({
           severity: "error",
           summary: "資料載入失敗",

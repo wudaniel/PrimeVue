@@ -8,7 +8,7 @@
           <label for="filingDate"
             >建檔日: <span class="text-red-500">*</span></label
           >
-          <Calendar
+          <DatePicker
             id="filingDate"
             v-model="filingDate"
             dateFormat="yy-mm-dd"
@@ -347,7 +347,7 @@ import { useToast } from "primevue/usetoast";
 import { useRouter } from "vue-router";
 
 // --- PrimeVue Components ---
-import Calendar from "primevue/calendar";
+import { DatePicker } from "primevue";
 import InputText from "primevue/inputtext";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";

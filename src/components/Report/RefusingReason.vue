@@ -8,7 +8,7 @@
         >日期區間:</label
       >
       <div class="flex-grow-1">
-        <Calendar
+        <DatePicker
           id="date-range"
           v-model="dateRange"
           selectionMode="range"
@@ -108,7 +108,7 @@ import Row from "primevue/row";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 // ★★★ 新增: 引入篩選器元件 ★★★
-import Calendar from "primevue/calendar";
+import { DatePicker } from "primevue";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 

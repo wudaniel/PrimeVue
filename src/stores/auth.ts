@@ -42,9 +42,29 @@ export const useSessionStore = defineStore(
     //    - 訪問 state 時使用 .value
     //    - 呼叫其他 action 時直接呼叫函式名
 
-    function logout() {
-      token.value = null;
-      userData.value = null;
+    async function logout() {
+      try {
+        // 使用 await 等待 API 請求完成。
+        // 在這個 await 結束前，token.value 仍然存在，
+        // 所以 Axios 攔截器可以正確地抓到並附加 token。
+        await apiHandler.post("/logout");
+      } catch (error) {
+        // 即使後端登出失敗 (例如網路斷線)，我們仍然希望在前端將使用者登出。
+        // 所以在這裡可以選擇性地記錄錯誤，但不要中斷流程。
+        console.error(
+          "Logout API call failed, but logging out on client-side anyway.",
+          error,
+        );
+      } finally {
+        // ★ 無論成功或失敗，最後都一定要執行這裡的程式碼 ★
+        // 確保客戶端的狀態被完全清除。
+        token.value = null;
+        userData.value = null;
+
+        // 如果你的路由守衛依賴這個 store，
+        // 清除狀態後再跳轉可以確保頁面正確重定向。
+        // 例如：router.push('/login');
+      }
     }
 
     async function login(username: string, password: string): Promise<boolean> {

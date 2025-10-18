@@ -14,7 +14,7 @@
       >
       <!-- .flex-grow-1: 讓此元素伸展以填滿可用空間 -->
       <div class="flex-grow-1">
-        <Calendar
+        <DatePicker
           id="date-range"
           v-model="dateRange"
           selectionMode="range"
@@ -125,7 +125,7 @@ import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import ColumnGroup from "primevue/columngroup";
 import Row from "primevue/row";
-import Calendar from "primevue/calendar";
+import { DatePicker } from "primevue";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 interface ApiDataRow {

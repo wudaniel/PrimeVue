@@ -5,7 +5,7 @@
       <div class="grid formgrid">
         <div class="field col-12 md:col-6">
           <label for="filingDate">填表日期:</label>
-          <Calendar
+          <DatePicker
             id="filingDate"
             v-model="filingDate"
             dateFormat="yy-mm-dd"
@@ -285,14 +285,14 @@
     </form>
   </div>
 </template>
-
 <script setup lang="ts">
+// ★ 步驟 1: 從 'vue' 導入 watch
 import { ref, onMounted, watch } from "vue";
 import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
 import { useRouter } from "vue-router";
 // --- PrimeVue 元件導入 ---
-import Calendar from "primevue/calendar";
+import { DatePicker } from "primevue";
 import InputText from "primevue/inputtext";
 import InputNumber from "primevue/inputnumber";
 import RadioButton from "primevue/radiobutton";
@@ -302,6 +302,7 @@ import Textarea from "primevue/textarea";
 import { useToast } from "primevue/usetoast";
 // --- VeeValidate 導入 ---
 import { useForm, useField, defineRule } from "vee-validate";
+
 interface GeneralFormValues {
   filingDate: Date | null;
   caseNumber: string;
@@ -313,17 +314,16 @@ interface GeneralFormValues {
   naturalized: number | null;
   sourceID: number | null;
   sourceOther: string;
-  sourceCatID: number | null; // <-- 在這裡明確定義類型
+  sourceCatID: number | null;
   town: number | null;
   othertown: string;
   caseDetail: string;
-  worker: string | null; // 注意 worker 是 string | null
+  worker: string | null;
 }
 const toast = useToast();
 const router = useRouter();
 
 // --- 定義 VeeValidate 規則 ---
-// 為了讓 'required' 字符串能穩定運作
 defineRule("required", (value: any) => {
   if (value === null || value === undefined || value === "") {
     return "此欄位為必填項";
@@ -332,8 +332,7 @@ defineRule("required", (value: any) => {
 });
 
 // --- VeeValidate 表單設定 ---
-const { handleSubmit, meta, setFieldValue } = useForm<GeneralFormValues>({
-  // <-- 在此應用介面
+const { handleSubmit, meta } = useForm<GeneralFormValues>({
   initialValues: {
     filingDate: null,
     caseNumber: "",
@@ -345,7 +344,7 @@ const { handleSubmit, meta, setFieldValue } = useForm<GeneralFormValues>({
     naturalized: null,
     sourceID: null,
     sourceOther: "",
-    sourceCatID: null, // 現在 TS 知道這個 null 屬於 number | null 類型
+    sourceCatID: null,
     town: null,
     othertown: "",
     caseDetail: "",
@@ -384,27 +383,36 @@ const { value: FullName, errorMessage: FullNameError } = useField<string>(
   "FullName",
   "required",
 );
+
+function clearNaturalized() {
+  selectednaturalized.value = null;
+}
 const { value: selectednationalities, errorMessage: nationalityError } =
   useField<number | null>("nationality", "required");
 const { value: othernationalities, errorMessage: othernationalitiesError } =
   useField<string>("othernationalities", validateOtherNationality);
 const { value: selectedYear, errorMessage: selectedYearError } = useField<
   number | null
->("selectedYear"); // 年份設為非必填
+>("selectedYear");
 const { value: selectedGender, errorMessage: genderError } = useField<
   number | null
 >("gender", "required");
 const { value: selectednaturalized, errorMessage: naturalizedError } = useField<
   number | null
->("naturalized"); // 歸化設為非必填
+>("naturalized");
 const { value: selectedsources, errorMessage: sourcesError } = useField<
   number | null
 >("sourceID", "required");
 const { value: othersources, errorMessage: othersourcesError } =
   useField<string>("sourceOther", validateOtherSources);
-const { value: selectedCaseSource, errorMessage: caseSourceError } = useField<
-  number | null
->("sourceCatID", "required");
+
+// ★ 步驟 2: 從 useField 中解構出 setValue 方法，並重新命名以避免衝突
+const {
+  value: selectedCaseSource,
+  errorMessage: caseSourceError,
+  setValue: setCaseSource, // 將 setValue 命名為 setCaseSource
+} = useField<number | null>("sourceCatID", "required");
+
 const { value: selectedtown, errorMessage: townError } = useField<
   number | null
 >("town", "required");
@@ -412,12 +420,8 @@ const { value: othertown, errorMessage: othertownError } = useField<string>(
   "othertown",
   validateOtherTown,
 );
-const { value: caseDetail, errorMessage: caseDetailError } = useField<string>(
-  "caseDetail",
-  "required",
-);
-
-// FIX: 將 `worker` 的類型從 `number` 改為 `string` 以匹配 Dropdown 的 `optionValue="name"`
+const { value: caseDetail, errorMessage: caseDetailError } =
+  useField<string>("caseDetail");
 const { value: selectedworkers, errorMessage: workerError } = useField<
   string | null
 >("worker", "required");
@@ -425,18 +429,35 @@ const { value: selectedworkers, errorMessage: workerError } = useField<
 // --- API 選項數據 ref ---
 const Nationality_List = ref<{ id: number; name: string }[]>([]);
 const sourceCats_List = ref<{ id: number; name: string }[]>([]);
+// 確保 sources_List 的類型定義包含 sourceCatID
 const sources_List = ref<{ id: number; name: string; sourceCatID?: number }[]>(
   [],
 );
 const town_List = ref<{ id: number; name: string }[]>([]);
-const workers_List = ref<{ name: string; fullname: string }[]>([]);
+const workers_List = ref<{ name: string; fullName: string }[]>([]);
 
 // --- 其他狀態 ---
-const CategoryLock = ref(true);
+const CategoryLock = ref(true); // 初始狀態為鎖定
+
+// ★ 步驟 3: 新增 watch 函數來監聽轉介單位的變化
+watch(selectedsources, (newSourceId) => {
+  // 查找使用者選擇的轉介單位物件
+  const selectedSource = sources_List.value.find(
+    (source) => source.id === newSourceId,
+  );
+
+  // 情況一: 找到對應的轉介單位，且該單位有 sourceCatID
+
+  if (selectedSource && selectedSource.sourceCatID == -1) {
+    CategoryLock.value = false;
+  } else if (selectedSource && selectedSource.sourceCatID !== undefined) {
+    setCaseSource(selectedSource.sourceCatID);
+    CategoryLock.value = true;
+  }
+});
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
-  // ★★★ 修改點 2: 將獲取 workers 的邏輯獨立出來處理 ★★★
   const fetchOptions = (endpoint: string, listRef: any) => {
     apiHandler
       .get(endpoint)
@@ -456,22 +477,17 @@ onMounted(() => {
       });
   };
 
-  // 獲取一般選項
   fetchOptions("/option/nationalities", Nationality_List);
   fetchOptions("/option/sourceCats", sourceCats_List);
   fetchOptions("/option/sources", sources_List);
   fetchOptions("/option/towns", town_List);
 
-  // ★★★ 修改點 3: 獨立處理 workers，並進行資料轉換 ★★★
   apiHandler
     .get("/option/workers")
     .then((response) => {
       if (response.data && Array.isArray(response.data.data)) {
-        // 使用 .map 轉換資料，確保屬性名稱是 'fullName'
         workers_List.value = response.data.data.map((worker: any) => ({
           name: worker.name,
-          // 這行程式碼會先嘗試取 worker.fullName，如果沒有，再嘗試取 worker.fullname
-          // 這樣可以讓程式碼更穩健，不怕後端大小寫變動
           fullName: worker.fullName || worker.fullname,
         }));
       }
@@ -489,8 +505,8 @@ onMounted(() => {
 
 // --- 提交處理 ---
 const onSubmit = handleSubmit(async (values) => {
+  // ... 提交邏輯維持不變 ...
   let formattedDate = null;
-  // 確保 `values.filingDate` 是一個有效的 Date 物件
   if (values.filingDate && typeof values.filingDate.getMonth === "function") {
     try {
       formattedDate = format(values.filingDate, "yyyy-MM-dd");
@@ -514,10 +530,10 @@ const onSubmit = handleSubmit(async (values) => {
     nationalityOther:
       values.nationality === -1 ? values.othernationalities?.trim() : null,
     yearOfBirth: values.selectedYear,
-    gender: values.gender, // gender 已經是 number 或 null
-    naturalized: values.naturalized === null ? null : values.naturalized === 1, // 轉換 0/1 為 false/true
+    gender: values.gender,
+    naturalized: values.naturalized === null ? null : values.naturalized === 1,
     sourceID: values.sourceID,
-    sourceOther: values.sourceID === -1 ? values.sourceOther?.trim() : null, // BEST PRACTICE: 從 values 取值
+    sourceOther: values.sourceID === -1 ? values.sourceOther?.trim() : null,
     sourceCatID: values.sourceCatID,
     town: values.town,
     townOther: values.town === -1 ? values.othertown?.trim() : null,

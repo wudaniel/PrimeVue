@@ -9,7 +9,7 @@
         >日期區間:</label
       >
       <div class="flex-grow-1">
-        <Calendar
+        <DatePicker
           id="date-range"
           v-model="dateRange"
           selectionMode="range"
@@ -163,7 +163,7 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
-import Calendar from "primevue/calendar";
+import { DatePicker } from "primevue";
 import MultiSelect from "primevue/multiselect";
 import Dropdown from "primevue/dropdown";
 import Button from "primevue/button";

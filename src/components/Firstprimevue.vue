@@ -26,7 +26,6 @@
             />
           </div>
 
-          <!-- ★★★ 修改點 1: 將 InputText 替換為 Dropdown ★★★ -->
           <div
             v-if="shouldShowWorkerColumn"
             class="field col-12 md:col-6 lg-col-3"
@@ -50,7 +49,7 @@
           <!-- 日期區間篩選 -->
           <div class="field col-12 md:col-6 lg:col-3">
             <label for="filterDateRange">日期區間</label>
-            <Calendar
+            <DatePicker
               id="filterDateRange"
               v-model="filters.dateRange.value"
               selectionMode="range"
@@ -123,7 +122,6 @@
         responsiveLayout="scroll"
         class="p-datatable-sm p-datatable-striped"
       >
-        <!-- ... DataTable 內容不變 ... -->
         <template #header> </template>
 
         <Column
@@ -210,26 +208,27 @@
                   '為 caseNumber ' + slotProps.data.caseNumber + ' 開案'
                 "
               />
-              <div v-if="shouldShowOpen">
-                <Button
-                  label="不開案"
-                  class="p-button-sm p-button-warning"
-                  @click="handleDoNotOpenCase(slotProps.data)"
-                  :disabled="slotProps.data.status !== 0"
-                  :aria-label="
-                    '將案號 ' + slotProps.data.caseNumber + ' 設為不開案'
-                  "
-                />
-                <Button
-                  label="結案"
-                  class="p-button-sm p-button-warning"
-                  @click="handleFinishCase(slotProps.data)"
-                  :disabled="slotProps.data.status !== 1"
-                  :aria-label="
-                    '將案號 ' + slotProps.data.caseNumber + ' 設為結案'
-                  "
-                />
-              </div>
+              <!-- ★★★ 修改點：移除外層 div，將 v-if 直接應用於按鈕 ★★★ -->
+              <Button
+                v-if="shouldShowOpen"
+                label="不開案"
+                class="p-button-sm p-button-warning"
+                @click="handleDoNotOpenCase(slotProps.data)"
+                :disabled="slotProps.data.status !== 0"
+                :aria-label="
+                  '將案號 ' + slotProps.data.caseNumber + ' 設為不開案'
+                "
+              />
+              <Button
+                v-if="shouldShowOpen"
+                label="結案"
+                class="p-button-sm p-button-danger"
+                @click="handleFinishCase(slotProps.data)"
+                :disabled="slotProps.data.status !== 1"
+                :aria-label="
+                  '將案號 ' + slotProps.data.caseNumber + ' 設為結案'
+                "
+              />
             </div>
           </template>
         </Column>
@@ -256,11 +255,9 @@ import Column from "primevue/column";
 import Chip from "primevue/chip";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import Calendar from "primevue/calendar";
+import { DatePicker } from "primevue";
 import MultiSelect from "primevue/multiselect";
-import Dropdown from "primevue/dropdown"; // ★★★ 新增: 導入 Dropdown ★★★
 
-// ★★★ 新增: Staff 類型定義 ★★★
 interface Staff {
   name: string;
   fullName: string;
@@ -276,7 +273,7 @@ const lazyParams = ref({
   first: 0,
   rows: 10,
   page: 0,
-  sortField: "fillingdate",
+  sortField: "filingdate",
   sortOrder: -1,
 });
 // --- 篩選功能相關狀態 ---
@@ -286,15 +283,13 @@ const toggleFilterRow = () => {
 };
 const filters = ref({
   caseNumber: { value: null as string | null },
-  worker: { value: [] as string[] }, // value 的類型保持 string | null
+  worker: { value: [] as string[] },
   status: { value: [] as number[] },
   type: { value: [] as number[] },
   dateRange: { value: null as Date[] | null },
 });
-const workerList = ref<Staff[]>([]); // ★★★ 新增: 存放工作人員列表 ★★★
+const workerList = ref<Staff[]>([]);
 
-// ★★★ 新增點 2: 建立一個高效的查找 Map ★★★
-// 使用 computed 屬性，當 workerList 變化時，這個 Map 會自動更新
 const workerNameMap = computed(() => {
   return new Map(
     workerList.value.map((worker) => [worker.name, worker.fullName]),
@@ -304,7 +299,7 @@ const getWorkerFullName = (workerName: string): string => {
   return workerNameMap.value.get(workerName) || workerName;
 };
 
-// --- 對應關係與格式化 (無變動) ---
+// --- 對應關係與格式化 ---
 const statusMap: { [key: number]: string } = {
   0: "未開案",
   1: "已開案",
@@ -383,7 +378,6 @@ const formatDate = (dateString: string | null | undefined): string => {
   }
 };
 
-// ★★★ 新增: 獲取工作人員列表的函式 ★★★
 const fetchWorkerList = async () => {
   try {
     const response = await apiHandler.get("/option/workers");
@@ -395,7 +389,7 @@ const fetchWorkerList = async () => {
   }
 };
 
-// --- 核心資料載入函式 (無變動) ---
+// --- 核心資料載入函式 ---
 const loadLazyData = async () => {
   loading.value = true;
   const dateRange = filters.value.dateRange.value;
@@ -430,7 +424,6 @@ const loadLazyData = async () => {
   const cleanParams = Object.fromEntries(
     Object.entries(apiParams).filter(([_, v]) => {
       if (v === null || v === undefined || v === "") return false;
-      // 如果是陣列，確保它不是空的
       if (Array.isArray(v) && v.length === 0) return false;
       return true;
     }),
@@ -447,7 +440,7 @@ const loadLazyData = async () => {
     loading.value = false;
   }
 };
-// --- 事件處理函式 (無變動) ---
+// --- 事件處理函式 ---
 const onPage = (event: DataTablePageEvent) => {
   lazyParams.value.page = event.page;
   lazyParams.value.rows = event.rows;
@@ -466,7 +459,7 @@ const handleSearch = () => {
 const handleClearFilters = () => {
   filters.value = {
     caseNumber: { value: null },
-    worker: { value: [] }, // 重置為空陣列
+    worker: { value: [] },
     status: { value: [] },
     type: { value: [] },
     dateRange: { value: null },
@@ -519,7 +512,6 @@ const handleFinishCase = (item: {
 };
 
 // --- 生命週期鉤子 ---
-// ★★★ 修改點 2: onMounted 時同時獲取表格資料和工作人員列表 ★★★
 onMounted(() => {
   loadLazyData();
   fetchWorkerList();

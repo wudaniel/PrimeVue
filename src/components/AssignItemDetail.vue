@@ -310,7 +310,7 @@ const fetchData = async (currentType: string, currentId: string) => {
       apiHandler.get(detailUrl),
       apiHandler.get(recordsUrl),
     ]);
-
+    console.log(detailResponse);
     // 處理案件詳細資料
     if (detailResponse.data && detailResponse.data.success) {
       rawData.value = detailResponse.data;
