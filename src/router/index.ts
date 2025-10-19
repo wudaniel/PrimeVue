@@ -39,6 +39,11 @@ const router = createRouter({
       //meta: { requiresAuth: true }
     },
     {
+      path: "/:pathMatch(.*)*", // 使用正規表達式匹配所有路徑
+      name: "NotFound",
+      component: () => import("../components/NotFoundView.vue"), // 指向你的 404 頁面組件
+    },
+    {
       // ★★★ 父路由：使用 MainLayout ★★★
       path: "/",
       component: MainLayout,

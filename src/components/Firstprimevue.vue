@@ -520,28 +520,93 @@ onMounted(() => {
   fetchWorkerList();
 });
 </script>
+<style>
+/* 非 scoped 樣式 - 專門針對篩選區域覆蓋 PrimeVue 預設值 */
+.filter-controls .p-inputtext-sm,
+.filter-controls .p-inputtext,
+.filter-controls .p-multiselect .p-multiselect-label,
+.filter-controls .p-datepicker input {
+  padding-inline: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+</style>
 
-<!-- ★★★ 新增的 CSS 區塊 ★★★ -->
 <style scoped>
-/*
-  使用 :deep() 偽類來穿透 scoped CSS 的限制，
-  以便我們能對 PrimeVue 子元件的內部樣式進行修改。
-  這段 CSS 會選取 'field' class 下的所有 PrimeVue 輸入元件，
-  並確保它們有相同的最小高度和垂直居中的內容。
-*/
+/* 統一所有篩選輸入元件的基礎樣式 */
 .field :deep(.p-inputtext),
-.field :deep(.p-multiselect) {
-  min-height: 42px; /* 設定一個統一的最小高度。您可以根據設計調整此數值 */
+.field :deep(.p-multiselect),
+.field :deep(.p-datepicker),
+.field :deep(.p-datepicker-input-container) {
+  min-height: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
 }
 
-/* 
-  特別針對 MultiSelect 的 placeholder 文字，確保它在容器內垂直居中。
-  這是因為 MultiSelect 的內部結構與 InputText 不同。
-*/
+/* 統一內部輸入框的高度 + 移除 padding-inline */
+.field :deep(.p-inputtext.p-inputtext-sm),
+.field :deep(.p-inputtext),
+.field :deep(.p-multiselect .p-multiselect-label),
+.field :deep(.p-datepicker input) {
+  min-height: 50px;
+  height: 50px;
+  line-height: 50px;
+  padding: 0.5rem 0.5rem !important; /* 只保留上下 padding,左右設為 0 */
+}
+
+/* MultiSelect 的特殊處理 */
 .field :deep(.p-multiselect .p-multiselect-label) {
-  padding-top: 0;
-  padding-bottom: 0;
+  padding: 0.5rem 0.5rem !important; /* 只保留上下 padding,左右設為 0 */
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+}
+
+/* MultiSelect 下拉觸發器對齊 */
+.field :deep(.p-multiselect .p-multiselect-dropdown) {
+  height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+/* DatePicker 特殊處理 */
+.field :deep(.p-datepicker) {
+  height: 50px;
+}
+
+.field :deep(.p-datepicker input.p-inputtext) {
+  height: 50px;
+  padding: 0.5rem 0.5rem !important; /* 只保留上下 padding,左右設為 0 */
+}
+
+.field :deep(.p-datepicker .p-datepicker-dropdown) {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 統一 label 的下邊距 */
+.field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+/* 確保 Chips 在 MultiSelect 中正常顯示 */
+.field :deep(.p-multiselect .p-multiselect-label .p-chip) {
+  margin: 0.125rem;
+}
+
+/* 當有多個選項時,MultiSelect 要能自動換行但保持最小高度 */
+.field :deep(.p-multiselect .p-multiselect-label.p-placeholder) {
+  min-height: 50px;
+  height: 50px;
+}
+
+.field :deep(.p-multiselect .p-multiselect-label:not(.p-placeholder)) {
+  min-height: 50px;
+  height: auto; /* 允許多行時擴展 */
 }
 </style>
