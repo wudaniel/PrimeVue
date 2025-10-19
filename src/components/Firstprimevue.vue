@@ -11,12 +11,14 @@
       />
       <!-- 動態顯示的篩選器行，並加入過渡動畫 -->
       <transition name="p-toggleable-content">
+        <!-- ★★★ 修改點：將 align-items-end 改為 align-items-start，確保頂部對齊 ★★★ -->
         <div
           v-show="isFilterRowVisible"
-          class="grid formgrid mt-3 align-items-end"
+          class="grid formgrid mt-3 align-items-start"
         >
           <!-- 案號篩選 -->
-          <div class="field col-12 md:col-6 lg:col-3">
+          <!-- ★★★ 修改點：將 lg:col-4 改為 lg:col-6 使佈局更平衡 ★★★ -->
+          <div class="field col-12 md:col-6 lg:col-6">
             <label for="filterCaseNumber">案號</label>
             <InputText
               id="filterCaseNumber"
@@ -26,9 +28,11 @@
             />
           </div>
 
+          <!-- 工作人員篩選 -->
+          <!-- ★★★ 修改點：將 lg:col-4 改為 lg:col-6 使佈局更平衡 ★★★ -->
           <div
             v-if="shouldShowWorkerColumn"
-            class="field col-12 md:col-6 lg-col-3"
+            class="field col-12 md:col-6 lg:col-6"
           >
             <label for="filterWorker">工作人員</label>
             <MultiSelect
@@ -47,7 +51,8 @@
           </div>
 
           <!-- 日期區間篩選 -->
-          <div class="field col-12 md:col-6 lg:col-3">
+          <!-- ★★★ 修改點：將 lg:col-4 改為 lg:col-6 使佈局更平衡 ★★★ -->
+          <div class="field col-12 md:col-6 lg:col-6">
             <label for="filterDateRange">日期區間</label>
             <DatePicker
               id="filterDateRange"
@@ -61,7 +66,8 @@
             />
           </div>
           <!-- 狀態篩選 -->
-          <div class="field col-12 md:col-6 lg:col-3">
+          <!-- ★★★ 修改點：將 lg:col-4 改為 lg:col-6 使佈局更平衡 ★★★ -->
+          <div class="field col-12 md:col-6 lg:col-6">
             <label for="filterStatus">狀態</label>
             <MultiSelect
               id="filterStatus"
@@ -76,7 +82,8 @@
           </div>
 
           <!-- 類別篩選 -->
-          <div class="field col-12 md:col-6 lg:col-3">
+          <!-- ★★★ 修改點：將 lg:col-4 改為 lg:col-6 使佈局更平衡 ★★★ -->
+          <div class="field col-12 md:col-6 lg:col-6">
             <label for="filterType">類別</label>
             <MultiSelect
               id="filterType"
@@ -208,7 +215,6 @@
                   '為 caseNumber ' + slotProps.data.caseNumber + ' 開案'
                 "
               />
-              <!-- ★★★ 修改點：移除外層 div，將 v-if 直接應用於按鈕 ★★★ -->
               <Button
                 v-if="shouldShowOpen"
                 label="不開案"
@@ -515,6 +521,27 @@ onMounted(() => {
 });
 </script>
 
+<!-- ★★★ 新增的 CSS 區塊 ★★★ -->
 <style scoped>
-/* 樣式無變動 */
+/*
+  使用 :deep() 偽類來穿透 scoped CSS 的限制，
+  以便我們能對 PrimeVue 子元件的內部樣式進行修改。
+  這段 CSS 會選取 'field' class 下的所有 PrimeVue 輸入元件，
+  並確保它們有相同的最小高度和垂直居中的內容。
+*/
+.field :deep(.p-inputtext),
+.field :deep(.p-multiselect) {
+  min-height: 42px; /* 設定一個統一的最小高度。您可以根據設計調整此數值 */
+  display: flex;
+  align-items: center;
+}
+
+/* 
+  特別針對 MultiSelect 的 placeholder 文字，確保它在容器內垂直居中。
+  這是因為 MultiSelect 的內部結構與 InputText 不同。
+*/
+.field :deep(.p-multiselect .p-multiselect-label) {
+  padding-top: 0;
+  padding-bottom: 0;
+}
 </style>
