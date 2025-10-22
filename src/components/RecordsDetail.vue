@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
-import { apiHandler } from "../class/apiHandler"; // 請確保路徑正確
+import { apiHandler } from "../class/apiHandler";
 
 // PrimeVue components
 import Button from "primevue/button";
@@ -87,12 +87,23 @@ import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import Chip from "primevue/chip";
 import Tag from "primevue/tag";
+
+// --- TypeScript Interfaces ---
 interface FieldConfig {
   key: string;
   title: string;
-  isFullWidth?: boolean; // '?' 表示這個屬性是可選的
-  dependsOn?: (recordData: any) => boolean; // '?' 表示這個函式也是可選的
+  isFullWidth?: boolean;
+  dependsOn?: (recordData: any) => boolean;
 }
+
+// [新增] 為 optionMaps 定義一個介面，包含 workers
+interface OptionMaps {
+  nationalities: Map<number, string>;
+  serviceMethods: Map<number, string>;
+  serviceItems: Map<number, string>;
+  workers: Map<string, string>; // 新增 workers Map
+}
+
 // --- Props ---
 const props = defineProps<{
   type: string;
@@ -106,8 +117,6 @@ const typeMap: { [key: string]: string } = {
   arrival: "新入境案件",
 };
 const displayType = computed(() => {
-  // 從對照表中尋找 props.type 對應的值
-  // 如果找不到，就直接回傳原始的 props.type 作為備用 (Fallback)
   return typeMap[props.type] || props.type;
 });
 
@@ -117,24 +126,35 @@ const isLoading = ref(true);
 const error = ref<string | null>(null);
 const loadingStatusText = ref("正在載入資料...");
 
-// 選項對照表
-const optionMaps = ref({
-  nationalities: new Map<number, string>(),
-  serviceMethods: new Map<number, string>(),
-  serviceItems: new Map<number, string>(), // API 中 serviceItems 為 null，但先備著
+// [修改] 使用新的介面並加入 workers
+const optionMaps = ref<OptionMaps>({
+  nationalities: new Map(),
+  serviceMethods: new Map(),
+  serviceItems: new Map(),
+  workers: new Map(), // 初始化空的 workers Map
 });
 const areOptionsLoaded = ref(false);
 
 // --- 輔助函式 ---
 const isChip = (key: string) =>
-  ["author", "caseNumber", "filingDate", "gender"].includes(key);
+  ["caseNumber", "filingDate", "gender"].includes(key);
 
+// [修改] 將 author 從 Chip 移到一般文字顯示，因為我們現在要顯示全名
 const isTag = (key: string) => ["nationalityID"].includes(key);
 
 const getTagSeverity = (key: string, value: any) => {
   if ((key === "nationalityID" || key === "serviceMethodID") && value === -1)
-    return "warn"; // "其他" 用黃色
-  return "info"; // 預設藍色
+    return "warn";
+  return "info";
+};
+
+// [新增] 建立一個集中的社工姓名轉換函式
+const getWorkerName = (workerId: any): string => {
+  if (workerId === null || workerId === undefined || workerId === "") {
+    return "未指定";
+  }
+  const key = String(workerId);
+  return optionMaps.value.workers.get(key) || `未知社工 (${key})`;
 };
 
 // --- 核心邏輯：處理並格式化紀錄資料 ---
@@ -146,14 +166,12 @@ const processedData = computed(() => {
   const recordData = rawData.value.data;
   const genderMap: { [key: number]: string } = { 0: "男", 1: "女", 2: "其他" };
 
-  // 手動定義要顯示的欄位以及如何處理它們
   const fieldsConfig: FieldConfig[] = [
     { key: "filingDate", title: "填寫日期" },
     { key: "caseNumber", title: "案件編號" },
     { key: "author", title: "填寫社工" },
     { key: "targets", title: "詳細服務對象" },
     { key: "serviceMethodID", title: "服務方式" },
-    // 舉例：如果 serviceMethodID 為 -1 (其他)，才顯示 'serviceMethodOther' 欄位
     {
       key: "serviceMethodOther",
       title: "其他服務方式說明",
@@ -165,24 +183,23 @@ const processedData = computed(() => {
   ];
 
   const dataArray = [];
-
   for (const field of fieldsConfig) {
     const value = recordData[field.key];
 
-    // 現在 TypeScript 知道 dependsOn 是合法的了，錯誤消失
     if (field.dependsOn && !field.dependsOn(recordData)) {
       continue;
     }
-
-    // 過濾掉沒有值的欄位 (null, undefined, 空字串)
     if (value === null || value === undefined || value === "") {
       continue;
     }
 
     let displayValue: any = value;
 
-    // 根據 key 處理特定欄位的顯示格式
     switch (field.key) {
+      // [新增] 新增 author 的 case 來轉換姓名
+      case "author":
+        displayValue = getWorkerName(value);
+        break;
       case "gender":
         displayValue = genderMap[value as number] || "未知";
         break;
@@ -194,17 +211,11 @@ const processedData = computed(() => {
               `ID: ${value}`;
         break;
       case "serviceMethodID":
-        if (value === -1) {
-          // 如果是 "其他"，則組合說明文字
-          displayValue = recordData.serviceMethodOther
-            ? `其他 (${recordData.serviceMethodOther})`
-            : "其他";
-        } else {
-          // 否則，正常從 Map 中查找
-          displayValue =
-            optionMaps.value.serviceMethods.get(value as number) ||
-            `ID: ${value}`;
-        }
+        displayValue =
+          value === -1
+            ? "其他"
+            : optionMaps.value.serviceMethods.get(value as number) ||
+              `ID: ${value}`;
         break;
       case "targets":
         if (Array.isArray(value) && value.length > 0) {
@@ -220,42 +231,26 @@ const processedData = computed(() => {
             })
             .join("\n");
         } else {
-          continue; // 如果是空陣列，則不顯示
+          continue;
         }
         break;
-      // 'serviceItems' 在範例中是 null，如果未來有資料，可以在此處添加處理邏輯
       case "serviceItems":
         if (Array.isArray(value) && value.length > 0) {
           displayValue = value
             .map((item) => {
-              // 1. 先從 Map 取得項目的基本名稱
               const itemName =
                 optionMaps.value.serviceItems.get(item.id) ||
                 `項目ID: ${item.id}`;
-
-              // 2. 建立一個陣列來存放額外的資訊
               const extras = [];
-              if (item.detail) {
-                // 如果 detail 有值 (不為空字串、null 或 undefined)
-                extras.push(`說明: ${item.detail}`);
-              }
-              if (item.unit) {
-                // 如果 unit 有值
-                extras.push(`單位: ${item.unit}`);
-              }
-
-              // 3. 組合最終的顯示字串
-              if (extras.length > 0) {
-                // 如果有額外資訊，就用括號包起來
-                return `${itemName} (${extras.join("、")})`;
-              } else {
-                // 如果沒有，就只顯示基本名稱
-                return itemName;
-              }
+              if (item.detail) extras.push(`說明: ${item.detail}`);
+              if (item.unit) extras.push(`單位: ${item.unit}`);
+              return extras.length > 0
+                ? `${itemName} (${extras.join("、")})`
+                : itemName;
             })
-            .join("\n"); // 將所有項目用換行符隔開
+            .join("\n");
         } else {
-          continue; // 如果是空陣列或 null，則不顯示
+          continue;
         }
         break;
     }
@@ -276,11 +271,13 @@ const processedData = computed(() => {
 const fetchOptionMaps = async () => {
   loadingStatusText.value = "正在載入選項對照表...";
   try {
-    const [nationalitiesRes, serviceMethodsRes, serviceItemsRes] =
+    // [修改] 加入 workers 的 API 請求
+    const [nationalitiesRes, serviceMethodsRes, serviceItemsRes, workersRes] =
       await Promise.all([
         apiHandler.get("/option/nationalities"),
         apiHandler.get("/option/serviceMethods"),
-        apiHandler.get("/option/serviceItems"), // 先獲取以備不時之需
+        apiHandler.get("/option/serviceItems"),
+        apiHandler.get("/option/workers"), // 新增請求
       ]);
     optionMaps.value.nationalities = new Map(
       nationalitiesRes.data.data.map((i: any) => [i.id, i.name]),
@@ -291,6 +288,11 @@ const fetchOptionMaps = async () => {
     optionMaps.value.serviceItems = new Map(
       serviceItemsRes.data.data.map((i: any) => [i.id, i.name]),
     );
+    // [修改] 將 workers 資料存入 Map
+    optionMaps.value.workers = new Map(
+      workersRes.data.data.map((i: any) => [i.name, i.fullName]),
+    );
+
     areOptionsLoaded.value = true;
   } catch (err) {
     error.value = "讀取選項對照表失敗，部分資料可能顯示為 ID。";
@@ -334,7 +336,6 @@ onMounted(() => {
   initialize();
 });
 
-// 監聽 props 的變化，如果變化了就重新載入資料
 watch(
   () => [props.type, props.casenumber, props.recordid] as const,
   ([newType, newCasenumber, newRecordid]) => {

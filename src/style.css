@@ -27,8 +27,6 @@ body {
   background-color: var(--surface-b); /* PrimeVue 的背景色變數 */
   color: var(--text-color);       /* PrimeVue 的文字顏色變數 */
 
-  /* 設定最小高度，確保內容不足時頁腳也能在底部 */
-  min-height: 100vh;
 }
 
 /* 

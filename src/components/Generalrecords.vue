@@ -37,7 +37,7 @@
           }}</small>
         </div>
 
-        <!-- 全域服務方式和工作目標 -->
+        <!-- 全域服務方式和工作目標 (保持不變) -->
         <div class="field col-12 md:col-6">
           <label for="serviceMethodsSelect"
             >服務方式: <span class="text-red-500">*</span></label
@@ -96,7 +96,7 @@
           />
         </div>
 
-        <!-- 對象陣列區域 -->
+        <!-- ★★★ 對象陣列區域 (已修改) ★★★ -->
         <div class="col-12">
           <div class="flex justify-content-between align-items-center mb-2">
             <label class="font-bold"
@@ -116,30 +116,34 @@
             targetArrayError
           }}</small>
 
-          <div
+          <!-- ★★★ 使用 Panel 元件取代 div ★★★ -->
+          <Panel
             v-for="(field, idx) in targetFields"
             :key="field.key"
-            class="p-3 border-1 surface-border border-round mb-3"
+            :header="field.value.name?.trim() || `對象 ${idx + 1}`"
+            toggleable
+            class="mb-3"
           >
-            <!-- 對象標題和刪除按鈕 -->
-            <div class="flex justify-content-between align-items-center mb-3">
-              <h4 class="mt-0 mb-0 text-primary">對象 {{ idx + 1 }}</h4>
+            <!-- ★★★ 將刪除按鈕放入 header 的 icons 插槽 ★★★ -->
+            <template #icons>
               <Button
                 icon="pi pi-trash"
-                class="p-button-danger p-button-sm"
+                class="p-button-danger p-button-text p-button-rounded"
                 type="button"
-                @click="removeTarget(idx)"
+                @click.stop="removeTarget(idx)"
                 v-tooltip.top="'移除此對象'"
               />
-            </div>
+            </template>
 
-            <!-- 對象基本資料 -->
+            <!-- 對象表單內容 (結構不變, 只是被包在 Panel 內) -->
             <div class="grid formgrid">
+              <!-- 對象基本資料 -->
               <div class="field col-12 md:col-4">
                 <label :for="`target-name-${idx}`"
                   >名稱: <span class="text-red-500">*</span></label
                 >
                 <InputText
+                  placeholder="請輸入對象名稱"
                   :id="`target-name-${idx}`"
                   v-model="field.value.name"
                   class="w-full"
@@ -180,6 +184,7 @@
                   >國籍: <span class="text-red-500">*</span></label
                 >
                 <Select
+                  placeholder="請選擇對象國籍"
                   :inputId="`target-nationality-${idx}`"
                   v-model="field.value.nationalityID"
                   :options="nationalityList"
@@ -217,11 +222,11 @@
               </div>
             </div>
 
-            <!-- ★★★ 服務項目區塊已移動到此處，成為每個對象的一部分 ★★★ -->
+            <!-- 服務項目區塊 -->
             <div
               class="p-2 mt-3 border-1 border-dashed surface-border border-round"
             >
-              <h5 class="mt-0 mb-3">對象 {{ idx + 1 }} 的服務項目</h5>
+              <h5 class="mt-0 mb-3">服務項目</h5>
 
               <div class="field col-12">
                 <label>服務項目: <span class="text-red-500">*</span></label>
@@ -349,7 +354,7 @@
                 >
               </div>
             </div>
-          </div>
+          </Panel>
         </div>
 
         <div class="field col-12 flex justify-content-end">
@@ -379,9 +384,12 @@ import Button from "primevue/button";
 import Select from "primevue/select";
 import Textarea from "primevue/textarea";
 import Checkbox from "primevue/checkbox";
+import Panel from "primevue/panel"; // ★★★ 1. 引入 Panel 元件 ★★★
 // --- VeeValidate ---
 import { useForm, useField, useFieldArray, defineRule } from "vee-validate";
 
+// Script 內容完全不需要變更，因為所有邏輯都保持不變。
+// ... (與您提供的 script 內容相同)
 defineRule("required", (value: any) => {
   if (!value && value !== 0) {
     return "此欄位為必填";
@@ -690,5 +698,8 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <style scoped>
-/* 樣式保持不變 */
+.p-error {
+  /* 直接指定一個明確的紅色，確保驗證錯誤提示永遠是紅色 */
+  color: #ef4444;
+}
 </style>

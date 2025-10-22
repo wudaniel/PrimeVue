@@ -163,7 +163,6 @@ const menuItems = ref([
       sidebarVisible.value = false;
     },
   },
-
   {
     label: "報表",
     icon: "pi pi-chart-bar",
@@ -277,6 +276,84 @@ const menuItems = ref([
       },
     ],
   },
+  {
+    label: "選項管理",
+    icon: "pi-database",
+    items: [
+      {
+        label: "國家",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/nationalities");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "轉介單位",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/unit");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "個案來源類別",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/unitCatgory");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "鄉鎮市區",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/town");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "服務方式",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/serviceMethon");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "服務項目",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/serviceItem");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "開案原因",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/openingReason");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "不開案原因",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/refusingReason");
+          sidebarVisible.value = false;
+        },
+      },
+      {
+        label: "結案原因",
+        icon: " pi pi-list",
+        command: () => {
+          router.push("/options/closingReason");
+          sidebarVisible.value = false;
+        },
+      },
+    ],
+  },
 ]);
 </script>
 
@@ -308,7 +385,6 @@ const menuItems = ref([
 }
 
 .main-content {
-  padding: 2rem;
   width: 100%;
   box-sizing: border-box;
 }
@@ -317,7 +393,6 @@ const menuItems = ref([
   padding-top: 5rem;
   padding-left: 5rem;
   padding-right: 2rem;
-  padding-bottom: 2rem;
 }
 
 /* ... 其他樣式 */

@@ -23,6 +23,7 @@
           <label for="caseNumber">案號:</label>
           <InputText
             id="caseNumber"
+            placeholder="請輸入案號"
             v-model="caseNumber"
             class="w-full"
             :class="{ 'p-invalid': !!caseNumberError }"
@@ -35,6 +36,7 @@
           <label for="fullName">全名:</label>
           <InputText
             id="fullName"
+            placeholder="請輸入案主姓名"
             v-model="FullName"
             class="w-full"
             :class="{ 'p-invalid': !!FullNameError }"

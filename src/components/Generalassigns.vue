@@ -38,7 +38,7 @@
           <InputText
             id="fullName"
             v-model="FullName"
-            placeholder="請輸入您的全名"
+            placeholder="請輸入案主姓名"
             class="w-full"
             :class="{ 'p-invalid': !!FullNameError }"
           />

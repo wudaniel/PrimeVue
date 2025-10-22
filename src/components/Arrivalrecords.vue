@@ -37,7 +37,7 @@
           }}</small>
         </div>
 
-        <!-- ★★★ 全域服務方式和工作目標 ★★★ -->
+        <!-- 全域服務方式和工作目標 (保持不變) -->
         <div class="field col-12 md:col-6">
           <label for="serviceMethodsSelect"
             >服務方式: <span class="text-red-500">*</span></label
@@ -96,7 +96,7 @@
           />
         </div>
 
-        <!-- ★★★ 對象陣列區域 ★★★ -->
+        <!-- ★★★ 對象陣列區域 (已修改) ★★★ -->
         <div class="col-12">
           <div class="flex justify-content-between align-items-center mb-2">
             <label class="font-bold"
@@ -116,25 +116,28 @@
             targetArrayError
           }}</small>
 
-          <div
+          <!-- ★★★ 使用 Panel 元件取代 div ★★★ -->
+          <Panel
             v-for="(field, idx) in targetFields"
             :key="field.key"
-            class="p-3 border-1 surface-border border-round mb-3"
+            :header="field.value.name?.trim() || `對象 ${idx + 1}`"
+            toggleable
+            class="mb-3"
           >
-            <!-- 對象標題和刪除按鈕 -->
-            <div class="flex justify-content-between align-items-center mb-3">
-              <h4 class="mt-0 mb-0 text-primary">對象 {{ idx + 1 }}</h4>
+            <!-- ★★★ 將刪除按鈕放入 header 的 icons 插槽 ★★★ -->
+            <template #icons>
               <Button
                 icon="pi pi-trash"
-                class="p-button-danger p-button-sm"
+                class="p-button-danger p-button-text p-button-rounded"
                 type="button"
-                @click="removeTarget(idx)"
+                @click.stop="removeTarget(idx)"
                 v-tooltip.top="'移除此對象'"
               />
-            </div>
+            </template>
 
-            <!-- 對象基本資料 -->
+            <!-- 對象表單內容 (結構不變, 只是被包在 Panel 內) -->
             <div class="grid formgrid">
+              <!-- 對象基本資料 -->
               <div class="field col-12 md:col-4">
                 <label :for="`target-name-${idx}`"
                   >名稱: <span class="text-red-500">*</span></label
@@ -142,6 +145,7 @@
                 <InputText
                   :id="`target-name-${idx}`"
                   v-model="field.value.name"
+                  placeholder="請輸入對象名稱"
                   class="w-full"
                   :class="{ 'p-invalid': !!targetErrors[idx]?.name }"
                 />
@@ -183,6 +187,7 @@
                   :inputId="`target-nationality-${idx}`"
                   v-model="field.value.nationalityID"
                   :options="nationalityList"
+                  placeholder="請選擇對象國籍"
                   optionLabel="name"
                   optionValue="id"
                   class="w-full"
@@ -217,11 +222,11 @@
               </div>
             </div>
 
-            <!-- ★★★ 修改點 1: 服務項目區塊被移動到這裡，現在是每個對象的一部分 ★★★ -->
+            <!-- 服務項目區塊 -->
             <div
               class="p-2 mt-3 border-1 border-dashed surface-border border-round"
             >
-              <h5 class="mt-0 mb-3">對象 {{ idx + 1 }} 的服務項目</h5>
+              <h5 class="mt-0 mb-3">服務項目</h5>
 
               <div class="field col-12">
                 <label>服務項目: <span class="text-red-500">*</span></label>
@@ -238,7 +243,6 @@
                     class="col-12 md:col-4 lg:col-3 p-1"
                   >
                     <div class="flex align-items-center">
-                      <!-- 注意 v-model 和 id 的變化 -->
                       <Checkbox
                         :inputId="`serviceItem-${idx}-${item.id}`"
                         name="serviceItems"
@@ -350,7 +354,7 @@
                 >
               </div>
             </div>
-          </div>
+          </Panel>
         </div>
 
         <div class="field col-12 flex justify-content-end">
@@ -373,14 +377,14 @@ import { format } from "date-fns";
 import { useToast } from "primevue/usetoast";
 import { useRouter } from "vue-router";
 // --- PrimeVue Components ---
-import { DatePicker } from "primevue";
+import DatePicker from "primevue/datepicker"; // 使用更精確的導入路徑
 import InputText from "primevue/inputtext";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
 import Select from "primevue/select";
-("primevue/select");
 import Textarea from "primevue/textarea";
 import Checkbox from "primevue/checkbox";
+import Panel from "primevue/panel"; // ★★★ 1. 引入 Panel 元件 ★★★
 // --- VeeValidate ---
 import { useForm, useField, useFieldArray, defineRule } from "vee-validate";
 
@@ -391,7 +395,7 @@ defineRule("required", (value: any) => {
   return true;
 });
 
-// --- ★★★ 修改點 2: 更新類型定義 ★★★ ---
+// --- ★★★ 修改點 2: 更新類型定義 (此處與您原本的代碼相同，無需更改) ★★★ ---
 interface SelectOption {
   id: number;
   name: string;
@@ -465,7 +469,7 @@ const nationalityList = ref<SelectOption[]>([]);
 const serviceMethodsList = ref<SelectOption[]>([]);
 const serviceObjectList = ref<ServiceObjectOption[]>([]);
 
-// --- ★★★ 修改點 3: 將 Computed 改為函式 ★★★ ---
+// --- ★★★ 修改點 3: 將 Computed 改為函式 (此處與您原本的代碼相同，無需更改) ★★★ ---
 const getSelectedExtraItems = (selectedIds: number[] | undefined) => {
   if (!selectedIds) return [];
   return serviceObjectList.value.filter(
@@ -540,7 +544,7 @@ onMounted(async () => {
   }
 });
 
-// --- ★★★ 修改點 4: 更新 onSubmit 驗證和提交邏輯 ★★★ ---
+// --- ★★★ 修改點 4: 更新 onSubmit 驗證和提交邏輯 (此處與您原本的代碼相同，無需更改) ★★★ ---
 const onSubmit = handleSubmit(async (values) => {
   Object.keys(dynamicErrors).forEach((key) => (dynamicErrors[key] = null));
   targetErrors.splice(
@@ -693,5 +697,8 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <style scoped>
-/* 樣式保持不變 */
+.p-error {
+  /* 直接指定一個明確的紅色，確保驗證錯誤提示永遠是紅色 */
+  color: #ef4444;
+}
 </style>

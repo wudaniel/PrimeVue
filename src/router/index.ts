@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteMeta } from "vue-router";
 import MainLayout from "../layout/MainLayout.vue"; // ★★★ 導入新佈局 ★★★
 import { useSessionStore } from "../stores/auth";
 import { addToastMessage } from "../toastServices";
+import NotFoundView from "../components/NotFoundView.vue";
 function hasRequiredPermission(meta: RouteMeta): boolean {
   const userStore = useSessionStore();
   const requiredPermission = meta.requiredPermission as number | undefined;
@@ -37,11 +38,6 @@ const router = createRouter({
       name: "login",
       component: () => import("../components/LoginPage.vue"),
       //meta: { requiresAuth: true }
-    },
-    {
-      path: "/:pathMatch(.*)*", // 使用正規表達式匹配所有路徑
-      name: "NotFound",
-      component: () => import("../components/NotFoundView.vue"), // 指向你的 404 頁面組件
     },
     {
       // ★★★ 父路由：使用 MainLayout ★★★
@@ -196,12 +192,24 @@ const router = createRouter({
           props: true,
         },
         {
-          path: "/form/assign/:type/:casenumber/record/:recordid",
+          path: "/assigns/:type/:casenumber/records/:recordid",
           name: "RecordsDetail", // 給它一個唯一的名稱，方便在程式中使用
           component: () => import("../components/RecordsDetail.vue"),
           props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
         },
+        {
+          path: "/options/nationalities",
+          name: "Options_nationalities", // 給它一個唯一的名稱，方便在程式中使用
+          component: () =>
+            import("../components/Options/options_nationalities.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
       ],
+    },
+    {
+      path: "/:pathMatch(.*)*", // 使用正規表達式匹配所有路徑
+      name: "NotFound",
+      component: NotFoundView, // 指向你的 404 頁面組件
     },
   ],
 });
