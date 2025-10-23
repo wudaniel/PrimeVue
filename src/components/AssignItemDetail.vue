@@ -101,7 +101,7 @@
 
           <!-- [修改] 社工欄位使用 template 進行對應 -->
           <!-- 這段代碼無需修改，它會自動使用修正後的 getWorkerName 函式 -->
-          <Column field="author" header="社工" :sortable="true">
+          <Column field="author" header="填寫社工" :sortable="true">
             <template #body="slotProps">
               <span>{{ getWorkerName(slotProps.data.author) }}</span>
             </template>
@@ -506,7 +506,13 @@ const goToAddRecord = () => {
   else {
     return;
   }
-  router.push({ name: targetRouteName, query: { caseNumber: props.id } });
+  router.push({
+    name: targetRouteName,
+    query: {
+      caseNumber: props.id,
+      caseType: props.type, // <-- 新增 caseType，用於返回時判斷
+    },
+  });
 };
 const goToRecordDetail = (recordId: string | number) => {
   let params = {
@@ -514,6 +520,7 @@ const goToRecordDetail = (recordId: string | number) => {
     casenumber: props.id,
     recordid: recordId,
   };
+
   router.push({
     name: "RecordsDetail",
     params: params,

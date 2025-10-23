@@ -1,6 +1,6 @@
 <template>
   <div class="surface-card p-2 sm:p-4 shadow-2 border-round">
-    <!-- 標題與操作區 -->
+    <!-- 標題與操作區 (保持不變) -->
     <div
       class="flex flex-wrap justify-content-between align-items-center gap-3 mb-4"
     >
@@ -18,17 +18,10 @@
           label="返回"
           icon="pi pi-arrow-left"
         />
-        <!-- 如果需要編輯按鈕，可以在這裡加入 -->
-        <!-- <Button
-          @click="editRecord"
-          class="p-button-primary p-button-sm"
-          label="編輯紀錄"
-          icon="pi pi-pencil"
-        /> -->
       </div>
     </div>
 
-    <!-- 狀態處理 -->
+    <!-- 狀態處理 (保持不變) -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
       <p class="mt-3 text-color-secondary">{{ loadingStatusText }}</p>
@@ -40,6 +33,7 @@
 
     <!-- 主要內容區 -->
     <div v-else>
+      <!-- [修改] 基本資料顯示網格 -->
       <div v-if="processedData && processedData.length > 0">
         <div class="grid detail-grid">
           <div
@@ -55,7 +49,6 @@
                 :class="item.isFullWidth ? 'text-base' : 'font-bold text-lg'"
                 class="item-value"
               >
-                <!-- 根據類型顯示不同樣式 -->
                 <Tag
                   v-if="isTag(item.key)"
                   :severity="getTagSeverity(item.key, item.originalValue)"
@@ -68,7 +61,35 @@
           </div>
         </div>
       </div>
-      <div v-else class="text-center text-color-secondary p-5 mt-3">
+
+      <!-- [新增] 服務對象詳細資料區塊 -->
+      <div
+        v-if="rawData?.data?.targets && rawData.data.targets.length > 0"
+        class="mt-5"
+      >
+        <h4
+          class="mb-3 font-semibold text-lg border-bottom-1 surface-border pb-2"
+        >
+          服務對象詳細資料
+        </h4>
+        <div class="flex flex-column gap-3">
+          <TargetDetailPanel
+            v-for="(target, index) in rawData.data.targets"
+            :key="index"
+            :target="target"
+            :option-maps="optionMaps"
+            :index="index"
+          />
+        </div>
+      </div>
+
+      <div
+        v-if="
+          (!processedData || processedData.length === 0) &&
+          (!rawData?.data?.targets || rawData.data.targets.length === 0)
+        "
+        class="text-center text-color-secondary p-5 mt-3"
+      >
         <i class="pi pi-inbox mb-3" style="font-size: 3rem"></i>
         <p class="m-0">查無此服務紀錄的相關詳細資料。</p>
       </div>
@@ -88,23 +109,24 @@ import Message from "primevue/message";
 import Chip from "primevue/chip";
 import Tag from "primevue/tag";
 
-// --- TypeScript Interfaces ---
+// [新增] 導入新的子元件
+import TargetDetailPanel from "../layout/TargetDetailPanel.vue";
+
+// --- TypeScript Interfaces (保持不變) ---
 interface FieldConfig {
   key: string;
   title: string;
   isFullWidth?: boolean;
   dependsOn?: (recordData: any) => boolean;
 }
-
-// [新增] 為 optionMaps 定義一個介面，包含 workers
 interface OptionMaps {
   nationalities: Map<number, string>;
   serviceMethods: Map<number, string>;
   serviceItems: Map<number, string>;
-  workers: Map<string, string>; // 新增 workers Map
+  workers: Map<string, string>;
 }
 
-// --- Props ---
+// --- Props (保持不變) ---
 const props = defineProps<{
   type: string;
   casenumber: string;
@@ -120,35 +142,28 @@ const displayType = computed(() => {
   return typeMap[props.type] || props.type;
 });
 
-// --- 狀態變數 ---
+// --- 狀態變數 (保持不變) ---
 const rawData = ref<any>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const loadingStatusText = ref("正在載入資料...");
-
-// [修改] 使用新的介面並加入 workers
 const optionMaps = ref<OptionMaps>({
   nationalities: new Map(),
   serviceMethods: new Map(),
   serviceItems: new Map(),
-  workers: new Map(), // 初始化空的 workers Map
+  workers: new Map(),
 });
 const areOptionsLoaded = ref(false);
 
-// --- 輔助函式 ---
+// --- 輔助函式 (保持不變) ---
 const isChip = (key: string) =>
   ["caseNumber", "filingDate", "gender"].includes(key);
-
-// [修改] 將 author 從 Chip 移到一般文字顯示，因為我們現在要顯示全名
 const isTag = (key: string) => ["nationalityID"].includes(key);
-
 const getTagSeverity = (key: string, value: any) => {
   if ((key === "nationalityID" || key === "serviceMethodID") && value === -1)
     return "warn";
   return "info";
 };
-
-// [新增] 建立一個集中的社工姓名轉換函式
 const getWorkerName = (workerId: any): string => {
   if (workerId === null || workerId === undefined || workerId === "") {
     return "未指定";
@@ -157,20 +172,20 @@ const getWorkerName = (workerId: any): string => {
   return optionMaps.value.workers.get(key) || `未知社工 (${key})`;
 };
 
-// --- 核心邏輯：處理並格式化紀錄資料 ---
+// --- [修改] 核心邏輯：處理並格式化紀錄資料 ---
 const processedData = computed(() => {
   if (!rawData.value?.data || !areOptionsLoaded.value) {
     return [];
   }
 
   const recordData = rawData.value.data;
-  const genderMap: { [key: number]: string } = { 0: "男", 1: "女", 2: "其他" };
 
+  // [修改] 移除 targets 和 serviceItems，它們將由新元件處理
   const fieldsConfig: FieldConfig[] = [
     { key: "filingDate", title: "填寫日期" },
     { key: "caseNumber", title: "案件編號" },
     { key: "author", title: "填寫社工" },
-    { key: "targets", title: "詳細服務對象" },
+    // { key: "targets", title: "詳細服務對象" }, // <--- 移除
     { key: "serviceMethodID", title: "服務方式" },
     {
       key: "serviceMethodOther",
@@ -179,7 +194,7 @@ const processedData = computed(() => {
     },
     { key: "taskObject", title: "工作目標", isFullWidth: true },
     { key: "detail", title: "服務內容", isFullWidth: true },
-    { key: "serviceItems", title: "服務項目明細", isFullWidth: true },
+    // { key: "serviceItems", title: "服務項目明細", isFullWidth: true }, // <--- 移除
   ];
 
   const dataArray = [];
@@ -195,20 +210,10 @@ const processedData = computed(() => {
 
     let displayValue: any = value;
 
+    // [修改] 移除 targets 和 serviceItems 的 switch case 邏輯
     switch (field.key) {
-      // [新增] 新增 author 的 case 來轉換姓名
       case "author":
         displayValue = getWorkerName(value);
-        break;
-      case "gender":
-        displayValue = genderMap[value as number] || "未知";
-        break;
-      case "nationalityID":
-        displayValue =
-          value === -1
-            ? "其他"
-            : optionMaps.value.nationalities.get(value as number) ||
-              `ID: ${value}`;
         break;
       case "serviceMethodID":
         displayValue =
@@ -217,42 +222,8 @@ const processedData = computed(() => {
             : optionMaps.value.serviceMethods.get(value as number) ||
               `ID: ${value}`;
         break;
-      case "targets":
-        if (Array.isArray(value) && value.length > 0) {
-          displayValue = value
-            .map((item) => {
-              const gender = genderMap[item.gender] || "未知性別";
-              const nationality =
-                item.nationalityID === -1
-                  ? "其他"
-                  : optionMaps.value.nationalities.get(item.nationalityID) ||
-                    `國籍ID: ${item.nationalityID}`;
-              return `${item.name} (${gender}, ${nationality})`;
-            })
-            .join("\n");
-        } else {
-          continue;
-        }
-        break;
-      case "serviceItems":
-        if (Array.isArray(value) && value.length > 0) {
-          displayValue = value
-            .map((item) => {
-              const itemName =
-                optionMaps.value.serviceItems.get(item.id) ||
-                `項目ID: ${item.id}`;
-              const extras = [];
-              if (item.detail) extras.push(`說明: ${item.detail}`);
-              if (item.unit) extras.push(`單位: ${item.unit}`);
-              return extras.length > 0
-                ? `${itemName} (${extras.join("、")})`
-                : itemName;
-            })
-            .join("\n");
-        } else {
-          continue;
-        }
-        break;
+      // case 'targets': ... // <--- 移除
+      // case 'serviceItems': ... // <--- 移除
     }
 
     dataArray.push({
@@ -267,17 +238,18 @@ const processedData = computed(() => {
   return dataArray;
 });
 
-// --- 資料獲取 ---
+// --- 資料獲取 (保持不變) ---
 const fetchOptionMaps = async () => {
   loadingStatusText.value = "正在載入選項對照表...";
   try {
-    // [修改] 加入 workers 的 API 請求
     const [nationalitiesRes, serviceMethodsRes, serviceItemsRes, workersRes] =
       await Promise.all([
-        apiHandler.get("/option/nationalities"),
+        apiHandler.get("/option/nationalities?show_all=true"),
         apiHandler.get("/option/serviceMethods"),
-        apiHandler.get("/option/serviceItems"),
-        apiHandler.get("/option/workers"), // 新增請求
+        // [重要] 這裡要確保您獲取的是新入境的服務項目列表 (type=2)，
+        // 以便與 TargetDetailPanel 裡的項目名稱對應
+        apiHandler.get("/option/serviceItems?type=2"),
+        apiHandler.get("/option/workers"),
       ]);
     optionMaps.value.nationalities = new Map(
       nationalitiesRes.data.data.map((i: any) => [i.id, i.name]),
@@ -288,7 +260,6 @@ const fetchOptionMaps = async () => {
     optionMaps.value.serviceItems = new Map(
       serviceItemsRes.data.data.map((i: any) => [i.id, i.name]),
     );
-    // [修改] 將 workers 資料存入 Map
     optionMaps.value.workers = new Map(
       workersRes.data.data.map((i: any) => [i.name, i.fullName]),
     );
@@ -326,7 +297,7 @@ const fetchData = async (
   }
 };
 
-// --- 生命週期鉤子 ---
+// --- 生命週期鉤子 & 頁面導航 (保持不變) ---
 onMounted(() => {
   const initialize = async () => {
     isLoading.value = true;
@@ -345,7 +316,6 @@ watch(
   },
 );
 
-// --- 頁面導航 ---
 const goBack = () => router.go(-1);
 </script>
 
@@ -360,8 +330,8 @@ const goBack = () => router.go(-1);
   transition: background-color 0.2s;
   display: flex;
   flex-direction: column;
-  min-height: 4.5rem; /* 確保卡片有基本高度 */
-  justify-content: center; /* 垂直置中 */
+  min-height: 4.5rem;
+  justify-content: center;
 }
 .detail-item-card:hover {
   background-color: var(--surface-b);

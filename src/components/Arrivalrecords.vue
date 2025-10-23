@@ -30,6 +30,7 @@
             v-model="caseNumber"
             placeholder="案號"
             class="w-full"
+            :readonly="isCaseLocked"
             :class="{ 'p-invalid': !!caseNumberError }"
           />
           <small class="p-error" v-if="caseNumberError">{{
@@ -371,11 +372,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, watch } from "vue";
+import { ref, onMounted, reactive, watch, computed } from "vue";
 import { apiHandler } from "../class/apiHandler";
 import { format } from "date-fns";
 import { useToast } from "primevue/usetoast";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 // --- PrimeVue Components ---
 import DatePicker from "primevue/datepicker"; // 使用更精確的導入路徑
 import InputText from "primevue/inputtext";
@@ -385,6 +386,7 @@ import Select from "primevue/select";
 import Textarea from "primevue/textarea";
 import Checkbox from "primevue/checkbox";
 import Panel from "primevue/panel"; // ★★★ 1. 引入 Panel 元件 ★★★
+
 // --- VeeValidate ---
 import { useForm, useField, useFieldArray, defineRule } from "vee-validate";
 
@@ -431,7 +433,15 @@ type TargetError = Partial<
 // --- Hooks ---
 const toast = useToast();
 const router = useRouter();
+const route = useRoute();
 const props = defineProps<{ caseNumberQuery?: string }>();
+const caseFromQuery = computed<string>(() => {
+  const q = (route.query.caseNumber ??
+    route.query.case ??
+    props.caseNumberQuery) as string | string[] | undefined;
+  return Array.isArray(q) ? (q[0] ?? "") : (q ?? "");
+});
+const isCaseLocked = computed<boolean>(() => !!caseFromQuery.value);
 
 // --- Form State ---
 const { handleSubmit, meta } = useForm({});
@@ -439,11 +449,13 @@ const isSubmitting = ref(false);
 
 const { value: filingDate, errorMessage: filingDateError } =
   useField<Date | null>("filingDate", "required");
-const { value: caseNumber, errorMessage: caseNumberError } = useField<string>(
-  "caseNumber",
-  "required",
-  { initialValue: props.caseNumberQuery || "" },
-);
+const {
+  value: caseNumber,
+  errorMessage: caseNumberError,
+  resetField, // <-- [修改 1]: 取得 resetField 方法
+} = useField<string>("caseNumber", "required", {
+  initialValue: caseFromQuery.value || "",
+});
 
 // useFieldArray 現在管理更複雜的 Target 物件
 const { fields: targetFields, push, remove } = useFieldArray<Target>("targets");
@@ -499,6 +511,16 @@ const removeTarget = (index: number) => {
 };
 
 // --- Watcher ---
+watch(
+  caseFromQuery,
+  (newCaseValue) => {
+    // 無論新的 URL query 是什麼 (字串或空)，
+    // 都使用 resetField 將表單欄位的值和狀態重設為該值。
+    // 這確保了在 SPA 導航中，欄位狀態永遠與 URL 同步。
+    resetField({ value: newCaseValue || "" });
+  },
+  { immediate: false }, // 保持 false，因為 initialValue 已經處理了首次載入
+);
 // 這個 watcher 現在需要遍歷所有 targetFields
 watch(
   targetFields,
@@ -680,7 +702,37 @@ const onSubmit = handleSubmit(async (values) => {
       detail: "紀錄已成功新增！",
       life: 1500,
     });
-    setTimeout(() => router.push("/"), 1500);
+
+    setTimeout(() => {
+      // [已修改] 從 route.query 讀取返回所需的資訊
+      const backCaseNumberQuery = route.query.caseNumber;
+      const backCaseTypeQuery = route.query.caseType;
+
+      // vue-router 的 query 可以是 string 或 string[]。
+      // 路由參數 (params) 通常需要一個單一的 string。
+      // 我們需要處理陣列的情況，通常取第一個值即可。
+      const backCaseNumber = Array.isArray(backCaseNumberQuery)
+        ? backCaseNumberQuery[0]
+        : backCaseNumberQuery;
+      const backCaseType = Array.isArray(backCaseTypeQuery)
+        ? backCaseTypeQuery[0]
+        : backCaseTypeQuery;
+
+      // 如果這兩個參數都存在 (不是 null, undefined 或空字串)，就代表是從詳細頁來的
+      if (backCaseNumber && backCaseType) {
+        router.push({
+          name: "AssignDetail", // <-- 請確認這是您案件詳細頁的路由名稱
+          params: {
+            type: "arrival",
+            // 現在 backCaseNumber 的類型是 string | null | undefined，可以安全地指派
+            caseNumber: backCaseNumber,
+          },
+        });
+      } else {
+        // 如果缺少任何一個參數，代表是從 Sidebar 來的，返回預設頁面
+        router.push("/");
+      }
+    }, 1500);
   } catch (error: any) {
     const errorMessage =
       error.response?.data?.message || "提交失敗，請檢查網路或聯繫管理員。";
