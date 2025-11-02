@@ -3,18 +3,19 @@
     <!-- ... 頁面標題和按鈕 ... -->
     <div class="flex justify-content-between align-items-center mb-4">
       <div>
-        <h2 class="m-0 text-xl font-semibold">國籍資料管理</h2>
+        <h2 class="m-0 text-xl font-semibold">結案原因資料管理</h2>
         <p class="mt-1 text-color-secondary text-sm">
           您可以新增、編輯或切換狀態，完成後請點擊「儲存變更」。
         </p>
       </div>
       <Button
-        @click="addNewNationality"
-        label="新增國籍"
+        @click="addNewReason"
+        label="新增結案原因"
         icon="pi pi-plus"
         class="p-button-success"
       />
     </div>
+
     <!-- ... 狀態處理 ... -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
@@ -25,7 +26,7 @@
 
     <div v-else>
       <DataTable
-        :value="allNationalities"
+        :value="allReasons"
         responsiveLayout="scroll"
         editMode="cell"
         @cell-edit-complete="onCellEditComplete"
@@ -35,7 +36,7 @@
             class: {
               'deleted-row':
                 props.rowData &&
-                isMarkedForDeletion(props.rowData as Nationality),
+                isMarkedForDeletion(props.rowData as ClosingReason),
             },
           }),
         }"
@@ -43,7 +44,7 @@
       >
         <Column field="id" header="ID" style="width: 10%"></Column>
 
-        <Column field="name" header="國籍名稱" style="width: 50%">
+        <Column field="name" header="結案原因名稱" style="width: 50%">
           <template #editor="{ data, field }">
             <InputText v-model="data[field]" autofocus class="w-full" />
           </template>
@@ -134,7 +135,7 @@ import ToggleSwitch from "primevue/toggleswitch";
 import { useToast } from "primevue/usetoast";
 
 // --- TypeScript 介面定義 ---
-interface Nationality {
+interface ClosingReason {
   id: number;
   name: string;
   visible: number;
@@ -147,13 +148,13 @@ interface UpsertPayload {
 }
 interface BodyRowPassThroughProps {
   props: {
-    rowData: Nationality;
+    rowData: ClosingReason;
   };
 }
 
 // --- 狀態變數 ---
-const originalNationalities = ref<Nationality[]>([]);
-const allNationalities = ref<Nationality[]>([]);
+const originalReasons = ref<ClosingReason[]>([]);
+const allReasons = ref<ClosingReason[]>([]);
 const deletedIds = ref(new Set<number>());
 
 const isLoading = ref(true);
@@ -166,29 +167,28 @@ let uiKeyCounter = 0;
 const toast = useToast();
 
 // --- 資料獲取邏輯 ---
-const fetchNationalities = async () => {
+const fetchReasons = async () => {
   isLoading.value = true;
   error.value = null;
   try {
     const response = await apiHandler.get(
-      "/option/nationalities?show_all=true",
+      "/option/closingreasons?show_all=true",
     );
     if (response.data?.success) {
       const rawData = response.data.data;
-      // 過濾掉所有 id <= 0 的項目
       const filteredData = rawData.filter(
         (item: { id: number }) => item.id > 0,
       );
       const processedData = filteredData.map(
-        (item: Omit<Nationality, "_ui_key">) => ({
+        (item: Omit<ClosingReason, "_ui_key">) => ({
           ...item,
           _ui_key: item.id,
         }),
       );
-      originalNationalities.value = JSON.parse(JSON.stringify(processedData));
-      allNationalities.value = JSON.parse(JSON.stringify(processedData));
+      originalReasons.value = JSON.parse(JSON.stringify(processedData));
+      allReasons.value = JSON.parse(JSON.stringify(processedData));
     } else {
-      throw new Error(response.data.message || "未能獲取國籍資料");
+      throw new Error(response.data.message || "未能獲取結案原因資料");
     }
   } catch (err: any) {
     error.value = err.message || "發生未知錯誤";
@@ -197,17 +197,17 @@ const fetchNationalities = async () => {
   }
 };
 
-onMounted(fetchNationalities);
+onMounted(fetchReasons);
 
 // --- 輔助及 UI 操作函式 (無變動) ---
-const isMarkedForDeletion = (item: Nationality) => {
+const isMarkedForDeletion = (item: ClosingReason) => {
   return item.id > 0 && deletedIds.value.has(item.id);
 };
 
-const addNewNationality = () => {
-  allNationalities.value.unshift({
+const addNewReason = () => {
+  allReasons.value.unshift({
     id: 0,
-    name: "請輸入新國籍",
+    name: "請輸入新結案原因",
     visible: 1,
     _ui_key: `new_${uiKeyCounter++}`,
   });
@@ -215,41 +215,37 @@ const addNewNationality = () => {
 
 const onCellEditComplete = (event: DataTableCellEditCompleteEvent) => {
   const { data, newValue, field } = event;
-  const item = allNationalities.value.find((n) => n._ui_key === data._ui_key);
+  const item = allReasons.value.find((r) => r._ui_key === data._ui_key);
   if (item && field in item) {
     (item as any)[field] = newValue;
   }
 };
 
-const updateVisibility = (itemToUpdate: Nationality, newValue: boolean) => {
-  const item = allNationalities.value.find(
-    (n) => n._ui_key === itemToUpdate._ui_key,
-  );
+const updateVisibility = (itemToUpdate: ClosingReason, newValue: boolean) => {
+  const item = allReasons.value.find((r) => r._ui_key === itemToUpdate._ui_key);
   if (item) {
     item.visible = newValue ? 1 : 0;
   }
 };
 
-const markForDeletion = (item: Nationality) => {
+const markForDeletion = (item: ClosingReason) => {
   if (item.id > 0) {
     deletedIds.value.add(item.id);
   } else {
-    allNationalities.value = allNationalities.value.filter(
-      (n) => n._ui_key !== item._ui_key,
+    allReasons.value = allReasons.value.filter(
+      (r) => r._ui_key !== item._ui_key,
     );
   }
 };
 
-const undoDeletion = (item: Nationality) => {
+const undoDeletion = (item: ClosingReason) => {
   if (item.id > 0) {
     deletedIds.value.delete(item.id);
   }
 };
 
 const resetChanges = () => {
-  allNationalities.value = JSON.parse(
-    JSON.stringify(originalNationalities.value),
-  );
+  allReasons.value = JSON.parse(JSON.stringify(originalReasons.value));
   deletedIds.value.clear();
   generatedPayload.value = null;
 };
@@ -257,14 +253,14 @@ const resetChanges = () => {
 // --- [核心修改] 3. 更新 Payload 產生與提交函式 ---
 const prepareAndShowPayload = async () => {
   const upserts: UpsertPayload[] = [];
-  allNationalities.value.forEach((item) => {
+  allReasons.value.forEach((item) => {
     if (isMarkedForDeletion(item)) return;
 
-    if (item.id === 0 && item.name !== "請輸入新國籍") {
+    if (item.id === 0 && item.name !== "請輸入新結案原因") {
       upserts.push({ id: 0, name: item.name, visible: item.visible });
     } else {
-      const originalItem = originalNationalities.value.find(
-        (n) => n._ui_key === item._ui_key,
+      const originalItem = originalReasons.value.find(
+        (r) => r._ui_key === item._ui_key,
       );
       if (
         originalItem &&
@@ -296,7 +292,7 @@ const prepareAndShowPayload = async () => {
   isSaving.value = true;
 
   try {
-    const response = await apiHandler.post("/option/nationalities", payload);
+    const response = await apiHandler.post("/option/closingreasons", payload);
     if (response.data?.success) {
       toast.add({
         severity: "success",
@@ -324,14 +320,14 @@ const prepareAndShowPayload = async () => {
 </script>
 
 <style>
+/* 樣式與之前完全相同，無需修改 */
 .editable-cells .p-editable-column {
   cursor: pointer;
 }
-/* [核心修改] 遵照您的要求，固定使用此樣式 */
 .deleted-row {
   text-decoration: line-through;
-  background-color: #ff0000 !important;
-  color: #888;
+  background-color: #ff0026 !important;
+  color: #757575;
 }
 .deleted-row .p-cell-editor,
 .deleted-row .p-inputswitch {

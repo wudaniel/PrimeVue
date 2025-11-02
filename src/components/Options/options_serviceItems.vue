@@ -1,20 +1,21 @@
 <template>
   <div class="surface-card p-4 shadow-2 border-round">
-    <!-- ... 頁面標題和按鈕 ... -->
+    <!-- ... 頁面標題和按鈕 (已更新) ... -->
     <div class="flex justify-content-between align-items-center mb-4">
       <div>
-        <h2 class="m-0 text-xl font-semibold">國籍資料管理</h2>
+        <h2 class="m-0 text-xl font-semibold">服務項目資料管理</h2>
         <p class="mt-1 text-color-secondary text-sm">
           您可以新增、編輯或切換狀態，完成後請點擊「儲存變更」。
         </p>
       </div>
       <Button
-        @click="addNewNationality"
-        label="新增國籍"
+        @click="addNewServiceItem"
+        label="新增服務項目"
         icon="pi pi-plus"
         class="p-button-success"
       />
     </div>
+
     <!-- ... 狀態處理 ... -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
@@ -25,7 +26,7 @@
 
     <div v-else>
       <DataTable
-        :value="allNationalities"
+        :value="allServiceItems"
         responsiveLayout="scroll"
         editMode="cell"
         @cell-edit-complete="onCellEditComplete"
@@ -35,23 +36,61 @@
             class: {
               'deleted-row':
                 props.rowData &&
-                isMarkedForDeletion(props.rowData as Nationality),
+                isMarkedForDeletion(props.rowData as ServiceItem),
             },
           }),
         }"
         dataKey="_ui_key"
       >
-        <Column field="id" header="ID" style="width: 10%"></Column>
+        <Column field="id" header="ID" style="width: 8%"></Column>
 
-        <Column field="name" header="國籍名稱" style="width: 50%">
+        <Column field="name" header="服務項目名稱" style="width: 29%">
           <template #editor="{ data, field }">
             <InputText v-model="data[field]" autofocus class="w-full" />
           </template>
         </Column>
 
-        <Column field="visible" header="狀態" style="width: 20%">
+        <!-- [核心修改] 新增 extra 欄位 -->
+        <Column field="extra" header="需額外資訊" style="width: 15%">
           <template #body="slotProps">
-            <div class="flex align-items-center gap-2">
+            <span
+              :class="{
+                'text-green-500': slotProps.data.extra === 1,
+                'text-gray-500': slotProps.data.extra === 0,
+              }"
+            >
+              {{ slotProps.data.extra === 1 ? "是" : "否" }}
+            </span>
+          </template>
+          <template #editor="{ data, field }">
+            <div class="flex justify-content-center">
+              <ToggleSwitch
+                :modelValue="data[field] === 1"
+                @update:modelValue="data[field] = $event ? 1 : 0"
+              />
+            </div>
+          </template>
+        </Column>
+
+        <!-- [核心修改] 新增 type 欄位 -->
+        <Column field="type" header="類型" style="width: 15%">
+          <template #body="slotProps">
+            {{ getTypeName(slotProps.data.type) }}
+          </template>
+          <template #editor="{ data, field }">
+            <Dropdown
+              v-model="data[field]"
+              :options="typeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+          </template>
+        </Column>
+
+        <Column field="visible" header="狀態" style="width: 13%">
+          <template #body="slotProps">
+            <div class="flex justify-content-center">
               <ToggleSwitch
                 :modelValue="slotProps.data.visible === 1"
                 @update:modelValue="
@@ -60,7 +99,6 @@
                 "
                 :disabled="isMarkedForDeletion(slotProps.data)"
               />
-              <span>{{ slotProps.data.visible === 1 ? "顯示" : "隱藏" }}</span>
             </div>
           </template>
         </Column>
@@ -84,7 +122,7 @@
         </Column>
       </DataTable>
 
-      <!-- ... 提交按鈕和 JSON 顯示 (已更新) ... -->
+      <!-- ... 提交按鈕和 JSON 顯示 ... -->
       <div class="mt-4 flex justify-content-end gap-2">
         <Button
           @click="resetChanges"
@@ -92,7 +130,6 @@
           class="p-button-secondary"
           :disabled="isSaving"
         />
-        <!-- [核心修改] 更新儲存按鈕，加入 loading 和 disabled 狀態 -->
         <Button
           @click="prepareAndShowPayload"
           label="儲存變更"
@@ -102,6 +139,7 @@
           :disabled="isSaving"
         />
       </div>
+
       <!--
       <div v-if="generatedPayload" class="mt-4">
         <h4 class="font-semibold">生成的請求資料 (Payload):</h4>
@@ -129,66 +167,72 @@ import Message from "primevue/message";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import ToggleSwitch from "primevue/toggleswitch";
-
-// [核心修改] 1. 引入 useToast
+import Dropdown from "primevue/dropdown";
 import { useToast } from "primevue/usetoast";
 
-// --- TypeScript 介面定義 ---
-interface Nationality {
+// --- TypeScript 介面定義 (已更新) ---
+interface ServiceItem {
   id: number;
   name: string;
   visible: number;
+  extra: number;
+  type: number;
   _ui_key: number | string;
 }
 interface UpsertPayload {
   id: number;
   name: string;
   visible: number;
+  extra: number;
+  type: number;
 }
 interface BodyRowPassThroughProps {
   props: {
-    rowData: Nationality;
+    rowData: ServiceItem;
   };
 }
 
 // --- 狀態變數 ---
-const originalNationalities = ref<Nationality[]>([]);
-const allNationalities = ref<Nationality[]>([]);
+const originalServiceItems = ref<ServiceItem[]>([]);
+const allServiceItems = ref<ServiceItem[]>([]);
 const deletedIds = ref(new Set<number>());
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const generatedPayload = ref<object | null>(null);
-const isSaving = ref(false); // [新增] 用於控制儲存按鈕的載入狀態
+const isSaving = ref(false);
 let uiKeyCounter = 0;
 
-// [核心修改] 2. 實例化 Toast 服務
 const toast = useToast();
 
+// [核心修改] 定義類型選項
+const typeOptions = ref([
+  { label: "兩者皆要", value: 0 },
+  { label: "一般", value: 1 },
+  { label: "新入境", value: 2 },
+]);
+
 // --- 資料獲取邏輯 ---
-const fetchNationalities = async () => {
+const fetchServiceItems = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await apiHandler.get(
-      "/option/nationalities?show_all=true",
-    );
+    const response = await apiHandler.get("/option/serviceItems?show_all=true");
     if (response.data?.success) {
       const rawData = response.data.data;
-      // 過濾掉所有 id <= 0 的項目
       const filteredData = rawData.filter(
         (item: { id: number }) => item.id > 0,
       );
       const processedData = filteredData.map(
-        (item: Omit<Nationality, "_ui_key">) => ({
+        (item: Omit<ServiceItem, "_ui_key">) => ({
           ...item,
           _ui_key: item.id,
         }),
       );
-      originalNationalities.value = JSON.parse(JSON.stringify(processedData));
-      allNationalities.value = JSON.parse(JSON.stringify(processedData));
+      originalServiceItems.value = JSON.parse(JSON.stringify(processedData));
+      allServiceItems.value = JSON.parse(JSON.stringify(processedData));
     } else {
-      throw new Error(response.data.message || "未能獲取國籍資料");
+      throw new Error(response.data.message || "未能獲取服務項目資料");
     }
   } catch (err: any) {
     error.value = err.message || "發生未知錯誤";
@@ -197,81 +241,102 @@ const fetchNationalities = async () => {
   }
 };
 
-onMounted(fetchNationalities);
+onMounted(fetchServiceItems);
 
-// --- 輔助及 UI 操作函式 (無變動) ---
-const isMarkedForDeletion = (item: Nationality) => {
+// --- 輔助及 UI 操作函式 ---
+const getTypeName = (typeValue: number): string => {
+  const option = typeOptions.value.find((opt) => opt.value === typeValue);
+  return option ? option.label : "未知";
+};
+
+const isMarkedForDeletion = (item: ServiceItem) => {
   return item.id > 0 && deletedIds.value.has(item.id);
 };
 
-const addNewNationality = () => {
-  allNationalities.value.unshift({
+const addNewServiceItem = () => {
+  allServiceItems.value.unshift({
     id: 0,
-    name: "請輸入新國籍",
+    name: "請輸入新服務項目",
     visible: 1,
+    extra: 0, // 預設為否
+    type: 0, // 預設為兩者皆要
     _ui_key: `new_${uiKeyCounter++}`,
   });
 };
 
 const onCellEditComplete = (event: DataTableCellEditCompleteEvent) => {
   const { data, newValue, field } = event;
-  const item = allNationalities.value.find((n) => n._ui_key === data._ui_key);
+  const item = allServiceItems.value.find((si) => si._ui_key === data._ui_key);
   if (item && field in item) {
     (item as any)[field] = newValue;
   }
 };
 
-const updateVisibility = (itemToUpdate: Nationality, newValue: boolean) => {
-  const item = allNationalities.value.find(
-    (n) => n._ui_key === itemToUpdate._ui_key,
+const updateVisibility = (itemToUpdate: ServiceItem, newValue: boolean) => {
+  const item = allServiceItems.value.find(
+    (si) => si._ui_key === itemToUpdate._ui_key,
   );
   if (item) {
     item.visible = newValue ? 1 : 0;
   }
 };
 
-const markForDeletion = (item: Nationality) => {
+const markForDeletion = (item: ServiceItem) => {
   if (item.id > 0) {
     deletedIds.value.add(item.id);
   } else {
-    allNationalities.value = allNationalities.value.filter(
-      (n) => n._ui_key !== item._ui_key,
+    allServiceItems.value = allServiceItems.value.filter(
+      (si) => si._ui_key !== item._ui_key,
     );
   }
 };
 
-const undoDeletion = (item: Nationality) => {
+const undoDeletion = (item: ServiceItem) => {
   if (item.id > 0) {
     deletedIds.value.delete(item.id);
   }
 };
 
 const resetChanges = () => {
-  allNationalities.value = JSON.parse(
-    JSON.stringify(originalNationalities.value),
+  allServiceItems.value = JSON.parse(
+    JSON.stringify(originalServiceItems.value),
   );
   deletedIds.value.clear();
   generatedPayload.value = null;
 };
 
-// --- [核心修改] 3. 更新 Payload 產生與提交函式 ---
+// --- Payload 產生與提交函式 (已更新) ---
 const prepareAndShowPayload = async () => {
   const upserts: UpsertPayload[] = [];
-  allNationalities.value.forEach((item) => {
+  allServiceItems.value.forEach((item) => {
     if (isMarkedForDeletion(item)) return;
 
-    if (item.id === 0 && item.name !== "請輸入新國籍") {
-      upserts.push({ id: 0, name: item.name, visible: item.visible });
+    if (item.id === 0 && item.name !== "請輸入新服務項目") {
+      upserts.push({
+        id: 0,
+        name: item.name,
+        visible: item.visible,
+        extra: item.extra,
+        type: item.type,
+      });
     } else {
-      const originalItem = originalNationalities.value.find(
-        (n) => n._ui_key === item._ui_key,
+      const originalItem = originalServiceItems.value.find(
+        (si) => si._ui_key === item._ui_key,
       );
       if (
         originalItem &&
         (originalItem.name !== item.name ||
-          originalItem.visible !== item.visible)
+          originalItem.visible !== item.visible ||
+          originalItem.extra !== item.extra ||
+          originalItem.type !== item.type)
       ) {
-        upserts.push({ id: item.id, name: item.name, visible: item.visible });
+        upserts.push({
+          id: item.id,
+          name: item.name,
+          visible: item.visible,
+          extra: item.extra,
+          type: item.type,
+        });
       }
     }
   });
@@ -296,7 +361,7 @@ const prepareAndShowPayload = async () => {
   isSaving.value = true;
 
   try {
-    const response = await apiHandler.post("/option/nationalities", payload);
+    const response = await apiHandler.post("/option/serviceItems", payload);
     if (response.data?.success) {
       toast.add({
         severity: "success",
@@ -327,11 +392,10 @@ const prepareAndShowPayload = async () => {
 .editable-cells .p-editable-column {
   cursor: pointer;
 }
-/* [核心修改] 遵照您的要求，固定使用此樣式 */
 .deleted-row {
   text-decoration: line-through;
-  background-color: #ff0000 !important;
-  color: #888;
+  background-color: #ff0026 !important;
+  color: #757575;
 }
 .deleted-row .p-cell-editor,
 .deleted-row .p-inputswitch {

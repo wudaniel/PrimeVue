@@ -3,14 +3,14 @@
     <!-- ... 頁面標題和按鈕 ... -->
     <div class="flex justify-content-between align-items-center mb-4">
       <div>
-        <h2 class="m-0 text-xl font-semibold">國籍資料管理</h2>
+        <h2 class="m-0 text-xl font-semibold">鄉鎮市區資料管理</h2>
         <p class="mt-1 text-color-secondary text-sm">
           您可以新增、編輯或切換狀態，完成後請點擊「儲存變更」。
         </p>
       </div>
       <Button
-        @click="addNewNationality"
-        label="新增國籍"
+        @click="addNewTown"
+        label="新增鄉鎮市區"
         icon="pi pi-plus"
         class="p-button-success"
       />
@@ -25,7 +25,7 @@
 
     <div v-else>
       <DataTable
-        :value="allNationalities"
+        :value="allTowns"
         responsiveLayout="scroll"
         editMode="cell"
         @cell-edit-complete="onCellEditComplete"
@@ -34,8 +34,7 @@
           bodyrow: ({ props }: BodyRowPassThroughProps) => ({
             class: {
               'deleted-row':
-                props.rowData &&
-                isMarkedForDeletion(props.rowData as Nationality),
+                props.rowData && isMarkedForDeletion(props.rowData as Town),
             },
           }),
         }"
@@ -43,7 +42,7 @@
       >
         <Column field="id" header="ID" style="width: 10%"></Column>
 
-        <Column field="name" header="國籍名稱" style="width: 50%">
+        <Column field="name" header="鄉鎮市區名稱" style="width: 50%">
           <template #editor="{ data, field }">
             <InputText v-model="data[field]" autofocus class="w-full" />
           </template>
@@ -134,7 +133,7 @@ import ToggleSwitch from "primevue/toggleswitch";
 import { useToast } from "primevue/usetoast";
 
 // --- TypeScript 介面定義 ---
-interface Nationality {
+interface Town {
   id: number;
   name: string;
   visible: number;
@@ -147,13 +146,13 @@ interface UpsertPayload {
 }
 interface BodyRowPassThroughProps {
   props: {
-    rowData: Nationality;
+    rowData: Town;
   };
 }
 
 // --- 狀態變數 ---
-const originalNationalities = ref<Nationality[]>([]);
-const allNationalities = ref<Nationality[]>([]);
+const originalTowns = ref<Town[]>([]);
+const allTowns = ref<Town[]>([]);
 const deletedIds = ref(new Set<number>());
 
 const isLoading = ref(true);
@@ -166,29 +165,25 @@ let uiKeyCounter = 0;
 const toast = useToast();
 
 // --- 資料獲取邏輯 ---
-const fetchNationalities = async () => {
+const fetchTowns = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await apiHandler.get(
-      "/option/nationalities?show_all=true",
-    );
+    const response = await apiHandler.get("/option/towns?show_all=true");
     if (response.data?.success) {
       const rawData = response.data.data;
-      // 過濾掉所有 id <= 0 的項目
+      // 過濾掉 ID <= 0 的項目
       const filteredData = rawData.filter(
         (item: { id: number }) => item.id > 0,
       );
-      const processedData = filteredData.map(
-        (item: Omit<Nationality, "_ui_key">) => ({
-          ...item,
-          _ui_key: item.id,
-        }),
-      );
-      originalNationalities.value = JSON.parse(JSON.stringify(processedData));
-      allNationalities.value = JSON.parse(JSON.stringify(processedData));
+      const processedData = filteredData.map((item: Omit<Town, "_ui_key">) => ({
+        ...item,
+        _ui_key: item.id,
+      }));
+      originalTowns.value = JSON.parse(JSON.stringify(processedData));
+      allTowns.value = JSON.parse(JSON.stringify(processedData));
     } else {
-      throw new Error(response.data.message || "未能獲取國籍資料");
+      throw new Error(response.data.message || "未能獲取鄉鎮市區資料");
     }
   } catch (err: any) {
     error.value = err.message || "發生未知錯誤";
@@ -197,17 +192,17 @@ const fetchNationalities = async () => {
   }
 };
 
-onMounted(fetchNationalities);
+onMounted(fetchTowns);
 
 // --- 輔助及 UI 操作函式 (無變動) ---
-const isMarkedForDeletion = (item: Nationality) => {
+const isMarkedForDeletion = (item: Town) => {
   return item.id > 0 && deletedIds.value.has(item.id);
 };
 
-const addNewNationality = () => {
-  allNationalities.value.unshift({
+const addNewTown = () => {
+  allTowns.value.unshift({
     id: 0,
-    name: "請輸入新國籍",
+    name: "請輸入新鄉鎮市區",
     visible: 1,
     _ui_key: `new_${uiKeyCounter++}`,
   });
@@ -215,41 +210,35 @@ const addNewNationality = () => {
 
 const onCellEditComplete = (event: DataTableCellEditCompleteEvent) => {
   const { data, newValue, field } = event;
-  const item = allNationalities.value.find((n) => n._ui_key === data._ui_key);
+  const item = allTowns.value.find((n) => n._ui_key === data._ui_key);
   if (item && field in item) {
     (item as any)[field] = newValue;
   }
 };
 
-const updateVisibility = (itemToUpdate: Nationality, newValue: boolean) => {
-  const item = allNationalities.value.find(
-    (n) => n._ui_key === itemToUpdate._ui_key,
-  );
+const updateVisibility = (itemToUpdate: Town, newValue: boolean) => {
+  const item = allTowns.value.find((n) => n._ui_key === itemToUpdate._ui_key);
   if (item) {
     item.visible = newValue ? 1 : 0;
   }
 };
 
-const markForDeletion = (item: Nationality) => {
+const markForDeletion = (item: Town) => {
   if (item.id > 0) {
     deletedIds.value.add(item.id);
   } else {
-    allNationalities.value = allNationalities.value.filter(
-      (n) => n._ui_key !== item._ui_key,
-    );
+    allTowns.value = allTowns.value.filter((n) => n._ui_key !== item._ui_key);
   }
 };
 
-const undoDeletion = (item: Nationality) => {
+const undoDeletion = (item: Town) => {
   if (item.id > 0) {
     deletedIds.value.delete(item.id);
   }
 };
 
 const resetChanges = () => {
-  allNationalities.value = JSON.parse(
-    JSON.stringify(originalNationalities.value),
-  );
+  allTowns.value = JSON.parse(JSON.stringify(originalTowns.value));
   deletedIds.value.clear();
   generatedPayload.value = null;
 };
@@ -257,13 +246,13 @@ const resetChanges = () => {
 // --- [核心修改] 3. 更新 Payload 產生與提交函式 ---
 const prepareAndShowPayload = async () => {
   const upserts: UpsertPayload[] = [];
-  allNationalities.value.forEach((item) => {
+  allTowns.value.forEach((item) => {
     if (isMarkedForDeletion(item)) return;
 
-    if (item.id === 0 && item.name !== "請輸入新國籍") {
+    if (item.id === 0 && item.name !== "請輸入新鄉鎮市區") {
       upserts.push({ id: 0, name: item.name, visible: item.visible });
     } else {
-      const originalItem = originalNationalities.value.find(
+      const originalItem = originalTowns.value.find(
         (n) => n._ui_key === item._ui_key,
       );
       if (
@@ -278,6 +267,7 @@ const prepareAndShowPayload = async () => {
 
   const deletes = Array.from(deletedIds.value);
 
+  // 如果沒有任何變更，則不提交
   if (upserts.length === 0 && deletes.length === 0) {
     toast.add({
       severity: "info",
@@ -296,14 +286,15 @@ const prepareAndShowPayload = async () => {
   isSaving.value = true;
 
   try {
-    const response = await apiHandler.post("/option/nationalities", payload);
+    const response = await apiHandler.post("/option/towns", payload);
     if (response.data?.success) {
       toast.add({
         severity: "success",
         summary: "成功",
         detail: "變更已成功儲存！",
-        life: 1500,
+        life: 1500, // Toast 顯示 1.5 秒
       });
+      // 延遲 1.5 秒後跳轉
       setTimeout(() => {
         router.push("/");
       }, 1500);
@@ -327,11 +318,11 @@ const prepareAndShowPayload = async () => {
 .editable-cells .p-editable-column {
   cursor: pointer;
 }
-/* [核心修改] 遵照您的要求，固定使用此樣式 */
+/* [核心修改] 遵照您的要求，固定使用此顏色 */
 .deleted-row {
   text-decoration: line-through;
-  background-color: #ff0000 !important;
-  color: #888;
+  background-color: #ff0026 !important; /* A lighter red for less visual strain */
+  color: #757575; /* Darker grey for better readability */
 }
 .deleted-row .p-cell-editor,
 .deleted-row .p-inputswitch {

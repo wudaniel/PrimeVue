@@ -510,7 +510,6 @@ const goToAddRecord = () => {
     name: targetRouteName,
     query: {
       caseNumber: props.id,
-      caseType: props.type, // <-- 新增 caseType，用於返回時判斷
     },
   });
 };

@@ -204,6 +204,60 @@ const router = createRouter({
             import("../components/Options/options_nationalities.vue"),
           props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
         },
+        {
+          path: "/options/towns",
+          name: "Options_towns", // 給它一個唯一的名稱，方便在程式中使用
+          component: () => import("../components/Options/options_towns.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
+        {
+          path: "/options/openingreason",
+          name: "Options_openingreason", // 給它一個唯一的名稱，方便在程式中使用
+          component: () =>
+            import("../components/Options/options_openingReason.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
+        {
+          path: "/options/refusingreason",
+          name: "Options_refusingreason", // 給它一個唯一的名稱，方便在程式中使用
+          component: () =>
+            import("../components/Options/options_refusingReason.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
+        {
+          path: "/options/closingreason",
+          name: "Options_closingReason", // 給它一個唯一的名稱，方便在程式中使用
+          component: () =>
+            import("../components/Options/options_closingReason.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
+        {
+          path: "/options/servicemethods",
+          name: "Options_servicemethods", // 給它一個唯一的名稱，方便在程式中使用
+          component: () =>
+            import("../components/Options/options_serviceMethods.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
+        {
+          path: "/options/sources",
+          name: "Options_sources", // 給它一個唯一的名稱，方便在程式中使用
+          component: () => import("../components/Options/options_sources.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
+        {
+          path: "/options/sourceCats",
+          name: "Options_sourceCats", // 給它一個唯一的名稱，方便在程式中使用
+          component: () =>
+            import("../components/Options/options_sourceCats.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
+        {
+          path: "/options/serviceItems",
+          name: "Options_serviceItems", // 給它一個唯一的名稱，方便在程式中使用
+          component: () =>
+            import("../components/Options/options_serviceItems.vue"),
+          props: true, // 這會將路由參數 :casenumber 和 :recordid 作為 props 傳入元件
+        },
       ],
     },
     {

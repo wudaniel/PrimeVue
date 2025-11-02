@@ -278,7 +278,7 @@ const menuItems = ref([
   },
   {
     label: "選項管理",
-    icon: "pi-database",
+    icon: "pi pi-database",
     items: [
       {
         label: "國家",
@@ -292,7 +292,7 @@ const menuItems = ref([
         label: "轉介單位",
         icon: " pi pi-list",
         command: () => {
-          router.push("/options/unit");
+          router.push("/options/sources");
           sidebarVisible.value = false;
         },
       },
@@ -300,7 +300,7 @@ const menuItems = ref([
         label: "個案來源類別",
         icon: " pi pi-list",
         command: () => {
-          router.push("/options/unitCatgory");
+          router.push("/options/sourcesCats");
           sidebarVisible.value = false;
         },
       },
@@ -308,7 +308,7 @@ const menuItems = ref([
         label: "鄉鎮市區",
         icon: " pi pi-list",
         command: () => {
-          router.push("/options/town");
+          router.push("/options/towns");
           sidebarVisible.value = false;
         },
       },
@@ -316,7 +316,7 @@ const menuItems = ref([
         label: "服務方式",
         icon: " pi pi-list",
         command: () => {
-          router.push("/options/serviceMethon");
+          router.push("/options/servicemethods");
           sidebarVisible.value = false;
         },
       },
@@ -324,7 +324,7 @@ const menuItems = ref([
         label: "服務項目",
         icon: " pi pi-list",
         command: () => {
-          router.push("/options/serviceItem");
+          router.push("/options/serviceItems");
           sidebarVisible.value = false;
         },
       },
@@ -348,7 +348,7 @@ const menuItems = ref([
         label: "結案原因",
         icon: " pi pi-list",
         command: () => {
-          router.push("/options/closingReason");
+          router.push("/options/closingreason");
           sidebarVisible.value = false;
         },
       },
