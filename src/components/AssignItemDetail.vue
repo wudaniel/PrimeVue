@@ -10,6 +10,7 @@
           >案件類型: {{ displayType }} / 案號: {{ id }}</span
         >
       </div>
+      <!-- [修改] 此處移除了下載按鈕 -->
       <div class="flex gap-2">
         <Button
           @click="goBack"
@@ -38,7 +39,7 @@
 
     <!-- 主要內容區 -->
     <div v-else>
-      <!-- 案件詳細資料區塊 -->
+      <!-- 案件詳細資料區塊 (此處無更動) -->
       <div v-if="processedData && processedData.length > 0">
         <div class="grid detail-grid">
           <div
@@ -78,7 +79,20 @@
       </div>
 
       <div class="mt-5">
-        <h4 class="m-0 mb-3 text-lg font-semibold">服務紀錄列表</h4>
+        <!-- [修改] 使用 Flexbox 容器來對齊標題和按鈕 -->
+        <div class="flex justify-content-between align-items-center mb-3">
+          <h4 class="m-0 text-lg font-semibold">服務紀錄列表</h4>
+          <!-- [移動] 將下載按鈕移動到此處 -->
+          <Button
+            @click="downloadSelectedRecords"
+            :disabled="!selectedRecords || selectedRecords.length === 0"
+            :loading="isDownloading"
+            class="p-button-info p-button-sm"
+            label="下載所選紀錄"
+            icon="pi pi-download"
+          />
+        </div>
+
         <DataTable
           :value="records"
           responsiveLayout="scroll"
@@ -88,7 +102,10 @@
           stripedRows
           paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageSelect"
           currentPageReportTemplate="顯示 {first} 到 {last} 項，共 {totalRecords} 項紀錄"
+          v-model:selection="selectedRecords"
+          dataKey="recordID"
         >
+          <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
           <Column field="listID" header="編號" :sortable="true">
             <template #body="slotProps">
               <Button
@@ -98,15 +115,11 @@
               /> </template
           ></Column>
           <Column field="date" header="日期" :sortable="true"></Column>
-
-          <!-- [修改] 社工欄位使用 template 進行對應 -->
-          <!-- 這段代碼無需修改，它會自動使用修正後的 getWorkerName 函式 -->
           <Column field="author" header="填寫社工" :sortable="true">
             <template #body="slotProps">
               <span>{{ getWorkerName(slotProps.data.author) }}</span>
             </template>
           </Column>
-
           <Column field="target" header="服務目標" :sortable="true"></Column>
           <Column field="methodID" header="服務方式" :sortable="true">
             <template #body="slotProps">
@@ -129,6 +142,7 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
@@ -142,7 +156,13 @@ import Tag from "primevue/tag";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 
-// [修改] 在 interface 中加入 towns
+// 定義紀錄的 TypeScript 介面，方便類型檢查
+interface Record {
+  recordID: number;
+  listID: number;
+  [key: string]: any; // 其他屬性
+}
+
 interface OptionMaps {
   sourceCats: Map<number, string>;
   sources: Map<number, string>;
@@ -152,7 +172,7 @@ interface OptionMaps {
   refusingReasons: Map<number, string>;
   closingReasons: Map<number, string>;
   workers: Map<string, string>;
-  towns: Map<number, string>; // 新增 towns Map
+  towns: Map<number, string>;
 }
 
 const props = defineProps<{
@@ -173,9 +193,12 @@ const rawData = ref<any>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const loadingStatusText = ref("正在載入資料...");
-const records = ref<any[]>([]);
+const records = ref<Record[]>([]);
 
-// [修改] 在 ref 初始化時加入 towns
+// [新增] 用於儲存勾選的紀錄和下載狀態
+const selectedRecords = ref<Record[]>([]);
+const isDownloading = ref(false);
+
 const optionMaps = ref<OptionMaps>({
   sourceCats: new Map(),
   sources: new Map(),
@@ -185,7 +208,7 @@ const optionMaps = ref<OptionMaps>({
   refusingReasons: new Map(),
   closingReasons: new Map(),
   workers: new Map(),
-  towns: new Map(), // 初始化空的 towns Map
+  towns: new Map(),
 });
 const areOptionsLoaded = ref(false);
 const areDynamicOptionsLoaded = ref(false);
@@ -243,11 +266,8 @@ const processedData = computed(() => {
         displayValue = optionMaps.value.sourceCats.get(value) || displayValue;
       } else if (key === "sourceID" && typeof value === "number") {
         displayValue = optionMaps.value.sources.get(value) || displayValue;
-      }
-      // [修改] 新增對 'town' 欄位的處理邏輯
-      else if (key === "town" && typeof value === "number") {
+      } else if (key === "town" && typeof value === "number") {
         const townName = optionMaps.value.towns.get(value);
-        // 如果 API 返回的鄉鎮名稱是 "其他"，並且 `townOther` 欄位有值，就使用 `townOther` 的值
         if (townName && townName.includes("其他") && caseData.townOther) {
           displayValue = caseData.townOther;
         } else {
@@ -316,15 +336,11 @@ const processedData = computed(() => {
         displayValue = "N/A";
       }
 
-      // 這個判斷已經不再需要，因為 town 的標題由 meta[key] 自動處理
-      // if (key === "townOther") title = meta["town"] || "鄉鎮";
-
       if (key === "refusingID") return null;
       return { key, title, displayValue, originalValue: value, isFullWidth };
     })
     .filter((item): item is NonNullable<typeof item> => {
       if (!item) return false;
-      // [修改] 顯示 town，隱藏 townOther
       if (item.key === "townOther") return false;
       if (item.key === "refusingID" && caseData.refusingReasonID) return false;
       const val = item.originalValue;
@@ -336,14 +352,13 @@ const processedData = computed(() => {
 const fetchStaticOptionMaps = async () => {
   loadingStatusText.value = "正在載入選項對照表...";
   try {
-    // [修改] 加入 /option/towns 的請求
     const responses = await Promise.all([
       apiHandler.get("/option/sourceCats"),
       apiHandler.get("/option/sources"),
       apiHandler.get("/option/nationalities"),
       apiHandler.get("/option/serviceMethods"),
       apiHandler.get("/option/workers"),
-      apiHandler.get("/option/towns"), // 新增請求
+      apiHandler.get("/option/towns"),
     ]);
     const [
       sourceCatsRes,
@@ -351,7 +366,7 @@ const fetchStaticOptionMaps = async () => {
       nationalitiesRes,
       serviceMethodsRes,
       workersRes,
-      townsRes, // 新增
+      townsRes,
     ] = responses;
 
     optionMaps.value.sourceCats = new Map(
@@ -369,7 +384,6 @@ const fetchStaticOptionMaps = async () => {
     optionMaps.value.workers = new Map(
       workersRes.data.data.map((item: any) => [item.name, item.fullName]),
     );
-    // [修改] 將 towns 資料存入 Map
     optionMaps.value.towns = new Map(
       townsRes.data.data.map((item: any) => [item.id, item.name]),
     );
@@ -381,7 +395,6 @@ const fetchStaticOptionMaps = async () => {
   }
 };
 
-// ... 其他函式 (fetchDynamicOptionMaps, fetchData, 導航函式) 維持不變 ...
 const fetchDynamicOptionMaps = async (caseData: any) => {
   loadingStatusText.value = "正在載入特定狀態選項...";
   const promises = [];
@@ -452,6 +465,7 @@ const fetchData = async (currentType: string, currentId: string) => {
   error.value = null;
   rawData.value = null;
   records.value = [];
+  selectedRecords.value = []; // [修改] 重置選項
   areDynamicOptionsLoaded.value = false;
 
   try {
@@ -524,6 +538,53 @@ const goToRecordDetail = (recordId: string | number) => {
     name: "RecordsDetail",
     params: params,
   });
+};
+
+// [新增] 下載所選紀錄的函式
+const downloadSelectedRecords = async () => {
+  if (!selectedRecords.value || selectedRecords.value.length === 0) {
+    return;
+  }
+  isDownloading.value = true;
+  error.value = null;
+
+  try {
+    const recordIDs = selectedRecords.value.map((record) => record.recordID);
+    const params = new URLSearchParams();
+    params.append("formType", props.type);
+    params.append("caseNumber", props.id);
+    recordIDs.forEach((id) => {
+      params.append("recordIDs[]", id.toString());
+    });
+
+    const url = `/export/docx?${params.toString()}`;
+
+    // 發送請求，並指定回應類型為 blob (二進制文件)
+    const response = await apiHandler.get(url, { responseType: "blob" });
+
+    // 處理 blob 回應，觸發瀏覽器下載
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.setAttribute("download", `案件_${props.id}_紀錄.docx`);
+    document.body.appendChild(link);
+    link.click();
+
+    // 清理
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+
+    // 清空選擇
+    selectedRecords.value = [];
+  } catch (err: any) {
+    error.value =
+      "下載失敗：" + (err.response?.data?.message || err.message || "未知錯誤");
+  } finally {
+    isDownloading.value = false;
+  }
 };
 </script>
 

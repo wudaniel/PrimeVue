@@ -116,7 +116,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { apiHandler } from "../../class/apiHandler";
-import router from "../../router";
 
 // PrimeVue 引入
 import DataTable, {
@@ -295,9 +294,6 @@ const prepareAndShowPayload = async () => {
         life: 1500, // Toast 顯示 1.5 秒
       });
       // 延遲 1.5 秒後跳轉
-      setTimeout(() => {
-        router.push("/");
-      }, 1500);
     } else {
       throw new Error(response.data?.message || "儲存失敗");
     }

@@ -133,7 +133,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { apiHandler } from "../../class/apiHandler";
-import router from "../../router";
 
 // PrimeVue 引入
 import DataTable, {
@@ -357,13 +356,6 @@ const prepareAndShowPayload = async () => {
         detail: "變更已成功儲存！",
         life: 1500,
       });
-      // 成功後延遲跳轉並重新載入資料
-      setTimeout(() => {
-        // 通常直接跳轉就好，但如果希望停在原頁面並看到新資料，可以重新 fetch
-        // fetchData();
-        // isSaving.value = false; // 如果不跳轉，記得手動關閉 saving
-        router.push("/");
-      }, 1500);
     } else {
       throw new Error(response.data?.message || "儲存失敗");
     }
