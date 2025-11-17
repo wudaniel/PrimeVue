@@ -22,7 +22,7 @@
         <div class="field col-12 md:col-6">
           <label for="caseNumber">案號:</label>
           <InputText
-            inputId="caseNumber"
+            id="caseNumber"
             v-model="caseNumber"
             placeholder="案號"
             class="w-full"
@@ -36,7 +36,7 @@
         <div class="field col-12 md:col-6">
           <label for="fullName">全名:</label>
           <InputText
-            inputId="fullName"
+            id="fullName"
             v-model="FullName"
             placeholder="請輸入案主姓名"
             class="w-full"
@@ -69,7 +69,7 @@
           <label for="othernationalities">請輸入其他國籍:</label>
 
           <InputText
-            inputId="othernationalities"
+            id="othernationalities"
             v-model="othernationalities"
             class="w-full"
             :class="{ 'p-invalid': !!othernationalitiesError }"
@@ -183,7 +183,7 @@
         <div class="field col-12 md:col-6" v-if="selectedsources === -1">
           <label for="othersources">請輸入其他轉介單位:</label>
           <InputText
-            inputId="othersources"
+            id="othersources"
             v-model="othersources"
             class="w-full"
             :class="{ 'p-invalid': !!othersourcesError }"
@@ -231,7 +231,7 @@
         <div class="field col-12 md:col-6" v-if="selectedtown === -1">
           <label for="othertown">請輸入其他鄉鎮市區:</label>
           <InputText
-            inputId="othertown"
+            id="othertown"
             v-model="othertown"
             class="w-full"
             :class="{ 'p-invalid': !!othertownError }"
@@ -244,7 +244,7 @@
         <div class="field col-12">
           <label for="caseDetail">關於該案的案情</label>
           <Textarea
-            inputId="caseDetail"
+            id="caseDetail"
             v-model="caseDetail"
             rows="5"
             class="w-full"

@@ -26,7 +26,7 @@
             >案號: <span class="text-red-500">*</span></label
           >
           <InputText
-            inputId="caseNumber"
+            id="caseNumber"
             v-model="caseNumber"
             placeholder="案號"
             class="w-full"
@@ -63,7 +63,7 @@
             >請輸入其他服務方式: <span class="text-red-500">*</span></label
           >
           <Textarea
-            inputId="otherServicemethods"
+            id="otherServicemethods"
             v-model="otherServicemethods"
             class="w-full"
             :class="{ 'p-invalid': !!dynamicErrors.otherServicemethods }"
@@ -77,7 +77,7 @@
         <div class="field col-12">
           <label for="taskObject">工作目標:</label>
           <Textarea
-            inputId="taskObject"
+            id="taskObject"
             v-model="taskObject"
             rows="5"
             class="w-full"
@@ -88,7 +88,7 @@
         <div class="field col-12">
           <label for="detail">處遇摘要及評估:</label>
           <Textarea
-            inputId="detail"
+            id="detail"
             v-model="detail"
             rows="5"
             class="w-full"
@@ -142,7 +142,7 @@
                   >名稱: <span class="text-red-500">*</span></label
                 >
                 <InputText
-                  :inputId="`target-name-${idx}`"
+                  :id="`target-name-${idx}`"
                   v-model="field.value.name"
                   placeholder="請輸入對象名稱"
                   class="w-full"
@@ -204,7 +204,7 @@
                   >請輸入其他國籍: <span class="text-red-500">*</span></label
                 >
                 <Textarea
-                  :inputId="`target-other-nationality-${idx}`"
+                  :id="`target-other-nationality-${idx}`"
                   v-model="field.value.nationalityOther"
                   class="w-full"
                   :class="{
@@ -316,7 +316,7 @@
                             >單位: <span class="text-red-500">*</span></label
                           >
                           <InputText
-                            :inputId="`unit-${idx}-${extra.id}-${inputIdx}`"
+                            :id="`unit-${idx}-${extra.id}-${inputIdx}`"
                             v-model="input.unit"
                             class="w-full"
                             :class="{
@@ -345,7 +345,7 @@
                             >內容: <span class="text-red-500">*</span></label
                           >
                           <Textarea
-                            :inputId="`content-${idx}-${extra.id}-${inputIdx}`"
+                            :id="`content-${idx}-${extra.id}-${inputIdx}`"
                             v-model="input.content"
                             rows="3"
                             autoResize
@@ -386,7 +386,7 @@
                   >請輸入其他需求：<span class="text-red-500">*</span></label
                 >
                 <Textarea
-                  :inputId="`otherserviceItem-${idx}`"
+                  :id="`otherserviceItem-${idx}`"
                   v-model="field.value.serviceItemOther"
                   class="w-full"
                   :class="{
