@@ -412,8 +412,7 @@ const fetchDynamicOptionMaps = async (caseData: any) => {
             response.data.data.map((item: any) => [item.id, item.name]),
           );
         })
-        .catch((err) => {
-          console.error("讀取 needs 選項失敗", err);
+        .catch(() => {
           optionMaps.value.needs = new Map();
         }),
     );
@@ -428,8 +427,7 @@ const fetchDynamicOptionMaps = async (caseData: any) => {
             response.data.data.map((item: any) => [item.id, item.name]),
           );
         })
-        .catch((err) => {
-          console.error("讀取 refusingReasons 選項失敗", err);
+        .catch(() => {
           optionMaps.value.refusingReasons = new Map();
         }),
     );
@@ -444,8 +442,7 @@ const fetchDynamicOptionMaps = async (caseData: any) => {
             response.data.data.map((item: any) => [item.id, item.name]),
           );
         })
-        .catch((err) => {
-          console.error("讀取 closingReasons 選項失敗", err);
+        .catch(() => {
           optionMaps.value.closingReasons = new Map();
         }),
     );

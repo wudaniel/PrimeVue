@@ -300,7 +300,7 @@ const menuItems = ref([
         label: "個案來源類別",
         icon: " pi pi-list",
         command: () => {
-          router.push("/options/sourcesCats");
+          router.push("/options/sourceCats");
           sidebarVisible.value = false;
         },
       },

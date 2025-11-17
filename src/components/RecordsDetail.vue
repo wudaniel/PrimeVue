@@ -242,15 +242,18 @@ const processedData = computed(() => {
 const fetchOptionMaps = async () => {
   loadingStatusText.value = "正在載入選項對照表...";
   try {
+    // ★★★ 優化：根據 props.type 動態決定 serviceItems 的 API 類型 ★★★
+    const serviceItemType = props.type === "general" ? 1 : 2;
+
     const [nationalitiesRes, serviceMethodsRes, serviceItemsRes, workersRes] =
       await Promise.all([
         apiHandler.get("/option/nationalities?show_all=true"),
         apiHandler.get("/option/serviceMethods"),
-        // [重要] 這裡要確保您獲取的是新入境的服務項目列表 (type=2)，
-        // 以便與 TargetDetailPanel 裡的項目名稱對應
-        apiHandler.get("/option/serviceItems?type=2"),
+        // 使用動態類型來請求
+        apiHandler.get(`/option/serviceItems?type=${serviceItemType}`),
         apiHandler.get("/option/workers"),
       ]);
+
     optionMaps.value.nationalities = new Map(
       nationalitiesRes.data.data.map((i: any) => [i.id, i.name]),
     );

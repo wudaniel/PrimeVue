@@ -171,7 +171,7 @@ const fetchReasons = async () => {
   error.value = null;
   try {
     const response = await apiHandler.get(
-      "/option/closingreasons?show_all=true",
+      "/option/closingReasons?show_all=true",
     );
     if (response.data?.success) {
       const rawData = response.data.data;
@@ -291,7 +291,7 @@ const prepareAndShowPayload = async () => {
   isSaving.value = true;
 
   try {
-    const response = await apiHandler.post("/option/closingreasons", payload);
+    const response = await apiHandler.post("/option/closingReasons", payload);
     if (response.data?.success) {
       toast.add({
         severity: "success",

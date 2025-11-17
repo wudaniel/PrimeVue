@@ -3,14 +3,14 @@
     <!-- ... 頁面標題和按鈕 (無變動) ... -->
     <div class="flex justify-content-between align-items-center mb-4">
       <div>
-        <h2 class="m-0 text-xl font-semibold">拒絕開案原因資料管理</h2>
+        <h2 class="m-0 text-xl font-semibold">不開案原因資料管理</h2>
         <p class="mt-1 text-color-secondary text-sm">
-          您可以新增、編輯或切換狀態，完成後請點擊「儲存變更」。 p>
+          您可以新增、編輯或切換狀態，完成後請點擊「儲存變更」。
         </p>
       </div>
       <Button
         @click="addNewRefusingReason"
-        label="新增拒絕開案原因"
+        label="新增不開案原因"
         icon="pi pi-plus"
         class="p-button-success"
       />
@@ -45,7 +45,7 @@
         <!-- Columns are unchanged -->
         <Column field="id" header="ID" style="width: 10%"></Column>
 
-        <Column field="name" header="拒絕開案原因名稱" style="width: 50%">
+        <Column field="name" header="不開案原因名稱" style="width: 50%">
           <template #editor="{ data, field }">
             <InputText v-model="data[field]" autofocus class="w-full" />
           </template>
@@ -188,7 +188,7 @@ const fetchRefusingReasons = async () => {
       originalRefusingReasons.value = JSON.parse(JSON.stringify(processedData));
       allRefusingReasons.value = JSON.parse(JSON.stringify(processedData));
     } else {
-      throw new Error(response.data.message || "未能獲取拒絕開案原因資料");
+      throw new Error(response.data.message || "未能獲取不開案原因資料");
     }
   } catch (err: any) {
     error.value = err.message || "發生未知錯誤";
@@ -207,7 +207,7 @@ const isMarkedForDeletion = (item: RefusingReason) => {
 const addNewRefusingReason = () => {
   allRefusingReasons.value.unshift({
     id: 0,
-    name: "請輸入新拒絕開案原因",
+    name: "請輸入新不開案原因",
     visible: 1,
     _ui_key: `new_${uiKeyCounter++}`,
   });
@@ -260,7 +260,7 @@ const prepareAndShowPayload = async () => {
   allRefusingReasons.value.forEach((item) => {
     if (isMarkedForDeletion(item)) return;
 
-    if (item.id === 0 && item.name !== "請輸入新拒絕開案原因") {
+    if (item.id === 0 && item.name !== "請輸入新不開案原因") {
       upserts.push({ id: 0, name: item.name, visible: item.visible });
     } else {
       const originalItem = originalRefusingReasons.value.find(

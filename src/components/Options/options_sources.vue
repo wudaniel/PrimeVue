@@ -10,7 +10,7 @@
       </div>
       <Button
         @click="addNewSource"
-        label="新增案主來源"
+        label="新增個案來源"
         icon="pi pi-plus"
         class="p-button-success"
       />

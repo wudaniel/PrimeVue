@@ -31,24 +31,52 @@
         v-if="target.serviceItems && target.serviceItems.length > 0"
         class="list-none p-0 m-0"
       >
-        <li v-for="item in target.serviceItems" :key="item.id" class="mb-2">
-          <i class="pi pi-check-circle text-green-500 mr-2"></i>
-          <strong>{{ getServiceItemName(item.id) }}</strong>
-          <span
-            v-if="item.detail || item.unit"
-            class="text-sm text-color-secondary ml-2"
-          >
-            ({{ formatServiceItemExtras(item) }})
-          </span>
+        <li v-for="item in target.serviceItems" :key="item.id" class="mb-3">
+          <div class="flex align-items-center">
+            <i class="pi pi-check-circle text-green-500 mr-2"></i>
+            <strong>{{ getServiceItemName(item.id) }}</strong>
+          </div>
+
+          <!-- [修改] extras 顯示區塊 -->
+          <div v-if="item.extras && item.extras.length > 0" class="pl-5 mt-2">
+            <!-- 1. 外層容器改為 grid -->
+            <div class="grid">
+              <!-- 2. v-for 迴圈現在創建的是網格欄位 -->
+              <div
+                v-for="(extra, extraIndex) in item.extras"
+                :key="extraIndex"
+                class="col-12 md:col-6 p-1"
+              >
+                <!-- 3. 內容框放在欄位內部，並加上 h-full 確保同行等高 -->
+                <div class="p-2 border-round border-1 surface-border h-full">
+                  <div class="grid text-sm">
+                    <div class="col-12 sm:col-3 text-color-secondary">
+                      單位 (#{{ extraIndex + 1 }}):
+                    </div>
+                    <div class="col-12 sm:col-9 font-medium">
+                      {{ extra.unit }}
+                    </div>
+                    <div class="col-12 sm:col-3 text-color-secondary">
+                      內容:
+                    </div>
+                    <div class="col-12 sm:col-9 font-medium pre-wrap">
+                      {{ extra.detail }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </li>
       </ul>
 
-      <!-- 顯示其他服務項目 -->
+      <!-- 顯示其他服務項目 (無變化) -->
       <div v-if="target.serviceItemOther" class="mt-3">
-        <label class="font-semibold text-color-secondary"
-          >其他服務項目說明</label
-        >
-        <p class="mt-1 p-2 bg-surface-100 border-round pre-wrap">
+        <div class="flex align-items-center">
+          <i class="pi pi-info-circle text-yellow-500 mr-2"></i>
+          <strong>其他服務項目說明</strong>
+        </div>
+        <p class="mt-1 ml-5 p-2 bg-surface-100 border-round pre-wrap">
           {{ target.serviceItemOther }}
         </p>
       </div>
@@ -63,28 +91,32 @@
 import { computed, type PropType } from "vue";
 import Panel from "primevue/panel";
 
-// --- Interfaces ---
-// 這些介面可以從您的表單元件或共用類型檔案中引入
-interface ServiceItemDetail {
-  id: number;
-  unit?: string;
-  detail?: string;
+// --- ★★★ 3. 更新 TypeScript Interfaces ★★★ ---
+interface ExtraDetail {
+  unit: string;
+  detail: string;
 }
+
+interface ServiceItem {
+  id: number;
+  extras: ExtraDetail[] | null;
+}
+
 interface Target {
   name: string;
   gender: number;
   nationalityID: number;
-  nationalityOther?: string; // API 回傳可能沒有此欄位，設為可選
-  serviceItems: ServiceItemDetail[] | null;
+  nationalityOther?: string;
+  serviceItems: ServiceItem[] | null;
   serviceItemOther: string | null;
 }
+
 interface OptionMaps {
   nationalities: Map<number, string>;
   serviceItems: Map<number, string>;
-  // 您可以加入其他需要的 maps
 }
 
-// --- Props ---
+// --- Props (介面更新) ---
 const props = defineProps({
   target: {
     type: Object as PropType<Target>,
@@ -100,7 +132,7 @@ const props = defineProps({
   },
 });
 
-// --- Computed Properties for Display ---
+// --- Computed Properties (無變化) ---
 const genderMap: { [key: number]: string } = { 0: "男", 1: "女", 2: "其他" };
 
 const displayGender = computed(() => {
@@ -109,7 +141,6 @@ const displayGender = computed(() => {
 
 const displayNationality = computed(() => {
   if (props.target.nationalityID === -1) {
-    // 假設 "其他" 的情況下，API 會回傳 nationalityOther 欄位
     return `其他 (${props.target.nationalityOther || "未提供說明"})`;
   }
   return (
@@ -118,17 +149,14 @@ const displayNationality = computed(() => {
   );
 });
 
-// --- Helper Functions ---
+// --- Helper Functions (移除不再需要的函式) ---
 const getServiceItemName = (id: number): string => {
   return props.optionMaps.serviceItems.get(id) || `未知項目 (ID: ${id})`;
 };
 
-const formatServiceItemExtras = (item: ServiceItemDetail): string => {
-  const parts = [];
-  if (item.unit) parts.push(`單位: ${item.unit}`);
-  if (item.detail) parts.push(`內容: ${item.detail}`);
-  return parts.join("、");
-};
+// ★★★ 4. 移除 formatServiceItemExtras 函式 ★★★
+// (因為我們現在用巢狀迴圈來顯示，不再需要這個函式)
+// const formatServiceItemExtras = ...
 </script>
 
 <style scoped>

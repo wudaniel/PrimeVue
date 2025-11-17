@@ -3,7 +3,7 @@
     <h3 class="text-center mb-4">一般紀錄表</h3>
     <form @submit="onSubmit">
       <div class="grid formgrid">
-        <!-- 表單上半部分 (建檔日, 案號等) 保持不變 -->
+        <!-- 表單上半部分 (建檔日, 案號等) ... 此處無更動 ... -->
         <div class="field col-12 md:col-6">
           <label for="filingDate"
             >建檔日: <span class="text-red-500">*</span></label
@@ -37,7 +37,6 @@
             caseNumberError
           }}</small>
         </div>
-        <!-- 全域服務方式和工作目標 (保持不變) -->
         <div class="field col-12 md:col-6">
           <label for="serviceMethodsSelect"
             >服務方式: <span class="text-red-500">*</span></label
@@ -96,7 +95,7 @@
           />
         </div>
 
-        <!-- ★★★ 對象陣列區域 (已修改) ★★★ -->
+        <!-- 對象陣列區域 -->
         <div class="col-12">
           <div class="flex justify-content-between align-items-center mb-2">
             <label class="font-bold"
@@ -116,7 +115,6 @@
             targetArrayError
           }}</small>
 
-          <!-- ★★★ 使用 Panel 元件取代 div ★★★ -->
           <Panel
             v-for="(field, idx) in targetFields"
             :key="field.key"
@@ -124,7 +122,6 @@
             toggleable
             class="mb-3"
           >
-            <!-- ★★★ 將刪除按鈕放入 header 的 icons 插槽 ★★★ -->
             <template #icons>
               <Button
                 icon="pi pi-trash"
@@ -135,9 +132,8 @@
               />
             </template>
 
-            <!-- 對象表單內容 (結構不變, 只是被包在 Panel 內) -->
+            <!-- 對象表單內容 (基本資料部分無更動) -->
             <div class="grid formgrid">
-              <!-- 對象基本資料 -->
               <div class="field col-12 md:col-4">
                 <label :for="`target-name-${idx}`"
                   >名稱: <span class="text-red-500">*</span></label
@@ -264,65 +260,106 @@
                 >
               </div>
 
-              <!-- 服務項目的額外輸入欄位 -->
-              <div class="col-12">
-                <div class="grid formgrid">
+              <!-- ★★★ 服務項目額外輸入欄位 (已修改為動態陣列) ★★★ -->
+              <div class="col-12 mt-3">
+                <div class="grid formgrid -m-2">
                   <div
                     v-for="extra in getSelectedExtraItems(
                       field.value.serviceItemID,
                     )"
                     :key="extra.id"
-                    class="col-12 md:col-6"
+                    class="col-12 lg:col-6 p-2"
                   >
                     <div
-                      class="p-3 border-1 surface-border border-round h-full"
+                      class="p-3 border-1 surface-border border-round h-full flex flex-column"
                     >
-                      <h4 class="mt-0 mb-3">{{ extra.name }}</h4>
-                      <div class="field">
-                        <label :for="`unit-${idx}-${extra.id}`"
-                          >單位: <span class="text-red-500">*</span></label
-                        >
-                        <InputText
-                          :id="`unit-${idx}-${extra.id}`"
-                          v-model="field.value.extraInputValues[extra.id].unit"
-                          class="w-full"
-                          :class="{
-                            'p-invalid':
-                              !!targetErrors[idx]?.[`extraUnit_${extra.id}`],
-                          }"
+                      <div
+                        class="flex justify-content-between align-items-center mb-3"
+                      >
+                        <h4 class="m-0">{{ extra.name }}</h4>
+                        <Button
+                          icon="pi pi-plus"
+                          class="p-button-success p-button-sm p-button-rounded"
+                          type="button"
+                          @click="addExtraInput(idx, extra.id)"
+                          v-tooltip.top="'新增一筆'"
                         />
-                        <small
-                          class="p-error"
-                          v-if="targetErrors[idx]?.[`extraUnit_${extra.id}`]"
-                          >{{
-                            targetErrors[idx]?.[`extraUnit_${extra.id}`]
-                          }}</small
-                        >
                       </div>
-                      <div class="field">
-                        <label :for="`content-${idx}-${extra.id}`"
-                          >內容: <span class="text-red-500">*</span></label
-                        >
-                        <Textarea
-                          :id="`content-${idx}-${extra.id}`"
-                          v-model="
-                            field.value.extraInputValues[extra.id].content
-                          "
-                          rows="3"
-                          autoResize
-                          class="w-full"
-                          :class="{
-                            'p-invalid':
-                              !!targetErrors[idx]?.[`extraContent_${extra.id}`],
-                          }"
-                        />
-                        <small
-                          class="p-error"
-                          v-if="targetErrors[idx]?.[`extraContent_${extra.id}`]"
-                          >{{
-                            targetErrors[idx]?.[`extraContent_${extra.id}`]
-                          }}</small
-                        >
+
+                      <div
+                        v-for="(input, inputIdx) in field.value
+                          .extraInputValues[extra.id]"
+                        :key="input.key"
+                        class="mb-3 p-2 border-1 surface-border border-round-sm"
+                      >
+                        <div class="flex justify-content-end mb-2">
+                          <Button
+                            icon="pi pi-minus"
+                            class="p-button-danger p-button-sm p-button-rounded p-button-text"
+                            type="button"
+                            @click="removeExtraInput(idx, extra.id, inputIdx)"
+                          />
+                        </div>
+                        <div class="field">
+                          <label :for="`unit-${idx}-${extra.id}-${inputIdx}`"
+                            >單位: <span class="text-red-500">*</span></label
+                          >
+                          <InputText
+                            :id="`unit-${idx}-${extra.id}-${inputIdx}`"
+                            v-model="input.unit"
+                            class="w-full"
+                            :class="{
+                              'p-invalid':
+                                !!targetErrors[idx]?.[
+                                  `extraUnit_${extra.id}_${inputIdx}`
+                                ],
+                            }"
+                          />
+                          <small
+                            class="p-error"
+                            v-if="
+                              targetErrors[idx]?.[
+                                `extraUnit_${extra.id}_${inputIdx}`
+                              ]
+                            "
+                            >{{
+                              targetErrors[idx]?.[
+                                `extraUnit_${extra.id}_${inputIdx}`
+                              ]
+                            }}</small
+                          >
+                        </div>
+                        <div class="field">
+                          <label :for="`content-${idx}-${extra.id}-${inputIdx}`"
+                            >內容: <span class="text-red-500">*</span></label
+                          >
+                          <Textarea
+                            :id="`content-${idx}-${extra.id}-${inputIdx}`"
+                            v-model="input.content"
+                            rows="3"
+                            autoResize
+                            class="w-full"
+                            :class="{
+                              'p-invalid':
+                                !!targetErrors[idx]?.[
+                                  `extraContent_${extra.id}_${inputIdx}`
+                                ],
+                            }"
+                          />
+                          <small
+                            class="p-error"
+                            v-if="
+                              targetErrors[idx]?.[
+                                `extraContent_${extra.id}_${inputIdx}`
+                              ]
+                            "
+                            >{{
+                              targetErrors[idx]?.[
+                                `extraContent_${extra.id}_${inputIdx}`
+                              ]
+                            }}</small
+                          >
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -369,6 +406,7 @@
     </form>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, onMounted, reactive, watch, computed } from "vue";
 import { apiHandler } from "../class/apiHandler";
@@ -383,12 +421,10 @@ import Button from "primevue/button";
 import Select from "primevue/select";
 import Textarea from "primevue/textarea";
 import Checkbox from "primevue/checkbox";
-import Panel from "primevue/panel"; // ★★★ 1. 引入 Panel 元件 ★★★
+import Panel from "primevue/panel";
 // --- VeeValidate ---
 import { useForm, useField, useFieldArray, defineRule } from "vee-validate";
 
-// Script 內容完全不需要變更，因為所有邏輯都保持不變。
-// ... (與您提供的 script 內容相同)
 defineRule("required", (value: any) => {
   if (!value && value !== 0) {
     return "此欄位為必填";
@@ -396,7 +432,7 @@ defineRule("required", (value: any) => {
   return true;
 });
 
-// --- ★★★ 類型定義更新 ★★★ ---
+// --- ★★★ 1. 更新類型定義 ★★★ ---
 interface SelectOption {
   id: number;
   name: string;
@@ -405,11 +441,10 @@ interface ServiceObjectOption extends SelectOption {
   extra?: boolean;
 }
 interface ExtraInput {
+  key: number; // 用於 v-for 的唯一 key
   unit: string;
   content: string;
 }
-
-// Target 介面現在包含服務項目相關的欄位
 interface Target {
   name: string;
   gender: number | null;
@@ -417,14 +452,13 @@ interface Target {
   nationalityOther: string;
   serviceItemID: number[];
   serviceItemOther: string;
-  extraInputValues: Record<number, ExtraInput>;
+  extraInputValues: Record<number, ExtraInput[]>; // 陣列!
 }
-// 針對 targetErrors 的類型
 type TargetError = Partial<
   Record<
     | keyof Omit<Target, "extraInputValues">
-    | `extraUnit_${number}`
-    | `extraContent_${number}`,
+    | `extraUnit_${number}_${number}`
+    | `extraContent_${number}_${number}`,
     string
   >
 >;
@@ -451,25 +485,22 @@ const { value: filingDate, errorMessage: filingDateError } =
 const {
   value: caseNumber,
   errorMessage: caseNumberError,
-  resetField, // <-- [修改 1]: 取得 resetField 方法
+  resetField,
 } = useField<string>("caseNumber", "required", {
   initialValue: caseFromQuery.value || "",
 });
-// useFieldArray 現在管理更複雜的 Target 物件
 const { fields: targetFields, push, remove } = useFieldArray<Target>("targets");
 const { errorMessage: targetArrayError } = useField<Target[]>(
   "targets",
   (value) => (value && value.length > 0 ? true : "請至少新增一個對象"),
   { initialValue: [] },
 );
-
-// 全域欄位
 const { value: selectedServicemethods, errorMessage: servicemethodsError } =
-  useField<number | null>("serviceMethod", "required");
+  useField<number | null>("serviceMethodID", "required"); // API 格式通常是 ID
 const { value: taskObject } = useField<string>("taskObject");
 const { value: detail } = useField<string>("detail");
 
-// 手動管理的欄位和錯誤
+// --- Manually Handled Fields ---
 const otherServicemethods = ref("");
 const dynamicErrors = reactive<Record<string, string | null>>({});
 const targetErrors = reactive<Array<TargetError>>([]);
@@ -479,7 +510,7 @@ const nationalityList = ref<SelectOption[]>([]);
 const serviceMethodsList = ref<SelectOption[]>([]);
 const serviceObjectList = ref<ServiceObjectOption[]>([]);
 
-// --- Helper Functions ---
+// --- Functions ---
 const getSelectedExtraItems = (selectedIds: number[] | undefined) => {
   if (!selectedIds) return [];
   return serviceObjectList.value.filter(
@@ -489,9 +520,7 @@ const getSelectedExtraItems = (selectedIds: number[] | undefined) => {
 const isOtherItemSelected = (selectedIds: number[] | undefined) => {
   return selectedIds?.includes(-1) ?? false;
 };
-
 const addTarget = () => {
-  // ★★★ addTarget 更新，初始化所有 Target 內的欄位 ★★★
   push({
     name: "",
     gender: null,
@@ -507,33 +536,66 @@ const removeTarget = (index: number) => {
   remove(index);
   targetErrors.splice(index, 1);
 };
+
+// --- ★★★ 2. 新增 ExtraInput 的操作函式 ★★★ ---
+const addExtraInput = (targetIndex: number, serviceItemId: number) => {
+  const target = targetFields.value[targetIndex].value;
+  if (!target.extraInputValues[serviceItemId]) {
+    target.extraInputValues[serviceItemId] = [];
+  }
+  target.extraInputValues[serviceItemId].push({
+    key: Date.now(),
+    unit: "",
+    content: "",
+  });
+};
+const removeExtraInput = (
+  targetIndex: number,
+  serviceItemId: number,
+  inputIndex: number,
+) => {
+  const target = targetFields.value[targetIndex].value;
+  if (target.extraInputValues[serviceItemId]?.length > 1) {
+    target.extraInputValues[serviceItemId].splice(inputIndex, 1);
+  } else {
+    toast.add({
+      severity: "info",
+      summary: "無法移除",
+      detail: "每個項目至少需要保留一筆資料。",
+      life: 2000,
+    });
+  }
+};
+
+// --- Watchers ---
 watch(
   caseFromQuery,
   (newCaseValue) => {
-    // 無論新的 URL query 是什麼 (字串或空)，
-    // 都使用 resetField 將表單欄位的值和狀態重設為該值。
-    // 這確保了在 SPA 導航中，欄位狀態永遠與 URL 同步。
     resetField({ value: newCaseValue || "" });
   },
-  { immediate: false }, // 保持 false，因為 initialValue 已經處理了首次載入
+  { immediate: false },
 );
-// --- ★★★ Watcher 新增，用於管理 extraInputValues ★★★ ---
+// --- ★★★ 3. 更新 Watcher 邏輯 ★★★ ---
 watch(
   targetFields,
   (targets) => {
     targets.forEach((target) => {
       const selectedIds = new Set(target.value.serviceItemID);
-      // 初始化 extra input
-      getSelectedExtraItems(target.value.serviceItemID).forEach((item) => {
-        if (!target.value.extraInputValues[item.id]) {
-          target.value.extraInputValues[item.id] = { unit: "", content: "" };
-        }
-      });
-      // 清理不再需要的 extra input
-      Object.keys(target.value.extraInputValues).forEach((idStr) => {
-        const id = parseInt(idStr, 10);
-        if (!selectedIds.has(id)) {
-          delete target.value.extraInputValues[id];
+      serviceObjectList.value.forEach((item) => {
+        if (item.extra) {
+          if (
+            selectedIds.has(item.id) &&
+            !target.value.extraInputValues[item.id]
+          ) {
+            target.value.extraInputValues[item.id] = [
+              { key: Date.now(), unit: "", content: "" },
+            ];
+          } else if (
+            !selectedIds.has(item.id) &&
+            target.value.extraInputValues[item.id]
+          ) {
+            delete target.value.extraInputValues[item.id];
+          }
         }
       });
     });
@@ -547,6 +609,7 @@ onMounted(async () => {
     const [natRes, metRes, sobjRes] = await Promise.all([
       apiHandler.get("/option/nationalities"),
       apiHandler.get("/option/serviceMethods"),
+      // 確保這裡的 type=1 是正確的
       apiHandler.get("/option/serviceItems?type=1"),
     ]);
     nationalityList.value = natRes.data.data ?? [];
@@ -562,7 +625,7 @@ onMounted(async () => {
   }
 });
 
-// --- ★★★ onSubmit 驗證和提交邏輯更新 ★★★ ---
+// --- ★★★ 4. 更新 onSubmit 驗證和提交邏輯 ★★★ ---
 const onSubmit = handleSubmit(async (values) => {
   Object.keys(dynamicErrors).forEach((key) => (dynamicErrors[key] = null));
   targetErrors.splice(
@@ -573,13 +636,11 @@ const onSubmit = handleSubmit(async (values) => {
 
   let isFormValid = true;
 
-  // 驗證全域欄位
-  if (values.serviceMethod === -1 && !otherServicemethods.value.trim()) {
+  if (values.serviceMethodID === -1 && !otherServicemethods.value.trim()) {
     dynamicErrors.otherServicemethods = "請輸入其他服務方式";
     isFormValid = false;
   }
 
-  // 遍歷並驗證每個對象
   values.targets?.forEach((target: Target, index: number) => {
     const currentErrors: TargetError = {};
     let isTargetValid = true;
@@ -617,15 +678,26 @@ const onSubmit = handleSubmit(async (values) => {
 
     // 額外項目驗證
     getSelectedExtraItems(target.serviceItemID).forEach((item) => {
-      const input = target.extraInputValues[item.id];
-      if (!input?.unit?.trim()) {
-        currentErrors[`extraUnit_${item.id}`] = `${item.name} 單位為必填`;
+      const inputs = target.extraInputValues[item.id] || [];
+      if (inputs.length === 0) {
+        currentErrors[`extraUnit_${item.id}_0`] =
+          `${item.name} 至少需要一筆資料`;
         isTargetValid = false;
       }
-      if (!input?.content?.trim()) {
-        currentErrors[`extraContent_${item.id}`] = `${item.name} 內容為必填`;
-        isTargetValid = false;
-      }
+      inputs.forEach((input, inputIdx) => {
+        if (!input.unit?.trim()) {
+          currentErrors[`extraUnit_${item.id}_${inputIdx}`] = `${
+            item.name
+          } #${inputIdx + 1} 單位為必填`;
+          isTargetValid = false;
+        }
+        if (!input.content?.trim()) {
+          currentErrors[`extraContent_${item.id}_${inputIdx}`] = `${
+            item.name
+          } #${inputIdx + 1} 內容為必填`;
+          isTargetValid = false;
+        }
+      });
     });
 
     if (!isTargetValid) {
@@ -648,19 +720,24 @@ const onSubmit = handleSubmit(async (values) => {
 
   // 格式化提交的 payload
   const formattedTargets = (values.targets || []).map((t: Target) => {
-    const extraInfoMap = new Map(
-      getSelectedExtraItems(t.serviceItemID).map((item) => [
-        item.id,
-        {
-          id: item.id,
-          unit: t.extraInputValues[item.id].unit.trim(),
-          detail: t.extraInputValues[item.id].content.trim(),
-        },
-      ]),
-    );
     const formattedServiceItems = (t.serviceItemID || [])
       .filter((id) => id !== -1)
-      .map((id) => (extraInfoMap.has(id) ? extraInfoMap.get(id) : { id }));
+      .map((id) => {
+        const hasExtraFlag = serviceObjectList.value.some(
+          (s) => s.id === id && s.extra,
+        );
+        if (hasExtraFlag && t.extraInputValues[id]?.length > 0) {
+          return {
+            id: id,
+            extras: t.extraInputValues[id].map((input) => ({
+              unit: input.unit.trim(),
+              detail: input.content.trim(),
+            })),
+          };
+        } else {
+          return { id: id, extras: null };
+        }
+      });
 
     return {
       name: t.name.trim(),
@@ -678,16 +755,15 @@ const onSubmit = handleSubmit(async (values) => {
   const payload = {
     filingDate: format(values.filingDate!, "yyyy-MM-dd"),
     caseNumber: values.caseNumber?.trim(),
-    serviceMethod: values.serviceMethod,
+    serviceMethodID: values.serviceMethodID,
     serviceMethodOther:
-      values.serviceMethod === -1 ? otherServicemethods.value.trim() : null,
+      values.serviceMethodID === -1 ? otherServicemethods.value.trim() : "",
     taskObject: values.taskObject?.trim() || null,
     detail: values.detail?.trim() || null,
     targets: formattedTargets,
   };
 
   try {
-    // 確保 API 端點是 "general"
     await apiHandler.post(
       `/form/assign/general/${values.caseNumber}/record`,
       payload,
@@ -699,32 +775,20 @@ const onSubmit = handleSubmit(async (values) => {
       life: 1500,
     });
     setTimeout(() => {
-      // [已修改] 從 route.query 讀取返回所需的資訊
       const backCaseNumberQuery = route.query.caseNumber;
-      const backCaseTypeQuery = route.query.caseType;
-
-      // vue-router 的 query 可以是 string 或 string[]。
-      // 路由參數 (params) 通常需要一個單一的 string。
-      // 我們需要處理陣列的情況，通常取第一個值即可。
-      const backCaseNumber = Array.isArray(backCaseNumberQuery)
-        ? backCaseNumberQuery[0]
-        : backCaseNumberQuery;
-      const backCaseType = Array.isArray(backCaseTypeQuery)
-        ? backCaseTypeQuery[0]
-        : backCaseTypeQuery;
-
-      // 如果這兩個參數都存在 (不是 null, undefined 或空字串)，就代表是從詳細頁來的
-      if (backCaseNumber && backCaseType) {
+      // 這裡的路由跳轉邏輯可能需要根據實際情況調整
+      if (backCaseNumberQuery) {
+        const backCaseNumber = Array.isArray(backCaseNumberQuery)
+          ? backCaseNumberQuery[0]
+          : backCaseNumberQuery;
         router.push({
-          name: "AssignDetail", // <-- 請確認這是您案件詳細頁的路由名稱
+          name: "AssignDetail",
           params: {
-            type: "arrival",
-            // 現在 backCaseNumber 的類型是 string | null | undefined，可以安全地指派
+            type: "general", // 確保跳轉類型是 general
             caseNumber: backCaseNumber,
           },
         });
       } else {
-        // 如果缺少任何一個參數，代表是從 Sidebar 來的，返回預設頁面
         router.push("/");
       }
     }, 1500);
@@ -744,7 +808,6 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 <style scoped>
 .p-error {
-  /* 直接指定一個明確的紅色，確保驗證錯誤提示永遠是紅色 */
   color: #ef4444;
 }
 </style>

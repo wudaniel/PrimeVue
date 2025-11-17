@@ -2,61 +2,74 @@
   <div class="card p-4">
     <h3 class="text-xl font-bold text-center mb-4">各國籍歸化身份統計表</h3>
 
-    <!-- ★★★ 新增: 篩選器區域 ★★★ -->
-    <div class="flex flex-wrap md:flex-nowrap align-items-center gap-3 mb-3">
-      <!-- 日期區間 -->
-      <label for="date-range" class="font-bold white-space-nowrap"
-        >日期區間:</label
+    <!-- ★★★ 篩選器區域 (已修改結構) ★★★ -->
+    <div class="flex flex-wrap align-items-center gap-3 mb-3">
+      <!-- [修改] 1. 日期區間 "整體" -->
+      <div
+        class="flex-grow-1 flex align-items-center gap-2"
+        style="min-width: 340px"
       >
-      <div class="flex-grow-1">
-        <DatePicker
-          id="date-range"
-          v-model="dateRange"
-          selectionMode="range"
-          :manualInput="false"
-          dateFormat="yy/mm/dd"
-          placeholder="請選擇開始至結束日期"
-          class="w-full"
-        />
+        <label for="date-range" class="font-bold white-space-nowrap"
+          >日期區間:</label
+        >
+        <!-- 輸入框的 wrapper 現在只負責佔據剩餘空間 -->
+        <div class="w-full">
+          <DatePicker
+            inputId="date-range"
+            v-model="dateRange"
+            selectionMode="range"
+            :manualInput="false"
+            dateFormat="yy/mm/dd"
+            placeholder="請選擇開始至結束日期"
+            class="w-full"
+          />
+        </div>
       </div>
 
-      <!-- 工作人員 -->
-      <label for="staff-select" class="font-bold white-space-nowrap"
-        >工作人員:</label
+      <!-- [修改] 2. 工作人員 "整體" -->
+      <div
+        class="flex-grow-1 flex align-items-center gap-2"
+        style="min-width: 340px"
       >
-      <div class="flex-grow-1">
-        <MultiSelect
-          id="staff-select"
-          v-model="selectedStaffIds"
-          :options="staffList"
-          :maxSelectedLabels="2"
-          selectedItemsLabel="已選擇 {0} 位"
-          optionLabel="fullName"
-          optionValue="name"
-          placeholder="可留空，預設查詢全部"
-          display="chip"
-          filter
-          class="w-full"
-        />
+        <label for="staff-select" class="font-bold white-space-nowrap"
+          >工作人員:</label
+        >
+        <div class="w-full">
+          <MultiSelect
+            inputId="staff-select"
+            v-model="selectedStaffIds"
+            :options="staffList"
+            :maxSelectedLabels="2"
+            selectedItemsLabel="已選擇 {0} 位"
+            optionLabel="fullName"
+            optionValue="name"
+            placeholder="可留空，預設查詢全部"
+            display="chip"
+            filter
+            class="w-full"
+          />
+        </div>
       </div>
 
-      <!-- 性別 -->
-      <label for="gender-select" class="font-bold white-space-nowrap"
-        >性別:</label
-      >
-      <div style="min-width: 150px">
-        <Select
-          id="gender-select"
-          v-model="selectedGender"
-          :options="genderOptions"
-          optionLabel="name"
-          optionValue="code"
-          placeholder="全部"
-          class="w-full"
-        />
+      <!-- [修改] 3. 性別 "整體" -->
+      <div class="flex align-items-center gap-2" style="min-width: 200px">
+        <label for="gender-select" class="font-bold white-space-nowrap"
+          >性別:</label
+        >
+        <div class="w-full">
+          <Select
+            inputId="gender-select"
+            v-model="selectedGender"
+            :options="genderOptions"
+            optionLabel="name"
+            optionValue="code"
+            placeholder="全部"
+            class="w-full"
+          />
+        </div>
       </div>
 
-      <!-- 查詢按鈕 -->
+      <!-- 查詢按鈕 (保持不變，它自己就是一個整體) -->
       <Button
         label="查詢"
         icon="pi pi-search"
@@ -66,7 +79,7 @@
       />
     </div>
 
-    <!-- 狀態處理 -->
+    <!-- 狀態處理 (無變更) -->
     <div v-if="isLoading" class="text-center p-5">
       <ProgressSpinner />
       <p class="mt-2">正在載入統計資料...</p>
@@ -75,7 +88,7 @@
       <Message severity="error">{{ error }}</Message>
     </div>
 
-    <!-- ★★★ 修改點: 合併為單一 DataTable ★★★ -->
+    <!-- DataTable (無變更) -->
     <div v-else>
       <DataTable
         :value="tableData"
@@ -87,8 +100,6 @@
         <template #empty>
           <div class="text-center p-4">請選擇篩選條件後點擊查詢。</div>
         </template>
-
-        <!-- 資料欄位 -->
         <Column
           field="name"
           header="籍別"
@@ -122,8 +133,6 @@
           bodyClass="text-center"
           style="width: 15%"
         ></Column>
-
-        <!-- Footer -->
         <ColumnGroup type="footer" v-if="totalRowData">
           <Row>
             <Column :footer="totalRowData.name" footerStyle="width: 40%" />
@@ -153,7 +162,6 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { apiHandler } from "../../class/apiHandler";
