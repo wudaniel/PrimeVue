@@ -15,7 +15,7 @@
       <!-- .flex-grow-1: 讓此元素伸展以填滿可用空間 -->
       <div class="flex-grow-1">
         <DatePicker
-          id="date-range"
+          inputId="date-range"
           v-model="dateRange"
           selectionMode="range"
           :manualInput="false"
@@ -26,13 +26,13 @@
       </div>
 
       <!-- 工作人員 -->
-      <label for="staff-select" class="font-bold white-space-nowrap"
+      <label for="source-cat-staff-select" class="font-bold white-space-nowrap"
         >工作人員:</label
       >
       <!-- .flex-grow-1: 讓此元素也伸展以填滿可用空間 -->
       <div class="flex-grow-1">
         <MultiSelect
-          id="staff-select"
+          inputId="source-cat-staff-select"
           v-model="selectedStaffIds"
           :options="staffList"
           :maxSelectedLabels="2"

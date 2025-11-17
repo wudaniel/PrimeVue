@@ -7,7 +7,7 @@
         <div class="field col-12 md:col-6">
           <label for="filingDate">填表日期:</label>
           <DatePicker
-            id="filingDate"
+            inputId="filingDate"
             v-model="filingDate"
             dateFormat="yy-mm-dd"
             showIcon
@@ -46,9 +46,9 @@
           }}</small>
         </div>
         <div class="field col-12 md:col-6">
-          <label for="nationalitySelect">原母國籍</label>
+          <span id="nationalitySelect-label">原母國籍</span>
           <Select
-            inputId="nationalitySelect"
+            aria-labelledby="nationalitySelect-label"
             v-model="selectednationalities"
             :options="Nationality_List"
             optionLabel="name"
@@ -75,7 +75,7 @@
           }}</small>
         </div>
         <div class="field col-12 md:col-6">
-          <label class="mb-2 block">性別:</label>
+          <label class="mb-2 block" for="gender0">性別:</label>
           <div class="flex flex-wrap gap-3">
             <div class="flex align-items-center">
               <RadioButton
@@ -103,9 +103,9 @@
           }}</small>
         </div>
         <div class="field col-12 md:col-6">
-          <label for="townSelect">鄉鎮市區</label>
+          <span id="townSelect-label">鄉鎮市區</span>
           <Select
-            inputId="townSelect"
+            aria-labelledby="townSelect-label"
             v-model="selectedtown"
             :options="town_List"
             optionLabel="name"
@@ -132,10 +132,10 @@
 
         <!-- 主責社工 -->
         <div class="field col-12 md:col-6">
-          <label for="mainworkerSelect">主責社工</label>
+          <span id="mainworkerSelect-label">主責社工</span>
           <!-- ★★★ 修改點 1: 將 optionLabel 改為 "fullName" ★★★ -->
           <Select
-            inputId="mainworkerSelect"
+            aria-labelledby="mainworkerSelect-label"
             v-model="selectedworkers"
             :options="workers_List"
             optionLabel="fullName"

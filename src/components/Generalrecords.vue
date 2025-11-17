@@ -9,7 +9,7 @@
             >建檔日: <span class="text-red-500">*</span></label
           >
           <DatePicker
-            id="filingDate"
+            inputId="filingDate"
             v-model="filingDate"
             dateFormat="yy-mm-dd"
             showIcon
@@ -38,11 +38,11 @@
           }}</small>
         </div>
         <div class="field col-12 md:col-6">
-          <label for="serviceMethodsSelect"
-            >服務方式: <span class="text-red-500">*</span></label
+          <span id="serviceMethodsSelect-label"
+            >服務方式: <span class="text-red-500">*</span></span
           >
           <Select
-            inputId="serviceMethodsSelect"
+            aria-labelledby="serviceMethodsSelect-label"
             v-model="selectedServicemethods"
             :options="serviceMethodsList"
             optionLabel="name"
@@ -150,7 +150,7 @@
                 }}</small>
               </div>
               <div class="field col-12 md:col-4">
-                <label class="mb-2 block"
+                <label class="mb-2 block" :for="`male-${idx}`"
                   >性別: <span class="text-red-500">*</span></label
                 >
                 <div class="flex flex-wrap gap-3">
@@ -176,12 +176,12 @@
                 }}</small>
               </div>
               <div class="field col-12 md:col-4">
-                <label :for="`target-nationality-${idx}`"
-                  >國籍: <span class="text-red-500">*</span></label
+                <span :id="`target-nationality-${idx}-label`"
+                  >國籍: <span class="text-red-500">*</span></span
                 >
                 <Select
                   placeholder="請選擇對象國籍"
-                  :inputId="`target-nationality-${idx}`"
+                  :aria-labelledby="`target-nationality-${idx}-label`"
                   v-model="field.value.nationalityID"
                   :options="nationalityList"
                   optionLabel="name"
@@ -225,7 +225,15 @@
               <h5 class="mt-0 mb-3">服務項目</h5>
 
               <div class="field col-12">
-                <label>服務項目: <span class="text-red-500">*</span></label>
+                <label
+                  :for="
+                    serviceObjectList.length
+                      ? `serviceItem-${idx}-${serviceObjectList[0].id}`
+                      : undefined
+                  "
+                >
+                  服務項目: <span class="text-red-500">*</span>
+                </label>
                 <div
                   class="grid mt-2"
                   :class="{

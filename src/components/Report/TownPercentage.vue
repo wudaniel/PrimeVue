@@ -10,7 +10,7 @@
       >
       <div class="flex-grow-1">
         <DatePicker
-          id="date-range"
+          inputId="date-range"
           v-model="dateRange"
           selectionMode="range"
           :manualInput="false"
@@ -21,12 +21,12 @@
       </div>
 
       <!-- 工作人員 -->
-      <label for="staff-select" class="font-bold white-space-nowrap"
+      <label for="town-staff-select" class="font-bold white-space-nowrap"
         >工作人員:</label
       >
       <div class="flex-grow-1">
         <MultiSelect
-          id="staff-select"
+          inputId="town-staff-select"
           v-model="selectedStaffIds"
           :options="staffList"
           :maxSelectedLabels="2"

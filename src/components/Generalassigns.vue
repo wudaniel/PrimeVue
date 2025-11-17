@@ -6,7 +6,7 @@
         <div class="field col-12 md:col-6">
           <label for="filingDate">填表日期:</label>
           <DatePicker
-            id="filingDate"
+            inputId="filingDate"
             v-model="filingDate"
             dateFormat="yy-mm-dd"
             showIcon
@@ -48,9 +48,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="nationalitySelect">原母國籍</label>
+          <span id="nationalitySelect-label">原母國籍</span>
           <Select
-            inputId="nationalitySelect"
+            aria-labelledby="nationalitySelect-label"
             v-model="selectednationalities"
             :options="Nationality_List"
             optionLabel="name"
@@ -84,7 +84,7 @@
         <div class="field col-12 md:col-6">
           <label for="yearInput">出生年份:</label>
           <InputNumber
-            id="yearInput"
+            inputId="yearInput"
             v-model="selectedYear"
             mode="decimal"
             :useGrouping="false"
@@ -98,7 +98,7 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label class="mb-2 block">性別:</label>
+          <label class="mb-2 block" for="gender0">性別:</label>
           <div class="flex flex-wrap gap-3">
             <div class="flex align-items-center">
               <RadioButton
@@ -127,7 +127,7 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label class="mb-2 block">是否歸化:</label>
+          <label class="mb-2 block" for="naturalized_YES">是否歸化:</label>
           <div class="flex flex-wrap gap-3">
             <div class="flex align-items-center">
               <RadioButton
@@ -165,9 +165,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="sourcesSelect">轉介單位</label>
+          <span id="sourcesSelect-label">轉介單位</span>
           <Select
-            inputId="sourcesSelect"
+            aria-labelledby="sourcesSelect-label"
             v-model="selectedsources"
             :options="sources_List"
             optionLabel="name"
@@ -194,9 +194,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="caseSourceSelect">個案來源類別</label>
+          <span id="caseSourceSelect-label">個案來源類別</span>
           <Select
-            inputId="caseSourceSelect"
+            aria-labelledby="caseSourceSelect-label"
             v-model="selectedCaseSource"
             :options="sourceCats_List"
             optionLabel="name"
@@ -213,9 +213,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="townSelect">鄉鎮市區</label>
+          <span id="townSelect-label">鄉鎮市區</span>
           <Select
-            inputId="townSelect"
+            aria-labelledby="townSelect-label"
             v-model="selectedtown"
             :options="town_List"
             optionLabel="name"
@@ -258,9 +258,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="mainworkerSelect">主責社工</label>
+          <span id="mainworkerSelect-label">主責社工</span>
           <Select
-            inputId="mainworkerSelect"
+            aria-labelledby="mainworkerSelect-label"
             v-model="selectedworkers"
             :options="workers_List"
             optionLabel="fullName"

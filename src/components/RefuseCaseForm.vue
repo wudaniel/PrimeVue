@@ -19,9 +19,9 @@
 
         <!-- 不開案原因下拉選單 (單選) -->
         <div class="field col-12 md:col-6">
-          <label for="refusingReason">不開案原因</label>
+          <span id="refusingReason-label">不開案原因</span>
           <Select
-            id="refusingReason"
+            aria-labelledby="refusingReason-label"
             v-model="selectedReasonId"
             :options="reasonOptions"
             optionLabel="name"

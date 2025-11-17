@@ -70,6 +70,7 @@
           <template #body="slotProps">
             <div class="flex align-items-center gap-2">
               <ToggleSwitch
+                :inputId="`sources-visible-${slotProps.data.id}`"
                 :modelValue="slotProps.data.visible === 1"
                 @update:modelValue="
                   (newValue: boolean) =>
@@ -77,7 +78,9 @@
                 "
                 :disabled="isMarkedForDeletion(slotProps.data)"
               />
-              <span>{{ slotProps.data.visible === 1 ? "顯示" : "隱藏" }}</span>
+              <label :for="`sources-visible-${slotProps.data.id}`">
+                {{ slotProps.data.visible === 1 ? "顯示" : "隱藏" }}
+              </label>
             </div>
           </template>
         </Column>
