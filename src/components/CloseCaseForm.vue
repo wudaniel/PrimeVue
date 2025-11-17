@@ -10,7 +10,7 @@
         <div class="field col-12 md:col-6">
           <label for="closeCaseNumber">案號</label>
           <InputText
-            id="closeCaseNumber"
+            inputId="closeCaseNumber"
             :model-value="props.caseId"
             disabled
             class="w-full"
@@ -19,9 +19,9 @@
 
         <!-- 結案原因下拉選單 (單選) -->
         <div class="field col-12 md:col-6">
-          <label for="closingReason">結案原因</label>
+          <span id="closingReason-label">結案原因</span>
           <Select
-            id="closingReason"
+            aria-labelledby="closingReason-label"
             v-model="selectedReasonId"
             :options="reasonOptions"
             optionLabel="name"
@@ -35,7 +35,7 @@
         <div v-if="isOtherFieldVisible" class="field col-12">
           <label for="otherClosingReason">請輸入詳細說明</label>
           <InputText
-            id="otherClosingReason"
+            inputId="otherClosingReason"
             v-model="otherReasonText"
             placeholder="請輸入詳細說明"
             class="w-full"
