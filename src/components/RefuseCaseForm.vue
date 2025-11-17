@@ -10,7 +10,7 @@
         <div class="field col-12 md:col-6">
           <label for="refuseCaseNumber">案號</label>
           <InputText
-            id="refuseCaseNumber"
+            inputId="refuseCaseNumber"
             :model-value="props.caseId"
             disabled
             class="w-full"
@@ -35,7 +35,7 @@
         <div v-if="isOtherFieldVisible" class="field col-12">
           <label for="otherRefusingReason">請輸入詳細說明</label>
           <InputText
-            id="otherRefusingReason"
+            inputId="otherRefusingReason"
             v-model="otherReasonText"
             placeholder="請輸入詳細說明"
             class="w-full"

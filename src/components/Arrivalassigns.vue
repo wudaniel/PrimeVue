@@ -22,7 +22,7 @@
         <div class="field col-12 md:col-6">
           <label for="caseNumber">案號:</label>
           <InputText
-            id="caseNumber"
+            inputId="caseNumber"
             placeholder="請輸入案號"
             v-model="caseNumber"
             class="w-full"
@@ -35,7 +35,7 @@
         <div class="field col-12 md:col-6">
           <label for="fullName">全名:</label>
           <InputText
-            id="fullName"
+            inputId="fullName"
             placeholder="請輸入案主姓名"
             v-model="FullName"
             class="w-full"
@@ -65,7 +65,7 @@
         <div class="field col-12 md:col-6" v-if="selectednationalities === -1">
           <label for="othernationalities">請輸入其他國籍:</label>
           <InputText
-            id="othernationalities"
+            inputId="othernationalities"
             v-model="othernationalities"
             class="w-full"
             :class="{ 'p-invalid': !!othernationalitiesError }"
@@ -120,7 +120,7 @@
         <div class="field col-12 md:col-6" v-if="selectedtown === -1">
           <label for="othertown">請輸入其他鄉鎮市區:</label>
           <InputText
-            id="othertown"
+            inputId="othertown"
             v-model="othertown"
             class="w-full"
             :class="{ 'p-invalid': !!othertownError }"

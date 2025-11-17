@@ -21,7 +21,7 @@
           <div class="field col-12 md:col-6 lg:col-6">
             <label for="filterCaseNumber">案號</label>
             <InputText
-              id="filterCaseNumber"
+              inputId="filterCaseNumber"
               v-model="filters.caseNumber.value"
               placeholder="按案號搜尋"
               class="p-inputtext-sm w-full"
@@ -34,7 +34,7 @@
             v-if="shouldShowWorkerColumn"
             class="field col-12 md:col-6 lg:col-6"
           >
-            <label for="filterWorker">工作人員</label>
+            <span id="filterWorker-label">工作人員</span>
             <MultiSelect
               inputId="filterWorker"
               v-model="filters.worker.value"
@@ -68,7 +68,7 @@
           <!-- 狀態篩選 -->
           <!-- ★★★ 修改點：將 lg:col-4 改為 lg:col-6 使佈局更平衡 ★★★ -->
           <div class="field col-12 md:col-6 lg:col-6">
-            <label for="filterStatus">狀態</label>
+            <span id="filterStatus-label">狀態</span>
             <MultiSelect
               inputId="filterStatus"
               v-model="filters.status.value"
@@ -84,7 +84,7 @@
           <!-- 類別篩選 -->
           <!-- ★★★ 修改點：將 lg:col-4 改為 lg:col-6 使佈局更平衡 ★★★ -->
           <div class="field col-12 md:col-6 lg:col-6">
-            <label for="filterType">類別</label>
+            <span id="filterType-label">類別</span>
             <MultiSelect
               inputId="filterType"
               v-model="filters.type.value"

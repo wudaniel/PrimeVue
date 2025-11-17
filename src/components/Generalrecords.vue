@@ -26,7 +26,7 @@
             >案號: <span class="text-red-500">*</span></label
           >
           <InputText
-            id="caseNumber"
+            inputId="caseNumber"
             v-model="caseNumber"
             placeholder="案號"
             class="w-full"
@@ -61,7 +61,7 @@
             >請輸入其他服務方式: <span class="text-red-500">*</span></label
           >
           <Textarea
-            id="otherServicemethods"
+            inputId="otherServicemethods"
             v-model="otherServicemethods"
             class="w-full"
             :class="{ 'p-invalid': !!dynamicErrors.otherServicemethods }"
@@ -75,7 +75,7 @@
         <div class="field col-12">
           <label for="taskObject">工作目標:</label>
           <Textarea
-            id="taskObject"
+            inputId="taskObject"
             v-model="taskObject"
             rows="5"
             class="w-full"
@@ -86,7 +86,7 @@
         <div class="field col-12">
           <label for="detail">處遇摘要及評估:</label>
           <Textarea
-            id="detail"
+            inputId="detail"
             v-model="detail"
             rows="5"
             class="w-full"
@@ -140,7 +140,7 @@
                 >
                 <InputText
                   placeholder="請輸入對象名稱"
-                  :id="`target-name-${idx}`"
+                  :inputId="`target-name-${idx}`"
                   v-model="field.value.name"
                   class="w-full"
                   :class="{ 'p-invalid': !!targetErrors[idx]?.name }"
@@ -201,7 +201,7 @@
                   >請輸入其他國籍: <span class="text-red-500">*</span></label
                 >
                 <Textarea
-                  :id="`target-other-nationality-${idx}`"
+                  :inputId="`target-other-nationality-${idx}`"
                   v-model="field.value.nationalityOther"
                   class="w-full"
                   :class="{
@@ -313,7 +313,7 @@
                             >單位: <span class="text-red-500">*</span></label
                           >
                           <InputText
-                            :id="`unit-${idx}-${extra.id}-${inputIdx}`"
+                            :inputId="`unit-${idx}-${extra.id}-${inputIdx}`"
                             v-model="input.unit"
                             class="w-full"
                             :class="{
@@ -342,7 +342,7 @@
                             >內容: <span class="text-red-500">*</span></label
                           >
                           <Textarea
-                            :id="`content-${idx}-${extra.id}-${inputIdx}`"
+                            :inputId="`content-${idx}-${extra.id}-${inputIdx}`"
                             v-model="input.content"
                             rows="3"
                             autoResize
@@ -383,7 +383,7 @@
                   >請輸入其他需求：<span class="text-red-500">*</span></label
                 >
                 <Textarea
-                  :id="`otherserviceItem-${idx}`"
+                  :inputId="`otherserviceItem-${idx}`"
                   v-model="field.value.serviceItemOther"
                   class="w-full"
                   :class="{
@@ -802,7 +802,8 @@ const onSubmit = handleSubmit(async (values) => {
     }, 1500);
   } catch (error: any) {
     const errorMessage =
-      error.response?.data?.message || "提交失敗，請檢查網路或聯繫管理員。";
+      error.response?.data?.error?.message ||
+      "提交失敗，請檢查網路或聯繫管理員。";
     toast.add({
       severity: "error",
       summary: "提交失敗",

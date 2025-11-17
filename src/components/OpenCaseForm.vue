@@ -10,7 +10,7 @@
         <div class="field col-12 md:col-6">
           <label for="caseNumber">案號</label>
           <InputText
-            id="caseNumber"
+            inputId="caseNumber"
             :model-value="props.caseId"
             disabled
             class="w-full"
@@ -19,7 +19,7 @@
 
         <!-- ★★★ 修改點：從 Select 改為 MultiSelect ★★★ -->
         <div class="field col-12 md:col-6">
-          <label for="openingReason">開案原因 (可複選)</label>
+          <span id="openingReason-label">開案原因 (可複選)</span>
           <MultiSelect
             inputId="openingReason"
             v-model="selectedReasonIds"
@@ -36,7 +36,7 @@
         <div v-if="isOtherFieldVisible" class="field col-12">
           <label for="otherReason">請輸入詳細說明</label>
           <InputText
-            id="otherReason"
+            inputId="otherReason"
             v-model="otherReasonText"
             placeholder="請輸入詳細說明"
             class="w-full"
