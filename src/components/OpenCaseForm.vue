@@ -21,7 +21,7 @@
         <div class="field col-12 md:col-6">
           <span id="openingReason-label">開案原因 (可複選)</span>
           <MultiSelect
-            aria-labelledby="openingReason-label"
+            inputId="openingReason"
             v-model="selectedReasonIds"
             :options="reasonOptions"
             optionLabel="name"

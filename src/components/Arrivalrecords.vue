@@ -153,7 +153,7 @@
                 }}</small>
               </div>
               <div class="field col-12 md:col-4">
-                <label class="mb-2 block"
+                <label class="mb-2 block" :for="`male-${idx}`"
                   >性別: <span class="text-red-500">*</span></label
                 >
                 <div class="flex flex-wrap gap-3">
@@ -228,7 +228,15 @@
               <h5 class="mt-0 mb-3">服務項目</h5>
               <!-- 服務項目 Checkbox (無更動) -->
               <div class="field col-12">
-                <label>服務項目: <span class="text-red-500">*</span></label>
+                <label
+                  :for="
+                    serviceObjectList.length
+                      ? `serviceItem-${idx}-${serviceObjectList[0].id}`
+                      : undefined
+                  "
+                >
+                  服務項目: <span class="text-red-500">*</span>
+                </label>
                 <div
                   class="grid mt-2"
                   :class="{
