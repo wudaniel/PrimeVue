@@ -46,7 +46,18 @@
 
         <Column field="name" header="服務項目名稱" style="width: 29%">
           <template #editor="{ data, field }">
-            <InputText v-model="data[field]" autofocus class="w-full" />
+            <label
+              class="p-sr-only"
+              :for="`service-item-name-${data._ui_key ?? data.id}`"
+            >
+              服務項目名稱
+            </label>
+            <InputText
+              :id="`service-item-name-${data._ui_key ?? data.id}`"
+              v-model="data[field]"
+              autofocus
+              class="w-full"
+            />
           </template>
         </Column>
 

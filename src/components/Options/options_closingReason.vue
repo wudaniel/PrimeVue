@@ -46,7 +46,18 @@
 
         <Column field="name" header="結案原因名稱" style="width: 50%">
           <template #editor="{ data, field }">
-            <InputText v-model="data[field]" autofocus class="w-full" />
+            <label
+              class="p-sr-only"
+              :for="`closing-reason-name-${data._ui_key ?? data.id}`"
+            >
+              結案原因名稱
+            </label>
+            <InputText
+              :id="`closing-reason-name-${data._ui_key ?? data.id}`"
+              v-model="data[field]"
+              autofocus
+              class="w-full"
+            />
           </template>
         </Column>
 
