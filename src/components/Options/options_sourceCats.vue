@@ -46,18 +46,7 @@
 
         <Column field="name" header="來源類別名稱" style="width: 50%">
           <template #editor="{ data, field }">
-            <label
-              class="p-sr-only"
-              :for="`source-cat-name-${data._ui_key ?? data.id}`"
-            >
-              來源類別名稱
-            </label>
-            <InputText
-              :id="`source-cat-name-${data._ui_key ?? data.id}`"
-              v-model="data[field]"
-              autofocus
-              class="w-full"
-            />
+            <InputText v-model="data[field]" autofocus class="w-full" />
           </template>
         </Column>
 
