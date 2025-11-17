@@ -9,7 +9,7 @@
       >
       <div class="flex-grow-1">
         <DatePicker
-          id="date-range"
+          inputId="date-range"
           v-model="dateRange"
           selectionMode="range"
           :manualInput="false"
@@ -18,12 +18,12 @@
           class="w-full"
         />
       </div>
-      <label for="staff-select" class="font-bold white-space-nowrap"
-        >工作人員:</label
+      <span id="staff-select-label" class="font-bold white-space-nowrap"
+        >工作人員:</span
       >
       <div class="flex-grow-1">
         <MultiSelect
-          id="staff-select"
+          aria-labelledby="staff-select-label"
           v-model="selectedStaffIds"
           :options="staffList"
           :maxSelectedLabels="2"

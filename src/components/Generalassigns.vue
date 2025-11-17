@@ -6,7 +6,7 @@
         <div class="field col-12 md:col-6">
           <label for="filingDate">填表日期:</label>
           <DatePicker
-            id="filingDate"
+            inputId="filingDate"
             v-model="filingDate"
             dateFormat="yy-mm-dd"
             showIcon
@@ -22,7 +22,7 @@
         <div class="field col-12 md:col-6">
           <label for="caseNumber">案號:</label>
           <InputText
-            id="caseNumber"
+            inputId="caseNumber"
             v-model="caseNumber"
             placeholder="案號"
             class="w-full"
@@ -36,7 +36,7 @@
         <div class="field col-12 md:col-6">
           <label for="fullName">全名:</label>
           <InputText
-            id="fullName"
+            inputId="fullName"
             v-model="FullName"
             placeholder="請輸入案主姓名"
             class="w-full"
@@ -48,9 +48,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="nationalitySelect">原母國籍</label>
+          <span id="nationalitySelect-label">原母國籍</span>
           <Select
-            inputId="nationalitySelect"
+            aria-labelledby="nationalitySelect-label"
             v-model="selectednationalities"
             :options="Nationality_List"
             optionLabel="name"
@@ -69,7 +69,7 @@
           <label for="othernationalities">請輸入其他國籍:</label>
 
           <InputText
-            id="othernationalities"
+            inputId="othernationalities"
             v-model="othernationalities"
             class="w-full"
             :class="{ 'p-invalid': !!othernationalitiesError }"
@@ -84,7 +84,7 @@
         <div class="field col-12 md:col-6">
           <label for="yearInput">出生年份:</label>
           <InputNumber
-            id="yearInput"
+            inputId="yearInput"
             v-model="selectedYear"
             mode="decimal"
             :useGrouping="false"
@@ -165,9 +165,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="sourcesSelect">轉介單位</label>
+          <span id="sourcesSelect-label">轉介單位</span>
           <Select
-            inputId="sourcesSelect"
+            aria-labelledby="sourcesSelect-label"
             v-model="selectedsources"
             :options="sources_List"
             optionLabel="name"
@@ -183,7 +183,7 @@
         <div class="field col-12 md:col-6" v-if="selectedsources === -1">
           <label for="othersources">請輸入其他轉介單位:</label>
           <InputText
-            id="othersources"
+            inputId="othersources"
             v-model="othersources"
             class="w-full"
             :class="{ 'p-invalid': !!othersourcesError }"
@@ -194,9 +194,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="caseSourceSelect">個案來源類別</label>
+          <span id="caseSourceSelect-label">個案來源類別</span>
           <Select
-            inputId="caseSourceSelect"
+            aria-labelledby="caseSourceSelect-label"
             v-model="selectedCaseSource"
             :options="sourceCats_List"
             optionLabel="name"
@@ -213,9 +213,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="townSelect">鄉鎮市區</label>
+          <span id="townSelect-label">鄉鎮市區</span>
           <Select
-            inputId="townSelect"
+            aria-labelledby="townSelect-label"
             v-model="selectedtown"
             :options="town_List"
             optionLabel="name"
@@ -231,7 +231,7 @@
         <div class="field col-12 md:col-6" v-if="selectedtown === -1">
           <label for="othertown">請輸入其他鄉鎮市區:</label>
           <InputText
-            id="othertown"
+            inputId="othertown"
             v-model="othertown"
             class="w-full"
             :class="{ 'p-invalid': !!othertownError }"
@@ -244,7 +244,7 @@
         <div class="field col-12">
           <label for="caseDetail">關於該案的案情</label>
           <Textarea
-            id="caseDetail"
+            inputId="caseDetail"
             v-model="caseDetail"
             rows="5"
             class="w-full"
@@ -258,9 +258,9 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="mainworkerSelect">主責社工</label>
+          <span id="mainworkerSelect-label">主責社工</span>
           <Select
-            inputId="mainworkerSelect"
+            aria-labelledby="mainworkerSelect-label"
             v-model="selectedworkers"
             :options="workers_List"
             optionLabel="fullName"
