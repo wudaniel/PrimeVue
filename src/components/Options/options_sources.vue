@@ -45,18 +45,7 @@
 
         <Column field="name" header="案主來源名稱" style="width: 32%">
           <template #editor="{ data, field }">
-            <label
-              class="p-sr-only"
-              :for="`source-name-${data._ui_key ?? data.id}`"
-            >
-              案主來源名稱
-            </label>
-            <InputText
-              :id="`source-name-${data._ui_key ?? data.id}`"
-              v-model="data[field]"
-              autofocus
-              class="w-full"
-            />
+            <InputText v-model="data[field]" autofocus class="w-full" />
           </template>
         </Column>
 

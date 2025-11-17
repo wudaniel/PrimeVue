@@ -44,18 +44,7 @@
 
         <Column field="name" header="鄉鎮市區名稱" style="width: 50%">
           <template #editor="{ data, field }">
-            <label
-              class="p-sr-only"
-              :for="`town-name-${data._ui_key ?? data.id}`"
-            >
-              鄉鎮市區名稱
-            </label>
-            <InputText
-              :id="`town-name-${data._ui_key ?? data.id}`"
-              v-model="data[field]"
-              autofocus
-              class="w-full"
-            />
+            <InputText v-model="data[field]" autofocus class="w-full" />
           </template>
         </Column>
 
