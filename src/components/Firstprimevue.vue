@@ -36,7 +36,7 @@
           >
             <label for="filterWorker">工作人員</label>
             <MultiSelect
-              id="filterWorker"
+              inputId="filterWorker"
               v-model="filters.worker.value"
               :options="workerList"
               optionLabel="fullName"
@@ -55,7 +55,7 @@
           <div class="field col-12 md:col-6 lg:col-6">
             <label for="filterDateRange">日期區間</label>
             <DatePicker
-              id="filterDateRange"
+              inputId="filterDateRange"
               v-model="filters.dateRange.value"
               selectionMode="range"
               :manualInput="false"
@@ -70,7 +70,7 @@
           <div class="field col-12 md:col-6 lg:col-6">
             <label for="filterStatus">狀態</label>
             <MultiSelect
-              id="filterStatus"
+              inputId="filterStatus"
               v-model="filters.status.value"
               :options="statusFilterOptions"
               optionLabel="label"
@@ -86,7 +86,7 @@
           <div class="field col-12 md:col-6 lg:col-6">
             <label for="filterType">類別</label>
             <MultiSelect
-              id="filterType"
+              inputId="filterType"
               v-model="filters.type.value"
               :options="typeFilterOptions"
               optionLabel="label"

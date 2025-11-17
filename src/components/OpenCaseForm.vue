@@ -21,7 +21,7 @@
         <div class="field col-12 md:col-6">
           <label for="openingReason">開案原因 (可複選)</label>
           <MultiSelect
-            id="openingReason"
+            inputId="openingReason"
             v-model="selectedReasonIds"
             :options="reasonOptions"
             optionLabel="name"
@@ -189,7 +189,8 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-.field > label {
+.field > label,
+.field > span {
   display: block;
   margin-bottom: 0.5rem;
 }

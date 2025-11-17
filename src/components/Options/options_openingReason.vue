@@ -45,7 +45,18 @@
 
         <Column field="name" header="需求項目名稱" style="width: 50%">
           <template #editor="{ data, field }">
-            <InputText v-model="data[field]" autofocus class="w-full" />
+            <label
+              class="p-sr-only"
+              :for="`need-item-name-${data._ui_key ?? data.id}`"
+            >
+              需求項目名稱
+            </label>
+            <InputText
+              :id="`need-item-name-${data._ui_key ?? data.id}`"
+              v-model="data[field]"
+              autofocus
+              class="w-full"
+            />
           </template>
         </Column>
 
@@ -53,6 +64,7 @@
           <template #body="slotProps">
             <div class="flex align-items-center gap-2">
               <ToggleSwitch
+                :inputId="`opening-visible-${slotProps.data.id}`"
                 :modelValue="slotProps.data.visible === 1"
                 @update:modelValue="
                   (newValue: boolean) =>
@@ -60,7 +72,9 @@
                 "
                 :disabled="isMarkedForDeletion(slotProps.data)"
               />
-              <span>{{ slotProps.data.visible === 1 ? "顯示" : "隱藏" }}</span>
+              <label :for="`opening-visible-${slotProps.data.id}`">
+                {{ slotProps.data.visible === 1 ? "顯示" : "隱藏" }}
+              </label>
             </div>
           </template>
         </Column>

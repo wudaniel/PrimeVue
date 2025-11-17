@@ -19,9 +19,9 @@
 
         <!-- 結案原因下拉選單 (單選) -->
         <div class="field col-12 md:col-6">
-          <label for="closingReason">結案原因</label>
+          <span id="closingReason-label">結案原因</span>
           <Select
-            id="closingReason"
+            aria-labelledby="closingReason-label"
             v-model="selectedReasonId"
             :options="reasonOptions"
             optionLabel="name"

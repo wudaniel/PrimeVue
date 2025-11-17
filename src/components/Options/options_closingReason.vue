@@ -46,7 +46,18 @@
 
         <Column field="name" header="結案原因名稱" style="width: 50%">
           <template #editor="{ data, field }">
-            <InputText v-model="data[field]" autofocus class="w-full" />
+            <label
+              class="p-sr-only"
+              :for="`closing-reason-name-${data._ui_key ?? data.id}`"
+            >
+              結案原因名稱
+            </label>
+            <InputText
+              :id="`closing-reason-name-${data._ui_key ?? data.id}`"
+              v-model="data[field]"
+              autofocus
+              class="w-full"
+            />
           </template>
         </Column>
 
@@ -54,6 +65,7 @@
           <template #body="slotProps">
             <div class="flex align-items-center gap-2">
               <ToggleSwitch
+                :inputId="`closing-visible-${slotProps.data.id}`"
                 :modelValue="slotProps.data.visible === 1"
                 @update:modelValue="
                   (newValue: boolean) =>
@@ -61,7 +73,9 @@
                 "
                 :disabled="isMarkedForDeletion(slotProps.data)"
               />
-              <span>{{ slotProps.data.visible === 1 ? "顯示" : "隱藏" }}</span>
+              <label :for="`closing-visible-${slotProps.data.id}`">
+                {{ slotProps.data.visible === 1 ? "顯示" : "隱藏" }}
+              </label>
             </div>
           </template>
         </Column>

@@ -46,7 +46,18 @@
 
         <Column field="name" header="服務項目名稱" style="width: 29%">
           <template #editor="{ data, field }">
-            <InputText v-model="data[field]" autofocus class="w-full" />
+            <label
+              class="p-sr-only"
+              :for="`service-item-name-${data._ui_key ?? data.id}`"
+            >
+              服務項目名稱
+            </label>
+            <InputText
+              :id="`service-item-name-${data._ui_key ?? data.id}`"
+              v-model="data[field]"
+              autofocus
+              class="w-full"
+            />
           </template>
         </Column>
 
@@ -64,7 +75,14 @@
           </template>
           <template #editor="{ data, field }">
             <div class="flex justify-content-center">
+              <label
+                class="p-sr-only"
+                :for="`service-item-extra-${data._ui_key ?? data.id}`"
+              >
+                需額外資訊
+              </label>
               <ToggleSwitch
+                :inputId="`service-item-extra-${data._ui_key ?? data.id}`"
                 :modelValue="data[field] === 1"
                 @update:modelValue="data[field] = $event ? 1 : 0"
               />
@@ -91,7 +109,14 @@
         <Column field="visible" header="狀態" style="width: 13%">
           <template #body="slotProps">
             <div class="flex justify-content-center">
+              <label
+                class="p-sr-only"
+                :for="`service-item-visible-${slotProps.data.id ?? slotProps.data._ui_key}`"
+              >
+                切換顯示狀態
+              </label>
               <ToggleSwitch
+                :inputId="`service-item-visible-${slotProps.data.id ?? slotProps.data._ui_key}`"
                 :modelValue="slotProps.data.visible === 1"
                 @update:modelValue="
                   (newValue: boolean) =>

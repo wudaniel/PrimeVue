@@ -5,20 +5,26 @@
     <div v-if="!userStore.isLoggedIn">
       <!-- 監聽 form 的 submit 事件，這會被 Enter 鍵觸發 -->
       <form @submit.prevent="handleLogin">
+        <label class="p-sr-only" for="login-username">帳號</label>
         <InputText
+          id="login-username"
           v-model="username"
           placeholder="帳號"
           class="w-full"
           style="margin-bottom: 20px"
         />
         <!-- 密碼輸入框，同樣在 form 內部 -->
-        <InputText
+        <label class="p-sr-only" for="login-password">密碼</label>
+        <Password
+          inputId="login-password"
           v-model="password"
           placeholder="密碼"
-          type="password"
-          class="p-inputtext w-full"
+          :feedback="false"
+          toggleMask
+          class="w-full"
+          inputClass="w-full"
         />
-        <!-- 
+        <!--
           將按鈕的 type 設為 "submit"。
           這樣當在表單內按 Enter 時，就會觸發 form 的 submit 事件。
           可以移除 @click 事件，避免重複調用 handleLogin。

@@ -31,12 +31,12 @@
         class="flex-grow-1 flex align-items-center gap-2"
         style="min-width: 340px"
       >
-        <label for="staff-select" class="font-bold white-space-nowrap"
+        <label for="nationality-identity-staff" class="font-bold white-space-nowrap"
           >工作人員:</label
         >
         <div class="w-full">
           <MultiSelect
-            inputId="staff-select"
+            inputId="nationality-identity-staff"
             v-model="selectedStaffIds"
             :options="staffList"
             :maxSelectedLabels="2"
@@ -53,12 +53,12 @@
 
       <!-- [修改] 3. 性別 "整體" -->
       <div class="flex align-items-center gap-2" style="min-width: 200px">
-        <label for="gender-select" class="font-bold white-space-nowrap"
-          >性別:</label
+        <span id="gender-select-label" class="font-bold white-space-nowrap"
+          >性別:</span
         >
         <div class="w-full">
           <Select
-            inputId="gender-select"
+            aria-labelledby="gender-select-label"
             v-model="selectedGender"
             :options="genderOptions"
             optionLabel="name"
