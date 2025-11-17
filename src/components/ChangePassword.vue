@@ -18,7 +18,7 @@
                 >舊密碼 <span class="text-red-500">*</span></label
               >
               <Password
-                id="oldPassword"
+                inputId="oldPassword"
                 v-model="oldPassword"
                 placeholder="請輸入您的舊密碼"
                 toggleMask
@@ -36,7 +36,7 @@
                 >新密碼 <span class="text-red-500">*</span></label
               >
               <Password
-                id="newPassword"
+                inputId="newPassword"
                 v-model="newPassword"
                 placeholder="至少 8 個字元"
                 toggleMask
@@ -54,7 +54,7 @@
                 >確認新密碼 <span class="text-red-500">*</span></label
               >
               <Password
-                id="newPasswordConfirmation"
+                inputId="newPasswordConfirmation"
                 v-model="newPasswordConfirmation"
                 placeholder="請再次輸入新密碼"
                 toggleMask
