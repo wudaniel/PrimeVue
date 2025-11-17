@@ -18,12 +18,12 @@
           class="w-full"
         />
       </div>
-      <span id="staff-select-label" class="font-bold white-space-nowrap"
-        >工作人員:</span
+      <label for="service-method-staff-select" class="font-bold white-space-nowrap"
+        >工作人員:</label
       >
       <div class="flex-grow-1">
         <MultiSelect
-          aria-labelledby="staff-select-label"
+          inputId="service-method-staff-select"
           v-model="selectedStaffIds"
           :options="staffList"
           :maxSelectedLabels="2"

@@ -31,12 +31,12 @@
         class="flex-grow-1 flex align-items-center gap-2"
         style="min-width: 340px"
       >
-        <span id="staff-select-label" class="font-bold white-space-nowrap"
-          >工作人員:</span
+        <label for="nationality-identity-staff" class="font-bold white-space-nowrap"
+          >工作人員:</label
         >
         <div class="w-full">
           <MultiSelect
-            aria-labelledby="staff-select-label"
+            inputId="nationality-identity-staff"
             v-model="selectedStaffIds"
             :options="staffList"
             :maxSelectedLabels="2"

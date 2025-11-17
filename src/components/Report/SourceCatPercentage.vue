@@ -26,13 +26,13 @@
       </div>
 
       <!-- 工作人員 -->
-      <span id="staff-select-label" class="font-bold white-space-nowrap"
-        >工作人員:</span
+      <label for="source-cat-staff-select" class="font-bold white-space-nowrap"
+        >工作人員:</label
       >
       <!-- .flex-grow-1: 讓此元素也伸展以填滿可用空間 -->
       <div class="flex-grow-1">
         <MultiSelect
-          aria-labelledby="staff-select-label"
+          inputId="source-cat-staff-select"
           v-model="selectedStaffIds"
           :options="staffList"
           :maxSelectedLabels="2"

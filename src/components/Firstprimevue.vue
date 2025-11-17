@@ -36,7 +36,7 @@
           >
             <span id="filterWorker-label">工作人員</span>
             <MultiSelect
-              aria-labelledby="filterWorker-label"
+              inputId="filterWorker"
               v-model="filters.worker.value"
               :options="workerList"
               optionLabel="fullName"
@@ -70,7 +70,7 @@
           <div class="field col-12 md:col-6 lg:col-6">
             <span id="filterStatus-label">狀態</span>
             <MultiSelect
-              aria-labelledby="filterStatus-label"
+              inputId="filterStatus"
               v-model="filters.status.value"
               :options="statusFilterOptions"
               optionLabel="label"
@@ -86,7 +86,7 @@
           <div class="field col-12 md:col-6 lg:col-6">
             <span id="filterType-label">類別</span>
             <MultiSelect
-              aria-labelledby="filterType-label"
+              inputId="filterType"
               v-model="filters.type.value"
               :options="typeFilterOptions"
               optionLabel="label"

@@ -75,7 +75,7 @@
           }}</small>
         </div>
         <div class="field col-12 md:col-6">
-          <label class="mb-2 block">性別:</label>
+          <label class="mb-2 block" for="gender0">性別:</label>
           <div class="flex flex-wrap gap-3">
             <div class="flex align-items-center">
               <RadioButton
