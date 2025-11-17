@@ -794,7 +794,8 @@ const onSubmit = handleSubmit(async (values) => {
     }, 1500);
   } catch (error: any) {
     const errorMessage =
-      error.response?.data?.message || "提交失敗，請檢查網路或聯繫管理員。";
+      error.response?.data?.error?.message ||
+      "提交失敗，請檢查網路或聯繫管理員。";
     toast.add({
       severity: "error",
       summary: "提交失敗",
